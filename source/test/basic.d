@@ -66,8 +66,8 @@ enum platforms = [
 
 unittest{
 	auto buf = new OutBuffer;
-	foreach(i, platform; platforms) {
-		auto cs = new Capstone(platform.arch, ModeFlags(platform.mode));
+	static foreach(i, platform; platforms) {{
+		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 
 		auto res = cs.disasm(platform.code, 0x1000);
@@ -83,7 +83,7 @@ unittest{
 
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
-	}
+	}}
 
 	const expected = import("basic.expected");
 	const actual = buf.toString;

@@ -23,13 +23,13 @@ auto bytesToHex(in ubyte[] code){
 }
 
 void main(){
-	writefln!"Version: %s (lib), %s (bindings)"(Capstone.versionOfLibrary, Capstone.versionOfBindings);
+	writefln!"Version: %s (lib), %s (bindings)"(versionOfLibrary, versionOfBindings);
 	"Querying Support:".underline.writeln;
 	foreach(query; EnumMembers!SupportQuery)
-		writefln!"%-10s: %s"(query, Capstone.supports(query));
+		writefln!"%-10s: %s"(query, supports(query));
 
 	//auto cs = new Capstone(Arch.arm, ModeFlags(Mode.arm32));
-	auto cs = new Capstone(Arch.x86, ModeFlags(Mode.bit32));
+	auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
 	//cs.syntax = Syntax.noregname;
 	//cs.detail = true;
 	//cs.skipData = true;

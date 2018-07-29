@@ -122,8 +122,10 @@ struct Detail(Arch arch) {
     }
 }
 
-abstract class AbstractInstruction {
-	// Address (EIP) of this instruction
+struct Instruction(Arch arch) {
+	Id!arch id;
+    
+    // Address (EIP) of this instruction
 	ulong address;
 
 	// Machine bytes of this instruction, with number of bytes indicated by @size above
@@ -135,32 +137,30 @@ abstract class AbstractInstruction {
 	// Ascii text of instruction operands
 	string opStr;
 
-    this(cs_insn internal){
-        address = internal.address;
-        bytes = internal.bytes[0..internal.size].dup;
-        mnemonic = internal.mnemonic.ptr.to!string;
-        opStr = internal.op_str.ptr.to!string;
-    }
-}
-
-class Instruction(Arch arch) : AbstractInstruction {
-    Id!arch id;
-
-	// Pointer to cs_detail.
+    // Pointer to cs_detail.
 	// NOTE: detail pointer is only valid when both requirements below are met:
 	// (1) CS_OP_DETAIL = CS_OPT_ON
 	// (2) Engine is not in Skipdata mode (CS_OP_SKIPDATA option set to CS_OPT_ON)
 	//
 	// NOTE 2: when in Skipdata mode, or when detail mode is OFF, even if this pointer
 	//     is not NULL, its content is still irrelevant.
-	Nullable!(Detail!arch) detail; // TODO: Property for safe access?
+	private Nullable!(Detail!arch) _detail;
 
     this(cs_insn internal, bool detail, bool skipData){
-        super(internal);
         id = internal.id.to!(Id!arch); // TODO: throw
-        if(detail && !skipData){
-            this.detail = Detail!arch(*internal.detail);
-        }
+        address = internal.address;
+        bytes = internal.bytes[0..internal.size].dup;
+        mnemonic = internal.mnemonic.ptr.to!string;
+        opStr = internal.op_str.ptr.to!string;
+
+        if(detail && !skipData)
+            _detail = Detail!arch(*internal.detail);
+    }
+
+    @property const detail(){
+        // TODO: Proper error
+        enforce(!_detail.isNull);
+        return _detail;
     }
 }
 
@@ -176,7 +176,6 @@ extern(C) size_t cCallback(const(ubyte)* code, size_t code_size, size_t offset, 
     return res;
 }
 
-//alias Version = Tuple!(int, "major", int, "minor");
 struct Version{
     int major, minor;
 
@@ -187,8 +186,7 @@ struct Version{
 
 alias Handle = size_t;
 
-class Capstone{
-    const Arch arch;
+class Capstone(Arch arch){
     const bool diet;
 
     private{
@@ -203,14 +201,13 @@ class Capstone{
         Callback callback;
     }
 
-    this(in Arch arch, in ModeFlags modeFlags){
+    this(in ModeFlags modeFlags){
         const libVer = versionOfLibrary;
         const bindVer = versionOfBindings;
         // TODO: Use custom exception ? Code: CS_ERR_VERSION
         enforce(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)"
             .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
 
-        this.arch = arch;
         this._mode = modeFlags;
 
         // TODO: Handle error properly
@@ -268,40 +265,34 @@ class Capstone{
         auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
         scope(exit){cs_free(internalInstrs, actualCount);}
 
-        auto instrAppnd = appender!(AbstractInstruction[]);
+        auto instrAppnd = appender!(Instruction!arch[]);
         instrAppnd.reserve(actualCount);
-        foreach(instr; internalInstrs[0..actualCount]){
-            static foreach(archNum; [0,3]) //Arch.min..Arch.max)
-                if(arch == archNum)
-                    instrAppnd.put(new Instruction!(cast(Arch)archNum)(instr, detail, skipData));
-        }
+        foreach(instr; internalInstrs[0..actualCount])
+            instrAppnd.put(Instruction!arch(instr, detail, skipData));
+
         return instrAppnd.data;
     }
 
-    // TODO: Types
-    // TODO: Error handling
-    string regName(uint regId) const {
+    string regName(Reg!arch regId) const {
         return cs_reg_name(handle, regId).to!string;
     }
+}
 
-    static{
-        auto versionOfBindings() {
-            return Version(CS_API_MAJOR, CS_API_MINOR);
-        }
-        auto versionOfLibrary() {
-            int major, minor;
-            cs_version(&major, &minor);
-            return Version(major, minor);
-        }
+auto versionOfBindings() {
+    return Version(CS_API_MAJOR, CS_API_MINOR);
+}
+auto versionOfLibrary() {
+    int major, minor;
+    cs_version(&major, &minor);
+    return Version(major, minor);
+}
 
-        unittest{
-            const libVer = versionOfLibrary;
-            const bindVer = versionOfBindings;        
-            assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)".format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
-        }
+unittest{
+    const libVer = versionOfLibrary;
+    const bindVer = versionOfBindings;        
+    assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)".format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
+}
 
-        auto supports(in SupportQuery query){
-            return cs_support(query);
-        }
-    }
+auto supports(in SupportQuery query){
+    return cs_support(query);
 }

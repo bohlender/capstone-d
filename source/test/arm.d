@@ -3,8 +3,8 @@ module source.test.arm;
 import capstone;
 import source.test.utils;
 
-import std.stdio;
 import std.outbuffer;
+import std.conv: to;
 
 enum ARM_CODE = cast(ubyte[])"\xED\xFF\xFF\xEB\x04\xe0\x2d\xe5\x00\x00\x00\x00\xe0\x83\x22\xe5\xf1\x02\x03\x0e\x00\x00\xa0\xe3\x02\x30\xc1\xe7\x00\x00\x53\xe3\x00\x02\x01\xf1\x05\x40\xd0\xe8\xf4\x80\x00\x00";
 enum ARM_CODE2 = cast(ubyte[])"\xd1\xe8\x00\xf0\xf0\x24\x04\x07\x1f\x3c\xf2\xc0\x00\x00\x4f\xf0\x00\x01\x46\x6c";
@@ -22,7 +22,7 @@ enum platforms = [
 	Platform(Arch.arm, Mode.arm + Mode.armV8, ARMV8, "Arm-V8")
 ];
 
-void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone cs){
+void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone!(Arch.arm) cs){
 	// TODO: No exception
 	assert(!instr.detail.isNull);
 	auto arm = instr.detail; //auto arm = instr.detail.archSpecific;
@@ -73,7 +73,7 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 				buf.writefln("\t\t\tShift: %d = %d", operand.shift.type, operand.shift.value);
 			else
 				// shift with register
-				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, cs.regName(operand.shift.value));
+				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, cs.regName(operand.shift.value.to!ArmRegister));
 		}
 
 		if (operand.vectorIndex != -1)
@@ -105,8 +105,8 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 
 unittest{
 	auto buf = new OutBuffer;
-	foreach(platform; platforms) {
-		auto cs = new Capstone(platform.arch, ModeFlags(platform.mode));
+	static foreach(platform; platforms) {{
+		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 		cs.detail = true;
 		
@@ -124,7 +124,7 @@ unittest{
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
-	}
+	}}
 
 	const expected = import("arm.expected");
 	const actual = buf.toString;
