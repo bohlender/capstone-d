@@ -1,5 +1,5 @@
 {
-	"name": "capstone.d",
+	"name": "capstone-d",
 	"description": "D bindings for the Capstone disassembly framework",
 	"authors": ["Dimitri Bohlender"],
 	"license": "MIT",
