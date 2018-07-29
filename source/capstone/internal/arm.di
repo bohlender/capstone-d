@@ -5,13 +5,13 @@ import capstone.arm;
 // Instruction operand
 struct cs_arm_op {
 	int vector_index;	// Vector Index for some vector operands (or -1 if irrelevant)
-	Shift shift;
-	ArmOperandType type;	// operand type
+	ArmShift shift;
+	ArmOpType type;	// operand type
 	union {
 		ArmRegister reg;	// register value for REG/SYSREG operand
 		int imm;			// immediate value for C-IMM, P-IMM or IMM operand
 		double fp;			// floating point value for FP operand
-		Mem mem;		// base/index/scale/disp value for MEM operand
+		ArmOpMem mem;		// base/index/scale/disp value for MEM operand
 		ArmSetendType setend; // SETEND instruction's operand type
 	};
 	// in some instructions, an operand can be subtracted or added to

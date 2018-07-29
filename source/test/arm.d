@@ -31,18 +31,18 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 		buf.writefln("\top_count: %d", arm.operands.length);
 	foreach(i, operand; arm.operands){
 		final switch(operand.type){
-			case ArmOperandType.INVALID:
+			case ArmOpType.INVALID:
 				break;
-			case ArmOperandType.REG:
+			case ArmOpType.REG:
 				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.regValue));
 				break;
-			case ArmOperandType.IMM:
+			case ArmOpType.IMM:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.immValue);
 				break;
-			case ArmOperandType.FP:
+			case ArmOpType.FP:
 				buf.writefln("\t\toperands[%d].type: FP = %f", i, operand.fpValue);
 				break;
-			case ArmOperandType.MEM:
+			case ArmOpType.MEM:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
 				if (operand.memValue.base != ArmRegister.INVALID)
 					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.memValue.base));
@@ -53,16 +53,16 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 				if (operand.memValue.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.memValue.disp);
 				break;
-			case ArmOperandType.PIMM:
+			case ArmOpType.PIMM:
 				buf.writefln("\t\toperands[%d].type: P-IMM = %d", i, operand.immValue);
 				break;
-			case ArmOperandType.CIMM:
+			case ArmOpType.CIMM:
 				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, operand.immValue);
 				break;
-			case ArmOperandType.SETEND:
+			case ArmOpType.SETEND:
 				buf.writefln("\t\toperands[%d].type: SETEND = %s", i, operand.setendValue == ArmSetendType.BE? "be" : "le");
 				break;
-			case ArmOperandType.SYSREG:
+			case ArmOpType.SYSREG:
 				buf.writefln("\t\toperands[%d].type: SYSREG = %d", i, operand.regValue);
 				break;
 		}

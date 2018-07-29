@@ -7,7 +7,7 @@ import std.exception: enforce;
 
 // Instruction's operand referring to memory
 // This is associated with X86_OP_MEM operand type above
-struct Mem {
+struct X86OpMem {
 	X86Register segment; // segment register (or X86_REG_INVALID if irrelevant)
 	X86Register base;	// base register (or X86_REG_INVALID if irrelevant)
 	X86Register index;	// index register (or X86_REG_INVALID if irrelevant)
@@ -15,13 +15,13 @@ struct Mem {
 	long disp;	// displacement value
 }
 
-alias X86OperandValue = Algebraic!(X86Register, long, Mem, double);
+alias X86OpValue = Algebraic!(X86Register, long, X86OpMem, double);
 
 // Instruction operand
-struct X86Operand {
-	X86OperandType type;
+struct X86Op {
+	X86OpType type;
 	// TODO: hide?
-	X86OperandValue value;
+	X86OpValue value;
 
     // size of this operand (in bytes)
     ubyte size;
@@ -36,18 +36,18 @@ struct X86Operand {
 	this(cs_x86_op internal){
 		type = internal.type;
 		final switch(internal.type) {
-			case X86OperandType.invalid:
+			case X86OpType.invalid:
 				break;
-			case X86OperandType.register:
+			case X86OpType.register:
 				value = internal.reg;
 				break;
-			case X86OperandType.immediate:
+			case X86OpType.immediate:
 				value = internal.imm;
 				break;
-			case X86OperandType.memory:
+			case X86OpType.memory:
 				value = internal.mem;
 				break;
-			case X86OperandType.floatingPoint:
+			case X86OpType.floatingPoint:
 				value = internal.fp;
 				break;
 		}
@@ -66,8 +66,8 @@ struct X86Operand {
 		return value.get!(long);
 	}
 	@property auto memValue() const {
-		enforce(value.type == typeid(Mem));
-		return value.get!(Mem);
+		enforce(value.type == typeid(X86OpMem));
+		return value.get!(X86OpMem);
 	}
 	@property auto fpValue() const {
 		enforce(value.type == typeid(float));
@@ -123,7 +123,7 @@ struct X86InstructionDetail {
 	// AVX static rounding mode
 	X86AvxRoundingMode avxRM;
 
-	X86Operand[] operands;	// operands for this instruction.
+	X86Op[] operands;	// operands for this instruction.
 
 	// TODO: Check for copying/ownership issues
 	// TODO: Should not be visible
@@ -143,7 +143,7 @@ struct X86InstructionDetail {
 		avxRM = internal.avx_rm;
 
 		foreach(op; internal.operands[0..internal.op_count])
-			operands ~= X86Operand(op);
+			operands ~= X86Op(op);
 	}
 }
 
@@ -204,7 +204,7 @@ enum X86Register {
 }
 
 //> Operand type for instruction's operands
-enum X86OperandType {
+enum X86OpType {
 	invalid = 0, // = CS_OP_INVALID (Uninitialized).
 	register, // = CS_OP_REG (Register operand).
 	immediate, // = CS_OP_IMM (Immediate operand).

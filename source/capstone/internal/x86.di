@@ -4,12 +4,12 @@ import capstone.x86;
 
 // Instruction operand
 struct cs_x86_op {
-		X86OperandType type;	// operand type
+		X86OpType type;	// operand type
 		union {
 			X86Register reg;	// register value for REG operand
 			long imm;		// immediate value for IMM operand
 			double fp;		// floating point value for FP operand
-			Mem mem;		// base/index/scale/disp value for MEM operand
+			X86OpMem mem;		// base/index/scale/disp value for MEM operand
 		};
 
 		// size of this operand (in bytes).

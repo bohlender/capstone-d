@@ -7,28 +7,28 @@ import std.exception: enforce;
 
 // Instruction's operand referring to memory
 // This is associated with ARM_OP_MEM operand type above
-struct Mem {
+struct ArmOpMem {
 	ArmRegister base;	// base register
 	ArmRegister index;	// index register
 	int scale;	// scale for index register (can be 1, or -1)
 	int disp;	// displacement/offset value
 }
 
-struct Shift{
+struct ArmShift{
 	ArmShiftType type;
 	uint value;
 }
 
 // TODO: https://dlang.org/blog/2018/05/21/complicated-types-prefer-alias-this-over-alias-for-easier-to-read-error-messages/
-alias ArmOperandValue = Algebraic!(ArmRegister, int, double, Mem, ArmSetendType);
+alias ArmOpValue = Algebraic!(ArmRegister, int, double, ArmOpMem, ArmSetendType);
 
 // Instruction operand
-struct ArmOperand {
+struct ArmOp {
 	int vectorIndex;	// Vector Index for some vector operands (or -1 if irrelevant)
-	Shift shift;
-	ArmOperandType type;	// operand type
+	ArmShift shift;
+	ArmOpType type;	// operand type
 	// TODO: hide?
-	ArmOperandValue value;
+	ArmOpValue value;
 
 	// in some instructions, an operand can be subtracted or added to
 	// the base register,
@@ -39,21 +39,21 @@ struct ArmOperand {
 		shift = internal.shift;
 		type = internal.type;
 		final switch(internal.type){
-			case ArmOperandType.INVALID:
+			case ArmOpType.INVALID:
 				break;
-			case ArmOperandType.REG, ArmOperandType.SYSREG:
+			case ArmOpType.REG, ArmOpType.SYSREG:
 				value = internal.reg;
 				break;
-			case ArmOperandType.IMM, ArmOperandType.CIMM, ArmOperandType.PIMM:
+			case ArmOpType.IMM, ArmOpType.CIMM, ArmOpType.PIMM:
 				value = internal.imm;
 				break;
-			case ArmOperandType.MEM:
+			case ArmOpType.MEM:
 				value = internal.mem;
 				break;
-			case ArmOperandType.FP:
+			case ArmOpType.FP:
 				value = internal.fp;
 				break;
-			case ArmOperandType.SETEND:
+			case ArmOpType.SETEND:
 				value = internal.setend;
 				break;
 		}
@@ -70,8 +70,8 @@ struct ArmOperand {
 		return value.get!(int);
 	}
 	@property auto memValue() const {
-		enforce(value.type == typeid(Mem));
-		return value.get!(Mem);
+		enforce(value.type == typeid(ArmOpMem));
+		return value.get!(ArmOpMem);
 	}
 	@property auto fpValue() const {
 		enforce(value.type == typeid(double));
@@ -94,7 +94,7 @@ struct ArmInstructionDetail {
 	bool writeback;		// does this insn write-back?
 	ArmMemBarrier memBarrier;	// Option for some memory barrier instructions
 
-	ArmOperand[] operands;	// operands for this instruction.
+	ArmOp[] operands;	// operands for this instruction.
 
 	this(cs_arm internal){
 		usermode = internal.usermode;
@@ -108,7 +108,7 @@ struct ArmInstructionDetail {
 		memBarrier = internal.mem_barrier;
 
 		foreach(op; internal.operands[0..internal.op_count])
-			operands ~= ArmOperand(op);
+			operands ~= ArmOp(op);
 	}
 }
 
@@ -221,7 +221,7 @@ enum ArmMemBarrier {
 }
 
 //> Operand type for instruction's operands
-enum ArmOperandType {
+enum ArmOpType {
 	INVALID = 0, // = CS_OP_INVALID (Uninitialized).
 	REG, // = CS_OP_REG (Register operand).
 	IMM, // = CS_OP_IMM (Immediate operand).
