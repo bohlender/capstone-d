@@ -1,0 +1,15 @@
+{
+	"name": "capstone.d",
+	"description": "D bindings for the Capstone disassembly framework",
+	"authors": ["Dimitri Bohlender"],
+	"license": "MIT",
+
+	"targetType": "sourceLibrary",
+	"libs": ["capstone"],
+	"dflags": [
+		"-Jsource/test"
+	],
+	"subPackages": [
+		"examples/basic/"
+	]
+}

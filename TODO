@@ -1,0 +1,7 @@
+- Support all archs
+
+- why no cs_op_count needed -> count = operands.count!(op => op.type == opType);
+- why no cs_op_index needed -> imms = operands.filter!(op => op.type == opType);
+- why no size for instruction -> bytes.length
+
+- Support manual memory management ?

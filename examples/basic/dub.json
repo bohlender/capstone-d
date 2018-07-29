@@ -1,0 +1,13 @@
+{
+	"name": "example-basic",
+	"description": "Basic example usage of the bindings",
+	"authors": ["Dimitri Bohlender"],
+	"license": "MIT",
+
+	"targetType": "executable",
+	
+	"libs": ["capstone"],
+	"dependencies": {
+		"capstone-d" : {"path": "../../"}
+	}
+}
