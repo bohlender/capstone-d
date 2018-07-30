@@ -110,7 +110,7 @@ unittest{
 
 		foreach(instr; res){
 			buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-			buf.writeDetail(cast(Instruction!(Arch.x86))instr, cs);
+			buf.writeDetail(instr, cs);
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
@@ -119,5 +119,5 @@ unittest{
 	const expected = import("x86.expected");
 	const actual = buf.toString;
 
-	assert(expected == actual);
+	assert(expected == actual, expectationMismatch(expected, actual));
 }

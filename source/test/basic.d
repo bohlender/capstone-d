@@ -88,5 +88,5 @@ unittest{
 	const expected = import("basic.expected");
 	const actual = buf.toString;
 
-	assert(expected == actual);
+	assert(expected == actual, expectationMismatch(expected, actual));
 }
