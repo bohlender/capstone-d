@@ -73,7 +73,7 @@ struct cs_detail {
 	union {
 		cs_x86 x86;	// X86 architecture, including 16-bit, 32-bit & 64-bit mode
 
-		//cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
+		cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
 		cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
 		/*
 		cs_mips mips;	// MIPS architecture

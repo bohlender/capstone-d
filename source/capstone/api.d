@@ -12,8 +12,7 @@ import std.stdio;
 
 import capstone.internal.api;
 import source.capstone.error;
-import capstone.x86;
-import capstone.arm;
+import capstone;
 
 enum Arch{
     arm = 0,
@@ -70,6 +69,8 @@ enum Syntax {
 template Id(Arch arch){
     static if(arch == Arch.arm)
         alias ArmInstructionId Id;
+    else static if(arch == Arch.arm64)
+        alias Arm64InstructionId Id;
     else static if(arch == Arch.x86)
         alias X86InstructionId Id;
     else static assert(false);
@@ -78,6 +79,8 @@ template Id(Arch arch){
 template Reg(Arch arch){
     static if(arch == Arch.arm)
         alias ArmRegister Reg;
+    else static if(arch == Arch.arm64)
+        alias Arm64Register Reg;
     else static if(arch == Arch.x86)
         alias X86Register Reg;
     else static assert(false);
@@ -86,6 +89,8 @@ template Reg(Arch arch){
 template Group(Arch arch){
     static if(arch == Arch.arm)
         alias ArmInstructionGroup Group;
+    else static if(arch == Arch.arm64)
+        alias Arm64InstructionGroup Group;
     else static if(arch == Arch.x86)
         alias X86InstructionGroup Group;
     else static assert(false);
@@ -94,6 +99,8 @@ template Group(Arch arch){
 template InstructionDetail(Arch arch){
     static if(arch == Arch.arm)
         alias ArmInstructionDetail InstructionDetail;
+    else static if(arch == Arch.arm64)
+        alias Arm64InstructionDetail InstructionDetail;
     else static if(arch == Arch.x86)
         alias X86InstructionDetail InstructionDetail;
     else static assert(false);
@@ -116,6 +123,8 @@ struct Detail(Arch arch) {
         // TODO: Do properly
         static if(arch == Arch.arm)
             archSpecific = InstructionDetail!arch(internal.arm);
+        else static if(arch == Arch.arm64)
+            archSpecific = InstructionDetail!arch(internal.arm64);
         else static if(arch == Arch.x86)
             archSpecific = InstructionDetail!arch(internal.x86);
         else static assert(false);

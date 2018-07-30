@@ -3,6 +3,7 @@ module capstone.arm64;
 import capstone.internal.arm64;
 
 import std.variant;
+import std.exception: enforce;
 
 // Instruction's operand referring to memory
 // This is associated with MEM operand type above
@@ -37,10 +38,69 @@ struct Arm64Op {
 		ext = internal.ext;
 		type = internal.type;
 		
-		// TODO: Continue here
+		final switch(internal.type){
+			case Arm64OpType.invalid:
+				break;
+			case Arm64OpType.reg, Arm64OpType.reg_mrs, Arm64OpType.reg_msr:
+				value = internal.reg;
+				break;
+			case Arm64OpType.imm, Arm64OpType.cimm:
+				value = internal.imm;
+				break;
+			case Arm64OpType.mem:
+				value = internal.mem;
+				break;
+			case Arm64OpType.fp:
+				value = internal.fp;
+				break;
+			case Arm64OpType.pstate:
+				value = internal.pstate;
+				break;
+			case Arm64OpType.sys:
+				value = internal.sys;
+				break;
+			case Arm64OpType.prefetch:
+				value = internal.prefetch;
+				break;
+			case Arm64OpType.barrier:
+				value = internal.barrier;
+				break;
+		}
 	}
 
-	// TODO: Add properties
+	// TODO: enforces ok?
+	@property auto regValue() const {
+		enforce(value.type == typeid(Arm64Register));
+		return value.get!(Arm64Register);
+	}
+	@property auto immValue() const {
+		enforce(value.type == typeid(long));
+		return value.get!(long);
+	}
+	@property auto memValue() const {
+		enforce(value.type == typeid(Arm64OpMem));
+		return value.get!(Arm64OpMem);
+	}
+	@property auto fpValue() const {
+		enforce(value.type == typeid(double));
+		return value.get!(double);
+	}
+	@property auto pstateValue() const {
+		enforce(value.type == typeid(Arm64PState));
+		return value.get!(Arm64PState);
+	}
+	@property auto sysValue() const {
+		enforce(value.type == typeid(uint));
+		return value.get!(uint);
+	}
+	@property auto prefetchValue() const {
+		enforce(value.type == typeid(Arm64PrefetchOp));
+		return value.get!(Arm64PrefetchOp);
+	}
+	@property auto barrierValue() const {
+		enforce(value.type == typeid(Arm64BarrierOp));
+		return value.get!(Arm64BarrierOp);
+	}
 }
 
 // Instruction structure
@@ -282,18 +342,18 @@ enum Arm64BarrierOp {
 
 //> Operand type for instruction's operands
 enum Arm64OpType {
-	INVALID = 0, // = CS_OP_INVALID (Uninitialized).
-	REG, // = CS_OP_REG (Register operand).
-	IMM, // = CS_OP_IMM (Immediate operand).
-	MEM, // = CS_OP_MEM (Memory operand).
-	FP,  // = CS_OP_FP (Floating-Point operand).
-	CIMM = 64, // C-Immediate
-	REG_MRS, // MRS register operand.
-	REG_MSR, // MSR register operand.
-	PSTATE, // PState operand.
-	SYS, // SYS operand for IC/DC/AT/TLBI instructions.
-	PREFETCH, // Prefetch operand (PRFM).
-	BARRIER, // Memory barrier operand (ISB/DMB/DSB instructions).
+	invalid = 0, // = cs_op_invalid (uninitialized).
+	reg, // = cs_op_reg (register operand).
+	imm, // = cs_op_imm (immediate operand).
+	mem, // = cs_op_mem (memory operand).
+	fp,  // = cs_op_fp (floating-point operand).
+	cimm = 64, // c-immediate
+	reg_mrs, // mrs register operand.
+	reg_msr, // msr register operand.
+	pstate, // pstate operand.
+	sys, // sys operand for ic/dc/at/tlbi instructions.
+	prefetch, // prefetch operand (prfm).
+	barrier, // memory barrier operand (isb/dmb/dsb instructions).
 }
 
 //> TLBI operations
