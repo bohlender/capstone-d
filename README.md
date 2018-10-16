@@ -63,7 +63,7 @@ x86Reduce : false
 ```
 
 ## How to include this in your project
-The examples folder contains a [basic project](https://github.com/bohlender/capstone.d/tree/master/examples/basic) to get you started, but it essentially boils down to adding `capstone-d` as a dependency in the `dub.json` of your project.
+The examples folder contains a [basic project](https://github.com/bohlender/capstone-d/tree/master/examples/basic) to get you started, but it essentially boils down to adding `capstone-d` as a dependency in the `dub.json` of your project.
 
 ## Contribute
 Keep in mind that the bindings are still under development, but you can always create an issue if you find bugs or think that something could be improved.
