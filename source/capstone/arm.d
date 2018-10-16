@@ -1,6 +1,7 @@
 module capstone.arm;
 
 import capstone.internal.arm;
+import capstone.utils;
 
 import std.variant;
 import std.exception: enforce;
@@ -19,8 +20,7 @@ struct ArmShift{
 	uint value;
 }
 
-// TODO: https://dlang.org/blog/2018/05/21/complicated-types-prefer-alias-this-over-alias-for-easier-to-read-error-messages/
-alias ArmOpValue = Algebraic!(ArmRegister, int, double, ArmOpMem, ArmSetendType);
+alias ArmOpValue = TaggedUnion!(ArmRegister, "reg", int, "imm", double, "fp", ArmOpMem, "mem", ArmSetendType, "setend");
 
 // Instruction operand
 struct ArmOp {
@@ -29,6 +29,7 @@ struct ArmOp {
 	ArmOpType type;	// operand type
 	// TODO: hide?
 	ArmOpValue value;
+	alias value this; // for conventient access to value (as in original bindings)
 
 	// in some instructions, an operand can be subtracted or added to
 	// the base register,
@@ -42,44 +43,22 @@ struct ArmOp {
 			case ArmOpType.INVALID:
 				break;
 			case ArmOpType.REG, ArmOpType.SYSREG:
-				value = internal.reg;
+				value.reg = internal.reg;
 				break;
 			case ArmOpType.IMM, ArmOpType.CIMM, ArmOpType.PIMM:
-				value = internal.imm;
+				value.imm = internal.imm;
 				break;
 			case ArmOpType.MEM:
-				value = internal.mem;
+				value.mem = internal.mem;
 				break;
 			case ArmOpType.FP:
-				value = internal.fp;
+				value.fp = internal.fp;
 				break;
 			case ArmOpType.SETEND:
-				value = internal.setend;
+				value.setend = internal.setend;
 				break;
 		}
 		subtracted = internal.subtracted;
-	}
-
-	// TODO: enforces ok?
-	@property auto regValue() const {
-		enforce(value.type == typeid(ArmRegister));
-		return value.get!(ArmRegister);
-	}
-	@property auto immValue() const {
-		enforce(value.type == typeid(int));
-		return value.get!(int);
-	}
-	@property auto memValue() const {
-		enforce(value.type == typeid(ArmOpMem));
-		return value.get!(ArmOpMem);
-	}
-	@property auto fpValue() const {
-		enforce(value.type == typeid(double));
-		return value.get!(double);
-	}
-	@property auto setendValue() const {
-		enforce(value.type == typeid(ArmSetendType));
-		return value.get!(ArmSetendType);
 	}
 }
 

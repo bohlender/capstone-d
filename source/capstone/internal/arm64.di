@@ -11,7 +11,7 @@ struct cs_arm64_op {
 	Arm64Extender ext;		// extender type of this operand
 	Arm64OpType type;	// operand type
 	union {
-		uint reg;	// register value for REG operand
+		Arm64Register reg;	// register value for REG operand
 		long imm;		// immediate value, or index for C-IMM or IMM operand
 		double fp;			// floating point value for FP operand
 		Arm64OpMem mem;		// base/index/scale/disp value for MEM operand

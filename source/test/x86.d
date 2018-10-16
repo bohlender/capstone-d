@@ -53,8 +53,8 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.x86) instr, in Capstone
 	auto imms = x86.operands.filter!(op => op.type == X86OpType.immediate).array;
 	if(imms.length > 0){
 		buf.writefln("\timm_count: %d", imms.length);
-		foreach(i, imm; imms){
-			buf.writefln("\t\timms[%d]: 0x%x", i+1, imm.value.get!(long));
+		foreach(i, op; imms){
+			buf.writefln("\t\timms[%d]: 0x%x", i+1, op.value.imm);
 		}
 	}
 
@@ -62,23 +62,23 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.x86) instr, in Capstone
 	foreach(i, operand; x86.operands){
 		final switch(operand.type){
 			case X86OpType.register:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.regValue));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
 				break;
 			case X86OpType.immediate:
-				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.immValue);
+				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case X86OpType.memory:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if(operand.memValue.segment != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.segment: REG = %s", i, cs.regName(operand.memValue.segment));
-				if(operand.memValue.base != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.memValue.base));
-				if(operand.memValue.index != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(operand.memValue.index));
-				if(operand.memValue.scale != 1)
-					buf.writefln("\t\t\toperands[%d].mem.scale: %d", i, operand.memValue.scale);
-				if(operand.memValue.disp != 0)
-					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.memValue.disp);
+				if(operand.mem.segment != X86Register.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.segment: REG = %s", i, cs.regName(operand.mem.segment));
+				if(operand.mem.base != X86Register.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
+				if(operand.mem.index != X86Register.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if(operand.mem.scale != 1)
+					buf.writefln("\t\t\toperands[%d].mem.scale: %d", i, operand.mem.scale);
+				if(operand.mem.disp != 0)
+					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;
 			case X86OpType.floatingPoint, X86OpType.invalid:
 				break;

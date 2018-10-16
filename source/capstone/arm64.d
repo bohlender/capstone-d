@@ -1,6 +1,7 @@
 module capstone.arm64;
 
 import capstone.internal.arm64;
+import capstone.utils;
 
 import std.variant;
 import std.exception: enforce;
@@ -18,8 +19,7 @@ struct Arm64Shift{
 	uint value;	// shifter value of this operand
 }
 
-// TODO: https://dlang.org/blog/2018/05/21/complicated-types-prefer-alias-this-over-alias-for-easier-to-read-error-messages/
-alias Arm64OperandValue = Algebraic!(Arm64Register, long, double, Arm64OpMem, Arm64PState, uint, Arm64PrefetchOp, Arm64BarrierOp);
+alias Arm64OperandValue = TaggedUnion!(Arm64Register, "reg", long, "imm", double, "fp", Arm64OpMem, "mem", Arm64PState, "pstate", uint, "sys", Arm64PrefetchOp, "prefetch", Arm64BarrierOp, "barrier");
 
 // Instruction operand
 struct Arm64Op {
@@ -30,6 +30,7 @@ struct Arm64Op {
 	Arm64Extender ext;		// extender type of this operand
 	Arm64OpType type;	// operand type
 	Arm64OperandValue value;
+	alias value this; // for conventient access to value (as in original bindings)
 
 	this(cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
@@ -42,64 +43,30 @@ struct Arm64Op {
 			case Arm64OpType.invalid:
 				break;
 			case Arm64OpType.reg, Arm64OpType.reg_mrs, Arm64OpType.reg_msr:
-				value = internal.reg;
+				value.reg = internal.reg;
 				break;
 			case Arm64OpType.imm, Arm64OpType.cimm:
-				value = internal.imm;
+				value.imm = internal.imm;
 				break;
 			case Arm64OpType.mem:
-				value = internal.mem;
+				value.mem = internal.mem;
 				break;
 			case Arm64OpType.fp:
-				value = internal.fp;
+				value.fp = internal.fp;
 				break;
 			case Arm64OpType.pstate:
-				value = internal.pstate;
+				value.pstate = internal.pstate;
 				break;
 			case Arm64OpType.sys:
-				value = internal.sys;
+				value.sys = internal.sys;
 				break;
 			case Arm64OpType.prefetch:
-				value = internal.prefetch;
+				value.prefetch = internal.prefetch;
 				break;
 			case Arm64OpType.barrier:
-				value = internal.barrier;
+				value.barrier = internal.barrier;
 				break;
 		}
-	}
-
-	// TODO: enforces ok?
-	@property auto regValue() const {
-		enforce(value.type == typeid(Arm64Register));
-		return value.get!(Arm64Register);
-	}
-	@property auto immValue() const {
-		enforce(value.type == typeid(long));
-		return value.get!(long);
-	}
-	@property auto memValue() const {
-		enforce(value.type == typeid(Arm64OpMem));
-		return value.get!(Arm64OpMem);
-	}
-	@property auto fpValue() const {
-		enforce(value.type == typeid(double));
-		return value.get!(double);
-	}
-	@property auto pstateValue() const {
-		enforce(value.type == typeid(Arm64PState));
-		return value.get!(Arm64PState);
-	}
-	@property auto sysValue() const {
-		enforce(value.type == typeid(uint));
-		return value.get!(uint);
-	}
-	@property auto prefetchValue() const {
-		enforce(value.type == typeid(Arm64PrefetchOp));
-		return value.get!(Arm64PrefetchOp);
-	}
-	@property auto barrierValue() const {
-		enforce(value.type == typeid(Arm64BarrierOp));
-		return value.get!(Arm64BarrierOp);
 	}
 }
 

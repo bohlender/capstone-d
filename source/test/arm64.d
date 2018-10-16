@@ -24,43 +24,43 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capsto
 			case Arm64OpType.invalid:
 				break;
 			case Arm64OpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(op.regValue));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(op.reg));
 				break;
 			case Arm64OpType.imm:
-				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, op.immValue);
+				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, op.imm);
 				break;
 			case Arm64OpType.fp:
-				buf.writefln("\t\toperands[%d].type: FP = %f", i, op.fpValue);
+				buf.writefln("\t\toperands[%d].type: FP = %f", i, op.fp);
 				break;
 			case Arm64OpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (op.memValue.base != Arm64Register.INVALID)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(op.memValue.base));
-				if (op.memValue.index != Arm64Register.INVALID)
-					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(op.memValue.index));
-				if (op.memValue.disp != 0)
-					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, op.memValue.disp);
+				if (op.mem.base != Arm64Register.INVALID)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(op.mem.base));
+				if (op.mem.index != Arm64Register.INVALID)
+					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(op.mem.index));
+				if (op.mem.disp != 0)
+					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, op.mem.disp);
 				break;
 			case Arm64OpType.cimm:
-				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, op.immValue);
+				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, op.imm);
 				break;
 			case Arm64OpType.reg_mrs:
-				buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.regValue);
+				buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg);
 				break;
 			case Arm64OpType.reg_msr:
-				buf.writefln("\t\toperands[%d].type: REG_MSR = 0x%x", i, op.regValue);
+				buf.writefln("\t\toperands[%d].type: REG_MSR = 0x%x", i, op.reg);
 				break;
 			case Arm64OpType.pstate:
-				buf.writefln("\t\toperands[%d].type: PSTATE = 0x%xn", i, op.pstateValue);
+				buf.writefln("\t\toperands[%d].type: PSTATE = 0x%xn", i, op.pstate);
 				break;
 			case Arm64OpType.sys:
-				buf.writefln("\t\toperands[%d].type: SYS = 0x%x", i, op.sysValue);
+				buf.writefln("\t\toperands[%d].type: SYS = 0x%x", i, op.sys);
 				break;
 			case Arm64OpType.prefetch:
-				buf.writefln("\t\toperands[%d].type: PREFETCH = 0x%x", i, op.prefetchValue);
+				buf.writefln("\t\toperands[%d].type: PREFETCH = 0x%x", i, op.prefetch);
 				break;
 			case Arm64OpType.barrier:
-				buf.writefln("\t\toperands[%d].type: BARRIER = 0x%x", i, op.barrierValue);
+				buf.writefln("\t\toperands[%d].type: BARRIER = 0x%x", i, op.barrier);
 				break;
 		}
 

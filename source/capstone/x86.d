@@ -1,6 +1,7 @@
 module capstone.x86;
 
 import capstone.internal.x86;
+import capstone.utils: TaggedUnion;
 
 import std.variant;
 import std.exception: enforce;
@@ -15,13 +16,14 @@ struct X86OpMem {
 	long disp;	// displacement value
 }
 
-alias X86OpValue = Algebraic!(X86Register, long, X86OpMem, double);
+alias X86OpValue = TaggedUnion!(X86Register, "reg", long, "imm", X86OpMem, "mem", double, "fp");
 
 // Instruction operand
 struct X86Op {
 	X86OpType type;
 	// TODO: hide?
 	X86OpValue value;
+	alias value this; // for conventient access to value (as in original bindings)
 
     // size of this operand (in bytes)
     ubyte size;
@@ -39,39 +41,21 @@ struct X86Op {
 			case X86OpType.invalid:
 				break;
 			case X86OpType.register:
-				value = internal.reg;
+				value.reg = internal.reg;
 				break;
 			case X86OpType.immediate:
-				value = internal.imm;
+				value.imm = internal.imm;
 				break;
 			case X86OpType.memory:
-				value = internal.mem;
+				value.mem = internal.mem;
 				break;
 			case X86OpType.floatingPoint:
-				value = internal.fp;
+				value.fp = internal.fp;
 				break;
 		}
 		size = internal.size;
 		avxBcast = internal.avx_bcast;
 		avxZeroOpmask = internal.avx_zero_opmask;
-	}
-
-	// TODO: enforces ok?
-	@property auto regValue() const {
-		enforce(value.type == typeid(X86Register));
-		return value.get!(X86Register);
-	}
-	@property auto immValue() const {
-		enforce(value.type == typeid(long));
-		return value.get!(long);
-	}
-	@property auto memValue() const {
-		enforce(value.type == typeid(X86OpMem));
-		return value.get!(X86OpMem);
-	}
-	@property auto fpValue() const {
-		enforce(value.type == typeid(float));
-		return value.get!(float);
 	}
 }
 
