@@ -24,7 +24,7 @@ void main(){
     	writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
 }
 ```
-Running this will dissassemble the byte sequence "\x55\x48\x8b\x05\xb8\x13\x00\x00" on a x86_64 architecture and output the following
+Running this will dissassemble the byte sequence `\x55\x48\x8b\x05\xb8\x13\x00\x00` on a x86_64 architecture and output the following
 ```
 0x1000: push            rbp
 0x1001: mov             rax, qword ptr [rip + 0x13b8]
