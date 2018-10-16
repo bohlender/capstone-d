@@ -21,7 +21,7 @@ void main(){
 	auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit64));
 	auto res = cs.disasm(CODE, 0x1000);
 	foreach(instr; res)
-    	writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
+		writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
 }
 ```
 Running this will dissassemble the byte sequence `\x55\x48\x8b\x05\xb8\x13\x00\x00` on a x86_64 architecture and output the following
