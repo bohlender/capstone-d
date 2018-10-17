@@ -30,7 +30,7 @@ Running this will dissassemble the byte sequence `\x55\x48\x8b\x05\xb8\x13\x00\x
 0x1001: mov             rax, qword ptr [rip + 0x13b8]
 ```
 ### Querying the library's capabilities
-If you wanted to determine which architectures the capstone library that you have installed are supported, you could do so as follows:
+If you wanted to determine which architectures are supported by the capstone library that you have installed on your system, you could do so as follows:
 ```D
 import std.format;
 import std.stdio;
