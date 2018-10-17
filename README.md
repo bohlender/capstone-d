@@ -45,7 +45,7 @@ void main(){
 		writefln!"%-10s: %s"(query, supports(query));
 }
 ```
-In my case, using the precompiled version 3.0.5 for Archlinux, I this will output
+In my case, using the precompiled version 3.0.5 for Arch Linux, this will output
 ```
 Version: 3.0 (lib), 3.0 (bindings)
 Querying Support:
