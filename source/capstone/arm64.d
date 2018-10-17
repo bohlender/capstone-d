@@ -35,6 +35,7 @@ struct Arm64Op {
 	this(cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
 		vas = internal.vas;
+		vess = internal.vess;
 		shift = internal.shift;
 		ext = internal.ext;
 		type = internal.type;

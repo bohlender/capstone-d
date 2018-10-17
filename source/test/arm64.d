@@ -51,7 +51,7 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capsto
 				buf.writefln("\t\toperands[%d].type: REG_MSR = 0x%x", i, op.reg);
 				break;
 			case Arm64OpType.pstate:
-				buf.writefln("\t\toperands[%d].type: PSTATE = 0x%xn", i, op.pstate);
+				buf.writefln("\t\toperands[%d].type: PSTATE = 0x%x", i, op.pstate);
 				break;
 			case Arm64OpType.sys:
 				buf.writefln("\t\toperands[%d].type: SYS = 0x%x", i, op.sys);
