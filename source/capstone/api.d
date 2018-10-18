@@ -69,11 +69,29 @@ enum Syntax {
 	noregname          /// Prints register name with only number
 }
 
+// Auxiliary templates to derive the types to use as InstructionId, Register, InstructionGroup and InstructionDetail for a given architecture
+private{
+    import std.meta: AliasSeq;
+    template ArchSpec(Arch arch){
+        static if(arch == Arch.arm)
+            alias ArchSpec = AliasSeq!(ArmInstructionId, ArmRegister, ArmInstructionGroup, ArmInstructionDetail);
+        else static if(arch == Arch.arm64)
+            alias ArchSpec = AliasSeq!(Arm64InstructionId, Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail);
+        else static if(arch == Arch.x86)
+            alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
+        else static assert(false);
+    }
+    alias InstructionId(Arch arch) = ArchSpec!(arch)[0];
+    alias Register(Arch arch) = ArchSpec!(arch)[1];
+    alias InstructionGroup(Arch arch) = ArchSpec!(arch)[2];
+    alias InstructionDetail(Arch arch) = ArchSpec!(arch)[3];
+}
+
 /// Architecture-independent instruction details
 struct Detail(Arch arch) {
-	Reg!arch[] regsRead;  /// Registers implicitly read by this instruction
-	Reg!arch[] regsWrite; /// Registers implicitly modified by this instruction
-	Group!arch[] groups;  /// Groups this instruction belongs to
+	Register!arch[] regsRead;  /// Registers implicitly read by this instruction
+	Register!arch[] regsWrite; /// Registers implicitly modified by this instruction
+	InstructionGroup!arch[] groups;  /// The groups this instruction belongs to
 
 	/// Architecture-specific instruction details
     InstructionDetail!arch archSpecific;
@@ -81,9 +99,9 @@ struct Detail(Arch arch) {
     alias archSpecific this;
 
     private this(cs_detail internal){
-        regsRead = internal.regs_read[0..internal.regs_read_count].to!(Reg!arch[]);
-        regsWrite = internal.regs_write[0..internal.regs_write_count].to!(Reg!arch[]);
-        groups = internal.groups[0..internal.groups_count].to!(Group!arch[]);
+        regsRead = internal.regs_read[0..internal.regs_read_count].to!(Register!arch[]);
+        regsWrite = internal.regs_write[0..internal.regs_write_count].to!(Register!arch[]);
+        groups = internal.groups[0..internal.groups_count].to!(InstructionGroup!arch[]);
 
         // TODO: Do properly
         static if(arch == Arch.arm)
@@ -99,7 +117,7 @@ struct Detail(Arch arch) {
 /// Detail information of disassembled instruction
 struct Instruction(Arch arch) {
     /// Instruction ID (basically a numeric ID for the instruction mnemonic)
-	Id!arch id;
+	InstructionId!arch id;
     
     /// Address (EIP) of this instruction
 	ulong address;
@@ -119,7 +137,7 @@ struct Instruction(Arch arch) {
 	private Nullable!(Detail!arch) _detail;
 
     private this(cs_insn internal, bool detail, bool skipData){
-        id = internal.id.to!(Id!arch); // TODO: throw
+        id = internal.id.to!(InstructionId!arch); // TODO: throw
         address = internal.address;
         bytes = internal.bytes[0..internal.size].dup;
         mnemonic = internal.mnemonic.ptr.to!string;
@@ -196,7 +214,7 @@ $(UL
 Params:
     arch = The CPU architecture that the engine will disassemble the byte-stream for
 */
-class Capstone(Arch arch){
+class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId, InstructionDetail and InstructionGroup but those are uniquely implied by the architecture
     private{
         alias Handle = size_t;
         Handle handle;    
@@ -229,7 +247,7 @@ class Capstone(Arch arch){
     }
     ///
     unittest{
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
     }
 
     ~this(){
@@ -368,53 +386,9 @@ class Capstone(Arch arch){
         regId = register id
     Returns: user-friendly string representation of the register's name
     */
-    string regName(Reg!arch regId) const {
+    string regName(Register!arch regId) const {
         // TODO: Add proper error
         enforce(!diet, "Register names are not stored when using Capstone in diet mode");
         return cs_reg_name(handle, regId).to!string;
-    }
-}
-
-// TODO: Find a more elegant way.
-// Get rid of these auxiliary templates here and in structs, e.g. Detail
-private{
-    template Id(Arch arch){
-        static if(arch == Arch.arm)
-            alias Id = ArmInstructionId;
-        else static if(arch == Arch.arm64)
-            alias Id = Arm64InstructionId;
-        else static if(arch == Arch.x86)
-            alias Id = X86InstructionId;
-        else static assert(false);
-    }
-
-    template Reg(Arch arch){
-        static if(arch == Arch.arm)
-            alias Reg = ArmRegister;
-        else static if(arch == Arch.arm64)
-            alias Reg = Arm64Register;
-        else static if(arch == Arch.x86)
-            alias Reg = X86Register;
-        else static assert(false);
-    }
-
-    template Group(Arch arch){
-        static if(arch == Arch.arm)
-            alias ArmInstructionGroup Group;
-        else static if(arch == Arch.arm64)
-            alias Arm64InstructionGroup Group;
-        else static if(arch == Arch.x86)
-            alias X86InstructionGroup Group;
-        else static assert(false);
-    }
-
-    template InstructionDetail(Arch arch){
-        static if(arch == Arch.arm)
-            alias ArmInstructionDetail InstructionDetail;
-        else static if(arch == Arch.arm64)
-            alias Arm64InstructionDetail InstructionDetail;
-        else static if(arch == Arch.x86)
-            alias X86InstructionDetail InstructionDetail;
-        else static assert(false);
     }
 }
