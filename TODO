@@ -1,7 +1,13 @@
+- make capstone.internal unaccessible from outside
 - support all archs
 - const pure nogc safe
 
+- get rid of ModeFlags? Do not help with safety anyway
+
+- make sure everything works as expected in diet mode
+
 - doc: more unittests as examples
+- unittests of functions
 
 - why no cs_op_count needed -> count = operands.count!(op => op.type == opType);
 - why no cs_op_index needed -> imms = operands.filter!(op => op.type == opType);

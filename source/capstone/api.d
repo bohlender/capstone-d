@@ -24,7 +24,7 @@ enum Arch{
     xCore    /// Support for XCore architecture
 }
 
-/// The options that $(LINK2 http://www.capstone-engine.org, Capstone) can have been compiled with to support
+/// The support options that Capstone can be compiled with
 enum SupportQuery {
     arm = 0,      /// Support for ARM architecture (including Thumb, Thumb-2)
     arm64,        /// Support for ARM-64 (also called AArch64)
@@ -89,9 +89,9 @@ private{
 
 /// Architecture-independent instruction details
 struct Detail(Arch arch) {
-	Register!arch[] regsRead;  /// Registers implicitly read by this instruction
-	Register!arch[] regsWrite; /// Registers implicitly modified by this instruction
-	InstructionGroup!arch[] groups;  /// The groups this instruction belongs to
+	Register!arch[] regsRead;       /// Registers implicitly read by this instruction
+	Register!arch[] regsWrite;      /// Registers implicitly modified by this instruction
+	InstructionGroup!arch[] groups; /// The groups this instruction belongs to
 
 	/// Architecture-specific instruction details
     InstructionDetail!arch archSpecific;
@@ -103,7 +103,6 @@ struct Detail(Arch arch) {
         regsWrite = internal.regs_write[0..internal.regs_write_count].to!(Register!arch[]);
         groups = internal.groups[0..internal.groups_count].to!(InstructionGroup!arch[]);
 
-        // TODO: Do properly
         static if(arch == Arch.arm)
             archSpecific = InstructionDetail!arch(internal.arm);
         else static if(arch == Arch.arm64)
@@ -131,13 +130,10 @@ struct Instruction(Arch arch) {
 	/// Ascii text of instruction operands
 	string opStr;
 
-	// NOTE: Instruction details only valid when both requirements below are met:
-	// (1) CS_OP_DETAIL = CS_OPT_ON
-	// (2) Engine is not in Skipdata mode (CS_OP_SKIPDATA option set to CS_OPT_ON)
 	private Nullable!(Detail!arch) _detail;
 
     private this(cs_insn internal, bool detail, bool skipData){
-        id = internal.id.to!(InstructionId!arch); // TODO: throw
+        id = internal.id.to!(InstructionId!arch);
         address = internal.address;
         bytes = internal.bytes[0..internal.size].dup;
         mnemonic = internal.mnemonic.ptr.to!string;
@@ -155,8 +151,8 @@ struct Instruction(Arch arch) {
         $(LI the engine is not in Skipdata mode))
     */ 
     @property detail() const {
-        // TODO: Proper error
-        enforce(!_detail.isNull, "Trying to access unavailable instruction detail");
+        if(_detail.isNull)
+            throw new CapstoneException("Trying to access unavailable instruction detail", ErrorCode.UnavailableInstructionDetail);
         return _detail;
     }
 }
@@ -271,23 +267,28 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     this(in ModeFlags modeFlags){
         const libVer = versionOfLibrary;
         const bindVer = versionOfBindings;
-        // TODO: Use custom exception ? Code: CS_ERR_VERSION
-        enforce(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)"
-            .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
+        if(libVer != bindVer)
+            throw new CapstoneException("API version mismatch between library (%d.%d) and bindings (%d.%d)"
+                .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor), ErrorCode.UnsupportedVersion);
 
+        // Create Capstone engine instance
         this._mode = modeFlags;
+        cs_open(arch, modeFlags.to!uint, &handle).checkErrno;
 
-        // TODO: Handle error properly
-        cs_open(arch, modeFlags.to!uint, &handle).checkErrorCode;
+        // Sync members with library's default values
+        // Note: not really necessary at the time of writing as they happen to match
+        syntax = _syntax;
+        detail = _detail;
+        skipData = _skipData;
     }
     ///
     unittest{
-        new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        new Capstone!(Arch.x86)(ModeFlags(Mode.bit64));
     }
 
     ~this(){
-        // TODO: Handle error properly
-        cs_close(&handle).checkErrorCode;
+        if(handle)
+           cs_close(&handle).checkErrno;
     }
 
     /// Gets the mode of interpretation
@@ -295,8 +296,15 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     /// Sets the mode of interpretation
     @property void mode(in ModeFlags modeFlags){
         _mode = modeFlags;
-        // TODO: Handle error properly
-        cs_option(handle, cs_opt_type.CS_OPT_MODE, modeFlags.to!uint).checkErrorCode;
+        cs_option(handle, cs_opt_type.CS_OPT_MODE, modeFlags.to!uint).checkErrno;
+    }
+    ///
+    unittest{
+        const code = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit16));
+        cs.disasm(code, 0x1000);
+        cs.mode = ModeFlags(Mode.bit32);
+        cs.disasm(code, 0x1000);
     }
 
     /// Gets the disassembly syntax variant
@@ -304,8 +312,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     /// Sets the disassembly syntax variant
     @property void syntax(in Syntax option){
         _syntax = option;
-        // TODO: Handle error properly
-        cs_option(handle, cs_opt_type.CS_OPT_SYNTAX, option).checkErrorCode;
+        cs_option(handle, cs_opt_type.CS_OPT_SYNTAX, option).checkErrno;
     }
 
     /// Indicates whether instructions will be disassembled in detail
@@ -313,9 +320,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     /// Sets whether instructions will be disassembled in detail
     @property void detail(in bool enable){
         _detail = enable;
-        // TODO: Handle error properly
         auto option = (enable ? cs_opt_value.CS_OPT_ON : cs_opt_value.CS_OPT_OFF);
-        cs_option(handle, cs_opt_type.CS_OPT_DETAIL, option).checkErrorCode;
+        cs_option(handle, cs_opt_type.CS_OPT_DETAIL, option).checkErrno;
     }
 
     /// Indicates whether SKIPDATA mode of operation is in use
@@ -323,9 +329,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     /// Sets whether to use SKIPDATA mode of operation
     @property void skipData(in bool enable){
         _skipData = enable;
-        // TODO: Handle error properly
         auto option = (enable ? cs_opt_value.CS_OPT_ON : cs_opt_value.CS_OPT_OFF);
-        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA, option).checkErrorCode;
+        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA, option).checkErrno;
     }
 
     /** Customises behaviour in SKIPDATA mode of operation
@@ -353,8 +358,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         this.callback = callback;
         
         auto setup = cs_opt_skipdata(this.mnemonic.ptr, callback ? &cCallback : null, &this.callback);
-        // TODO: Handle error properly
-        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(ulong)&setup).checkErrorCode;
+        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(ulong)&setup).checkErrno;
     }
 
     // TODO: for system with scarce memory to be dynamically allocated such as OS kernel or firmware, the API cs_disasm_iter() might be a better choice than cs_disasm()
@@ -370,6 +374,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         cs_insn* internalInstrs;
         auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
         scope(exit){cs_free(internalInstrs, actualCount);}
+        cs_errno(handle).checkErrno;
 
         auto instrAppnd = appender!(Instruction!arch[]);
         instrAppnd.reserve(actualCount);
@@ -387,8 +392,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     Returns: user-friendly string representation of the register's name
     */
     string regName(Register!arch regId) const {
-        // TODO: Add proper error
-        enforce(!diet, "Register names are not stored when using Capstone in diet mode");
+        if(diet)
+            throw new CapstoneException("Register names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_reg_name(handle, regId).to!string;
     }
 }

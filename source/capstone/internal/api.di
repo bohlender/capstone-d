@@ -132,7 +132,7 @@ extern (C){
     
     int cs_option(size_t handle, int type, size_t value);
     
-    //int cs_errno(csh handle);
+    int cs_errno(size_t handle);
     const(char)* cs_strerror(int code);
     
     size_t cs_disasm(size_t handle, const(ubyte)* code, size_t code_size, ulong address, size_t count, cs_insn** insn);
