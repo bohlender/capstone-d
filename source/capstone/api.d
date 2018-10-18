@@ -1,6 +1,4 @@
-/**
- Idiomatic lifting of $(LINK2 http://www.capstone-engine.org, Capstone)'s C API to D
-*/
+/// Idiomatic lifting of $(LINK2 http://www.capstone-engine.org, Capstone)'s C API to D
 module capstone.api;
 
 import std.typecons: Tuple, BitFlags, Yes, Nullable;
@@ -26,7 +24,7 @@ enum Arch{
     xCore    /// Support for XCore architecture
 }
 
-/// The options that $(LINK2 http://www.capstone-engine.org, capstone) can have been compiled with to support
+/// The options that $(LINK2 http://www.capstone-engine.org, Capstone) can have been compiled with to support
 enum SupportQuery {
     arm = 0,      /// Support for ARM architecture (including Thumb, Thumb-2)
     arm64,        /// Support for ARM-64 (also called AArch64)
@@ -65,9 +63,9 @@ alias ModeFlags = BitFlags!(Mode, Yes.unsafe);
 
 /// Disassembly syntax variants
 enum Syntax {
-	systemDefault = 0, /// Default asm syntax
-	intel,             /// X86 Intel asm syntax - default on X86
-	att,               /// X86 ATT asm syntax
+	systemDefault = 0, /// System's default syntax
+	intel,             /// X86 Intel syntax - default on X86
+	att,               /// X86 AT&T syntax
 	noregname          /// Prints register name with only number
 }
 
@@ -132,37 +130,38 @@ struct Instruction(Arch arch) {
     }
 
     /** More details about the instruction
-
-       Note that this is only available if both requirements are met: 
-       $(OL $(LI details are enabled)
-            $(LI the engine is not in Skipdata mode)
-        )
+    
+    Note that this is only available if both requirements are met: 
+    $(OL
+        $(LI details are enabled)
+        $(LI the engine is not in Skipdata mode))
     */ 
     @property detail() const {
         // TODO: Proper error
-        enforce(!_detail.isNull, "Trying to acces unavailable instruction detail");
+        enforce(!_detail.isNull, "Trying to access unavailable instruction detail");
         return _detail;
     }
 }
 
+// TODO: Example for using custom data
+// TODO: See test/skipdata.d for full sample code demonstrating this API.
 /** User-defined callback function type for SKIPDATA mode of operation
  
 The first parameter is the input buffer containing code to be disassembled,
 while the second one holds the position of the currently-examined byte in this buffer.
 
- Example:
- ---
- size_t callback(in ubyte[] code, size_t offset) {
-     return 2;
- }
- ---
- See test/skipdata.d for full sample code demonstrating this API.
+Example:
+---
+size_t callback(in ubyte[] code, size_t offset) {
+    return 2; // Always skip 2 bytes when encountering uninterpretable instructions
+}
+---
 
- Returns: The number of bytes to skip, or 0 to immediately stop disassembling
+Returns: The number of bytes to skip, or 0 to immediately stop disassembling
 */
 alias Callback = size_t delegate(in ubyte[] code, size_t offset) nothrow @nogc;
 
-// This trampoline is the ugly c-lang callback (calling d in turn)
+// This trampoline is the ugly c-lang callback (calling D in turn)
 private extern(C) size_t cCallback(const(ubyte)* code, size_t code_size, size_t offset, void* userData) nothrow @nogc{
     auto slice = code[0..code_size];
     
@@ -172,7 +171,6 @@ private extern(C) size_t cCallback(const(ubyte)* code, size_t code_size, size_t 
     return res;
 }
 
-// TODO: Replace by Tuple!(int, int)?
 /// Version consisting of major and minor numbers
 struct Version{
     int major; /// Major version number
@@ -184,19 +182,23 @@ struct Version{
     }
 }
 
-private alias Handle = size_t;
-
 /** Encapsulates an instance of the Capstone dissassembly engine
 
- Params:
-    arch = The CPU architecture that the engine will assume when disassembling the byte-stream
+This class encapsulates the core functionality of the Capstone disassembly engine, providing
+access to runtime options for
+$(UL
+    $(LI changing the `Mode` of interpretation)
+    $(LI changing the `Syntax` of the disassembly)
+    $(LI choosing whether `Instruction`'s should be disassembled in detail, i.e. filling `Instruction.detail`)
+    $(LI defining manual handling of broken instructions through the $(LINK2 http://www.capstone-engine.org/skipdata.html, SKIPDATA) mode of operation (optionally via a `Callback`))
+)
+
+Params:
+    arch = The CPU architecture that the engine will disassemble the byte-stream for
 */
 class Capstone(Arch arch){
-    // TODO: Make static?
-    /// Indicates whether the installed library was compiled in diet mode
-    const bool diet;
-
     private{
+        alias Handle = size_t;
         Handle handle;    
         
         ModeFlags _mode;
@@ -210,9 +212,8 @@ class Capstone(Arch arch){
 
     /** Constructs an instance of the disassembly engine
 
-     Params:
-        modeFlags = A combination of flags to further specify how bytes
-                    will be interpreted, e.g. in little-endian.
+    Params:
+        modeFlags = A combination of flags to further specify how bytes will be interpreted, e.g. in little-endian.
     */
     this(in ModeFlags modeFlags){
         const libVer = versionOfLibrary;
@@ -225,12 +226,50 @@ class Capstone(Arch arch){
 
         // TODO: Handle error properly
         cs_open(arch, modeFlags.to!uint, &handle).checkErrorCode;
-        diet = cs_support(SupportQuery.diet);
+    }
+    ///
+    unittest{
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
     }
 
     ~this(){
         // TODO: Handle error properly
         cs_close(&handle).checkErrorCode;
+    }
+
+    /// Determines the `Version` supported by these bindings
+    static auto versionOfBindings() {
+        return Version(CS_API_MAJOR, CS_API_MINOR);
+    }
+
+    /// Determines the `Version` supported by the installed library
+    static auto versionOfLibrary() {
+        int major, minor;
+        cs_version(&major, &minor);
+        return Version(major, minor);
+    }
+
+    unittest{
+        const libVer = versionOfLibrary;
+        const bindVer = versionOfBindings;        
+        assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)"
+            .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
+    }
+
+    /// Indicates whether the installed library was compiled in $(LINK2 http://www.capstone-engine.org/diet.html, diet mode)
+    static @property auto diet(){
+        return supports(SupportQuery.diet);
+    }
+
+    /** Indicates whether an architecture or particular option is supported by the installed Capstone library
+    
+    Params:
+        query = The `SupportQuery` to issue to the library
+     
+    Returns: True if the requested option is supported
+    */
+    static @property auto supports(in SupportQuery query){
+        return cs_support(query);
     }
 
     /// Gets the mode of interpretation
@@ -251,9 +290,9 @@ class Capstone(Arch arch){
         cs_option(handle, cs_opt_type.CS_OPT_SYNTAX, option).checkErrorCode;
     }
 
-    /// Indicates whether the engine should disassemble instruction details
+    /// Indicates whether instructions will be disassembled in detail
     @property auto detail() const {return _detail;}
-    /// Sets whether the engine should disassemble instruction details
+    /// Sets whether instructions will be disassembled in detail
     @property void detail(in bool enable){
         _detail = enable;
         // TODO: Handle error properly
@@ -261,7 +300,9 @@ class Capstone(Arch arch){
         cs_option(handle, cs_opt_type.CS_OPT_DETAIL, option).checkErrorCode;
     }
 
+    /// Indicates whether SKIPDATA mode of operation is in use
     @property auto skipData() const {return _skipData;}
+    /// Sets whether to use SKIPDATA mode of operation
     @property void skipData(in bool enable){
         _skipData = enable;
         // TODO: Handle error properly
@@ -269,6 +310,26 @@ class Capstone(Arch arch){
         cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA, option).checkErrorCode;
     }
 
+    /** Customises behaviour in SKIPDATA mode of operation
+     
+    By default, disassembling will stop when it encounters a broken instruction.
+    Most of the time, the reason is that this is data mixed inside the input.
+
+    When in SKIPDATA mode, some (unknown) amount of data until the next interpretable instruction will be skipped.
+    Capstone considers the skipped data a special instruction with ID 0x00 and a `mnemonic` that defaults to `".byte"`.
+    The operand string is a hex-code of the sequence of bytes it skipped.
+
+    By default, for each iteration, Capstone skips 1 byte on X86 architecture, 2 bytes on Thumb mode on Arm
+    architecture, and 4 bytes for the rest. The reason while Capstone skips 1 byte on X86 is that X86 puts no
+    restriction on instruction alignment, but other architectures enforce some requirements on this aspect.
+
+    To customise how many bytes to skip when encountering data, a `Callback` delegate can optonally be setup
+    to return the corresponding number.
+
+    Params:
+        mnemonic = The mnemonic to use for representing skipped data
+        callback = The optional callback to use for handling bytes that cannot be interpreted as an instruction.
+    */
     void setupSkipdata(string mnemonic = ".byte", Callback callback = null){
         this.mnemonic = mnemonic;
         this.callback = callback;
@@ -278,6 +339,15 @@ class Capstone(Arch arch){
         cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(ulong)&setup).checkErrorCode;
     }
 
+    // TODO: for system with scarce memory to be dynamically allocated such as OS kernel or firmware, the API cs_disasm_iter() might be a better choice than cs_disasm()
+    /** Disassemble binary code, given the code buffer, address and number of instructions to be decoded
+    
+    Params:
+        code    = Buffer containing raw binary code to be disassembled
+        address = Address of the first instruction in given raw code buffer
+        count   = Number of instructions to be disassembled, or 0 to get all of them
+    Returns: The successfully disassembled instructions
+    */
     auto disasm(in ubyte[] code, in ulong address, in size_t count = 0){
         cs_insn* internalInstrs;
         auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
@@ -291,28 +361,18 @@ class Capstone(Arch arch){
         return instrAppnd.data;
     }
 
+    /** Determines user-friendly name of a register
+    
+    When in diet mode, this API is irrelevant because engine does not store register names
+    Param:
+        regId = register id
+    Returns: user-friendly string representation of the register's name
+    */
     string regName(Reg!arch regId) const {
+        // TODO: Add proper error
+        enforce(!diet, "Register names are not stored when using Capstone in diet mode");
         return cs_reg_name(handle, regId).to!string;
     }
-}
-
-auto versionOfBindings() {
-    return Version(CS_API_MAJOR, CS_API_MINOR);
-}
-auto versionOfLibrary() {
-    int major, minor;
-    cs_version(&major, &minor);
-    return Version(major, minor);
-}
-
-unittest{
-    const libVer = versionOfLibrary;
-    const bindVer = versionOfBindings;        
-    assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)".format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
-}
-
-auto supports(in SupportQuery query){
-    return cs_support(query);
 }
 
 // TODO: Find a more elegant way.
