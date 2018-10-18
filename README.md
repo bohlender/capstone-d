@@ -3,7 +3,7 @@
 ## What is this?
 This package implements idiomatic D bindings for [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
 
-*Note: The development is still in progress and not all architectures are supported yet -- although x86 and ARM work already. While the code is documented, proper documentation will be added as soon as I finish the bindings for the remaining architectures.*
+*Note: The development is still in progress and not all architectures are supported yet -- although x86 and ARM work already. While the core API is fully documented, some classes are still missing documentation and adding it is a currently ongoing effort.*
 
 ## Examples
 ### Introductory Example
@@ -63,7 +63,8 @@ x86Reduce : false
 ```
 
 ## How to include this in your project
-The examples folder contains a [basic project](https://github.com/bohlender/capstone-d/tree/master/examples/basic) to get you started, but it essentially boils down to adding `capstone-d` as a dependency in the `dub.json` of your project.
+The package is available in the [D package management](http://code.dlang.org/packages/capstone-d) s.t. it suffices to add `capstone-d` as a dependency in the `dub.json` of your project.
+Furthermore, the examples folder contains a [basic project](https://github.com/bohlender/capstone-d/tree/master/examples/basic) to get you started.
 
 ## Contribute
 Keep in mind that the bindings are still under development, but you can always create an issue if you find bugs or think that something could be improved.
