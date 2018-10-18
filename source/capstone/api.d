@@ -9,7 +9,7 @@ import std.string;
 import std.array;
 
 import capstone.internal.api;
-import source.capstone.error;
+import capstone.error;
 import capstone;
 
 /// Architecture type
@@ -200,6 +200,41 @@ struct Version{
     }
 }
 
+/// Determines the `Version` supported by these bindings
+auto versionOfBindings() {
+    return Version(CS_API_MAJOR, CS_API_MINOR);
+}
+
+/// Determines the `Version` supported by the installed library
+auto versionOfLibrary() {
+    int major, minor;
+    cs_version(&major, &minor);
+    return Version(major, minor);
+}
+
+unittest{
+    const libVer = versionOfLibrary;
+    const bindVer = versionOfBindings;        
+    assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)"
+        .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
+}
+
+/// Indicates whether the installed library was compiled in $(LINK2 http://www.capstone-engine.org/diet.html, diet mode)
+auto diet(){
+    return supports(SupportQuery.diet);
+}
+
+/** Indicates whether an architecture or particular option is supported by the installed Capstone library
+
+Params:
+    query = The `SupportQuery` to issue to the library
+ 
+Returns: True if the requested option is supported
+*/
+auto supports(in SupportQuery query){
+    return cs_support(query);
+}
+
 /** Encapsulates an instance of the Capstone dissassembly engine
 
 This class encapsulates the core functionality of the Capstone disassembly engine, providing
@@ -253,41 +288,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     ~this(){
         // TODO: Handle error properly
         cs_close(&handle).checkErrorCode;
-    }
-
-    /// Determines the `Version` supported by these bindings
-    static auto versionOfBindings() {
-        return Version(CS_API_MAJOR, CS_API_MINOR);
-    }
-
-    /// Determines the `Version` supported by the installed library
-    static auto versionOfLibrary() {
-        int major, minor;
-        cs_version(&major, &minor);
-        return Version(major, minor);
-    }
-
-    unittest{
-        const libVer = versionOfLibrary;
-        const bindVer = versionOfBindings;        
-        assert(libVer == bindVer, "API version mismatch between library (%d.%d) and bindings (%d.%d)"
-            .format(libVer.major, libVer.minor, bindVer.major, bindVer.minor));
-    }
-
-    /// Indicates whether the installed library was compiled in $(LINK2 http://www.capstone-engine.org/diet.html, diet mode)
-    static @property auto diet(){
-        return supports(SupportQuery.diet);
-    }
-
-    /** Indicates whether an architecture or particular option is supported by the installed Capstone library
-    
-    Params:
-        query = The `SupportQuery` to issue to the library
-     
-    Returns: True if the requested option is supported
-    */
-    static @property auto supports(in SupportQuery query){
-        return cs_support(query);
     }
 
     /// Gets the mode of interpretation

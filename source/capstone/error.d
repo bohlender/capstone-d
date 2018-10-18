@@ -1,4 +1,4 @@
-module source.capstone.error;
+module capstone.error;
 
 import std.conv;
 import std.exception: enforce, assertNotThrown;
