@@ -353,11 +353,13 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         mnemonic = The mnemonic to use for representing skipped data
         callback = The optional callback to use for handling bytes that cannot be interpreted as an instruction.
     */
-    void setupSkipdata(string mnemonic = ".byte", Callback callback = null){
+    void setupSkipdata(in string mnemonic = ".byte", Callback callback = null){
+        if(!mnemonic)
+            throw new CapstoneException("Invalid mnemonic", ErrorCode.InvalidOption);
         this.mnemonic = mnemonic;
         this.callback = callback;
         
-        auto setup = cs_opt_skipdata(this.mnemonic.ptr, callback ? &cCallback : null, &this.callback);
+        auto setup = cs_opt_skipdata(this.mnemonic.ptr, this.callback ? &cCallback : null, &this.callback);
         cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(ulong)&setup).checkErrno;
     }
 
@@ -373,7 +375,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     auto disasm(in ubyte[] code, in ulong address, in size_t count = 0){
         cs_insn* internalInstrs;
         auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
-        scope(exit){cs_free(internalInstrs, actualCount);}
+        scope(exit){if(internalInstrs){cs_free(internalInstrs, actualCount);}}
         cs_errno(handle).checkErrno;
 
         auto instrAppnd = appender!(Instruction!arch[]);

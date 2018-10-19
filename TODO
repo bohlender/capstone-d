@@ -5,6 +5,7 @@
 - get rid of ModeFlags? Do not help with safety anyway
 
 - make sure everything works as expected in diet mode
+- fuzz api
 
 - doc: more unittests as examples
 - unittests of functions

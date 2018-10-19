@@ -14,6 +14,7 @@ struct Platform{
 	ubyte[] code;
 	string comment;
 	Syntax syntax;
+	string skipdataMnemonic;
 }
 
 auto bytesToHex(in ubyte[] code){

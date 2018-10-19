@@ -6,7 +6,6 @@
 
 	"targetType": "executable",
 	
-	"libs": ["capstone"],
 	"dependencies": {
 		"capstone-d" : {"path": "../../"}
 	}
