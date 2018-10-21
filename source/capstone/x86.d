@@ -1,10 +1,10 @@
 module capstone.x86;
 
-import capstone.internal.x86;
-import capstone.utils: TaggedUnion;
-
 import std.variant;
 import std.exception: enforce;
+
+import capstone.internal.x86;
+import capstone.utils;
 
 // Instruction's operand referring to memory
 // This is associated with X86_OP_MEM operand type above

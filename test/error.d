@@ -1,4 +1,4 @@
-module source.test.error;
+module test.error;
 
 import std.exception: collectException;
 

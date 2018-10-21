@@ -8,8 +8,6 @@ import std.conv;
 import std.string;
 import std.array;
 
-import capstone.internal.api;
-import capstone.error;
 import capstone;
 
 /// Architecture type

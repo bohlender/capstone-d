@@ -4,10 +4,20 @@
 	"authors": ["Dimitri Bohlender"],
 	"license": "MIT",
 
-	"targetType": "sourceLibrary",
 	"libs": ["capstone"],
-	"dflags": [
-		"-Jsource/test"
+	"configurations": [
+		{
+			"name": "bindings",
+			"targetType": "sourceLibrary"
+		},
+		{
+			"name": "unittest",
+			"targetType": "executable",
+			"mainSourceFile": "test/main.d",
+			"sourcePaths": ["test/"],
+			"importPaths": ["test/"],
+			"dflags": ["-Jtest"]
+		}
 	],
 	"subPackages": [
 		"examples/basic/"

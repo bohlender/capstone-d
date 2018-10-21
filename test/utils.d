@@ -1,4 +1,4 @@
-module source.test.utils;
+module test.utils;
 
 import std.algorithm: map;
 import std.array: join;

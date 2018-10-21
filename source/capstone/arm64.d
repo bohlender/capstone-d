@@ -1,10 +1,10 @@
 module capstone.arm64;
 
-import capstone.internal.arm64;
-import capstone.utils;
-
 import std.variant;
 import std.exception: enforce;
+
+import capstone.internal.arm64;
+import capstone.utils;
 
 // Instruction's operand referring to memory
 // This is associated with MEM operand type above

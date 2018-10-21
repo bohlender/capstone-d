@@ -1,13 +1,13 @@
-module source.test.skipdata;
-
-import capstone;
-import source.test.utils;
+module test.skipdata;
 
 import std.array: array;
 import std.algorithm: filter;
 import std.string: representation;
 import std.outbuffer: OutBuffer;
 import std.functional: toDelegate;
+
+import capstone;
+import test.utils;
 
 enum X86_CODE32 = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
 enum RANDOM_CODE = cast(ubyte[])"\xed\x00\x00\x00\x00\x1a\x5a\x0f\x1f\xff\xc2\x09\x80\x00\x00\x00\x07\xf7\xeb\x2a\xff\xff\x7f\x57\xe3\x01\xff\xff\x7f\x57\xeb\x00\xf0\x00\x00\x24\xb2\x4f\x00\x78";

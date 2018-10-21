@@ -1,9 +1,9 @@
-module source.test.basic;
-
-import capstone;
-import source.test.utils;
+module test.basic;
 
 import std.outbuffer;
+
+import capstone;
+import test.utils;
 
 enum X86_CODE16 = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00";
 enum X86_CODE32 = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00";
