@@ -44,9 +44,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 				break;
 			case ArmOpType.MEM:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != ArmRegister.INVALID)
+				if (operand.mem.base != ArmRegister.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if (operand.mem.index != ArmRegister.INVALID)
+				if (operand.mem.index != ArmRegister.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(operand.mem.index));
 				if (operand.mem.scale != 1)
 					buf.writefln("\t\t\toperands[%d].mem.scale: %d", i, operand.mem.scale);
@@ -60,15 +60,15 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, operand.imm);
 				break;
 			case ArmOpType.SETEND:
-				buf.writefln("\t\toperands[%d].type: SETEND = %s", i, operand.setend == ArmSetendType.BE? "be" : "le");
+				buf.writefln("\t\toperands[%d].type: SETEND = %s", i, operand.setend == ArmSetendType.be? "be" : "le");
 				break;
 			case ArmOpType.SYSREG:
 				buf.writefln("\t\toperands[%d].type: SYSREG = %d", i, operand.reg);
 				break;
 		}
 
-		if (operand.shift.type != ArmShiftType.INVALID && operand.shift.value) {
-			if (operand.shift.type < ArmShiftType.ASR_REG)
+		if (operand.shift.type != ArmShiftType.invalid && operand.shift.value) {
+			if (operand.shift.type < ArmShiftType.asr_reg)
 				// shift with constant value
 				buf.writefln("\t\t\tShift: %d = %d", operand.shift.type, operand.shift.value);
 			else
@@ -82,7 +82,7 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 			buf.writefln("\t\tSubtracted: True");
 	}
 
-	if (arm.cc != ArmCc.AL && arm.cc != ArmCc.INVALID)
+	if (arm.cc != ArmCc.al && arm.cc != ArmCc.invalid)
 		buf.writefln("\tCode condition: %d", arm.cc);
 	if (arm.updateFlags)
 		buf.writefln("\tUpdate-flags: True");

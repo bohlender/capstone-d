@@ -1,8 +1,9 @@
-- make capstone.internal unaccessible from outside
+- consistent naming/capitalisation of constants
 - support all archs
 - const pure nogc safe
 
 - get rid of ModeFlags? Do not help with safety anyway
+- get rid of/wrap all the types where zeroes indicate invalid values
 
 - make sure everything works as expected in diet mode
 - fuzz api

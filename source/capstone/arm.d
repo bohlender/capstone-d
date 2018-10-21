@@ -1,3 +1,4 @@
+/// Types and constants of ARM architecture
 module capstone.arm;
 
 import std.variant;
@@ -6,895 +7,898 @@ import std.exception: enforce;
 import capstone.internal.arm;
 import capstone.utils;
 
-// Instruction's operand referring to memory
-// This is associated with ARM_OP_MEM operand type above
+/** Instruction's operand referring to memory
+
+This is associated with the `ArmOpType.mem` operand type
+*/
 struct ArmOpMem {
-	ArmRegister base;	// base register
-	ArmRegister index;	// index register
-	int scale;	// scale for index register (can be 1, or -1)
-	int disp;	// displacement/offset value
+    ArmRegister base;   /// Base register
+    ArmRegister index;  /// Index register
+    // TODO: use boolean to indicate +/- 1 and @property scale
+    int scale;          /// Scale for index register (can be 1, or -1)
+    int disp;           /// Displacement/offset value
 }
 
+/// Optional shift
 struct ArmShift{
-	ArmShiftType type;
-	uint value;
+    ArmShiftType type;  /// Type of shift
+    uint value;         /// value (constant or register) to shift by
 }
 
+/// Tagged union of possible operand values
 alias ArmOpValue = TaggedUnion!(ArmRegister, "reg", int, "imm", double, "fp", ArmOpMem, "mem", ArmSetendType, "setend");
 
-// Instruction operand
+/// Instruction's operand
 struct ArmOp {
-	int vectorIndex;	// Vector Index for some vector operands (or -1 if irrelevant)
-	ArmShift shift;
-	ArmOpType type;	// operand type
-	// TODO: hide?
-	ArmOpValue value;
-	alias value this; // for convenient access to value (as in original bindings)
+    int vectorIndex;  /// Vector index for some vector operands (or -1 if irrelevant)
+    ArmShift shift;   /// Optional shift
+    ArmOpType type;   /// Operand type
+    ArmOpValue value; /// Operand value of type `type`
+    alias value this; /// Convenient access to value (as in original bindings)
 
-	// in some instructions, an operand can be subtracted or added to
-	// the base register,
-	bool subtracted; // if TRUE, this operand is subtracted. otherwise, it is added.
+    /** In some instructions, an operand can be subtracted or added to the base register.
 
-	this(cs_arm_op internal){
-		vectorIndex = internal.vector_index;
-		shift = internal.shift;
-		type = internal.type;
-		final switch(internal.type){
-			case ArmOpType.INVALID:
-				break;
-			case ArmOpType.REG, ArmOpType.SYSREG:
-				value.reg = internal.reg;
-				break;
-			case ArmOpType.IMM, ArmOpType.CIMM, ArmOpType.PIMM:
-				value.imm = internal.imm;
-				break;
-			case ArmOpType.MEM:
-				value.mem = internal.mem;
-				break;
-			case ArmOpType.FP:
-				value.fp = internal.fp;
-				break;
-			case ArmOpType.SETEND:
-				value.setend = internal.setend;
-				break;
-		}
-		subtracted = internal.subtracted;
-	}
+    If TRUE, this operand is subtracted. Otherwise, it is added.
+    */
+    bool subtracted; 
+
+    package this(cs_arm_op internal){
+        vectorIndex = internal.vector_index;
+        shift = internal.shift;
+        type = internal.type;
+        final switch(internal.type){
+            case ArmOpType.INVALID:
+                break;
+            case ArmOpType.REG, ArmOpType.SYSREG:
+                value.reg = internal.reg;
+                break;
+            case ArmOpType.IMM, ArmOpType.CIMM, ArmOpType.PIMM:
+                value.imm = internal.imm;
+                break;
+            case ArmOpType.MEM:
+                value.mem = internal.mem;
+                break;
+            case ArmOpType.FP:
+                value.fp = internal.fp;
+                break;
+            case ArmOpType.SETEND:
+                value.setend = internal.setend;
+                break;
+        }
+        subtracted = internal.subtracted;
+    }
 }
 
+/// Detailed information about an ARM instruction
 struct ArmInstructionDetail {
-	bool usermode;	// User-mode registers to be loaded (for LDM/STM instructions)
-	int vectorSize; 	// Scalar size for vector instructions
-	ArmVectordataType vectorData; // Data type for elements of vector instructions
-	ArmCpsmodeType cpsMode;	// CPS mode for CPS instruction
-	ArmCpsflagType cpsFlag;	// CPS mode for CPS instruction
-	ArmCc cc;			// conditional code for this insn
-	bool updateFlags;	// does this insn update flags?
-	bool writeback;		// does this insn write-back?
-	ArmMemBarrier memBarrier;	// Option for some memory barrier instructions
+    bool usermode;                /// User-mode registers to be loaded (for LDM/STM instructions)
+    int vectorSize;               /// Scalar size for vector instructions
+    ArmVectordataType vectorData; /// Data type for elements of vector instructions
+    ArmCpsmodeType cpsMode;       /// Mode operand for CPS instruction
+    ArmCpsflagType cpsFlag;       /// Flags operand for CPS instruction
+    ArmCc cc;                     /// Conditional code for this instruction
+    bool updateFlags;             /// Does this instruction update flags?
+    bool writeback;               /// Does this instruction write-back?
+    ArmMemBarrier memBarrier;     /// Option for some memory barrier instructions
 
-	ArmOp[] operands;	// operands for this instruction.
+    ArmOp[] operands;             /// Operands for this instruction.
 
-	this(cs_arm internal){
-		usermode = internal.usermode;
-		vectorSize = internal.vector_size;
-		vectorData = internal.vector_data;
-		cpsMode = internal.cps_mode;
-		cpsFlag = internal.cps_flag;
-		cc = internal.cc;
-		updateFlags = internal.update_flags;
-		writeback = internal.writeback;
-		memBarrier = internal.mem_barrier;
+    package this(cs_arm internal){
+        usermode = internal.usermode;
+        vectorSize = internal.vector_size;
+        vectorData = internal.vector_data;
+        cpsMode = internal.cps_mode;
+        cpsFlag = internal.cps_flag;
+        cc = internal.cc;
+        updateFlags = internal.update_flags;
+        writeback = internal.writeback;
+        memBarrier = internal.mem_barrier;
 
-		foreach(op; internal.operands[0..internal.op_count])
-			operands ~= ArmOp(op);
-	}
+        foreach(op; internal.operands[0..internal.op_count])
+            operands ~= ArmOp(op);
+    }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Constants
-///////////////////////////////////////////////////////////////////////////////
-
-//> ARM shift type
+/// ARM shift type
 enum ArmShiftType {
-	INVALID = 0,
-	ASR,	// shift with immediate const
-	LSL,	// shift with immediate const
-	LSR,	// shift with immediate const
-	ROR,	// shift with immediate const
-	RRX,	// shift with immediate const
-	ASR_REG,	// shift with register
-	LSL_REG,	// shift with register
-	LSR_REG,	// shift with register
-	ROR_REG,	// shift with register
-	RRX_REG,	// shift with register
+    invalid = 0, /// Invalid
+    asr,         /// Arithmetic shift right (with immediate const)
+    lsl,         /// Logical shift left (with immediate const)
+    lsr,         /// Logical shift right (with immediate const)
+    ror,         /// Rotate right (with immediate const)
+    rrx,         /// Rotate right with extend (with immediate const)
+    asr_reg,     /// Arithmetic shift right (with register)
+    lsl_reg,     /// Logical shift left (with register)
+    lsr_reg,     /// Logical shift right (with register)
+    ror_reg,     /// Rotate right (with register)
+    rrx_reg,     /// Rotate right with extend (with register)
 }
 
-//> ARM condition code
+/// ARM condition code
 enum ArmCc {
-	INVALID = 0,
-	EQ,            // Equal                      Equal
-	NE,            // Not equal                  Not equal, or unordered
-	HS,            // Carry set                  >, ==, or unordered
-	LO,            // Carry clear                Less than
-	MI,            // Minus, negative            Less than
-	PL,            // Plus, positive or zero     >, ==, or unordered
-	VS,            // Overflow                   Unordered
-	VC,            // No overflow                Not unordered
-	HI,            // Unsigned higher            Greater than, or unordered
-	LS,            // Unsigned lower or same     Less than or equal
-	GE,            // Greater than or equal      Greater than or equal
-	LT,            // Less than                  Less than, or unordered
-	GT,            // Greater than               Greater than
-	LE,            // Less than or equal         <, ==, or unordered
-	AL             // Always (unconditional)     Always (unconditional)
+    invalid = 0, /// Invalid
+    eq,          /// Equal                      Equal
+    ne,          /// Not equal                  Not equal, or unordered
+    hs,          /// Carry set                  >, ==, or unordered
+    lo,          /// Carry clear                Less than
+    mi,          /// Minus, negative            Less than
+    pl,          /// Plus, positive or zero     >, ==, or unordered
+    vs,          /// Overflow                   Unordered
+    vc,          /// No overflow                Not unordered
+    hi,          /// Unsigned higher            Greater than, or unordered
+    ls,          /// Unsigned lower or same     Less than or equal
+    ge,          /// Greater than or equal      Greater than or equal
+    lt,          /// Less than                  Less than, or unordered
+    gt,          /// Greater than               Greater than
+    le,          /// Less than or equal         <, ==, or unordered
+    al           /// Always (unconditional)     Always (unconditional)
 }
 
+/// Special registers for MSR
 enum ArmSysreg {
-	//> Special registers for MSR
-	INVALID = 0,
+    invalid = 0,
 
-	// SPSR* registers can be OR combined
-	SPSR_C = 1,
-	SPSR_X = 2,
-	SPSR_S = 4,
-	SPSR_F = 8,
+    // SPSR* registers can be OR combined
+    spsr_c = 1,
+    spsr_x = 2,
+    spsr_s = 4,
+    spsr_f = 8,
 
-	// CPSR* registers can be OR combined
-	CPSR_C = 16,
-	CPSR_X = 32,
-	CPSR_S = 64,
-	CPSR_F = 128,
+    // CPSR* registers can be OR combined
+    cpsr_c = 16,
+    cpsr_x = 32,
+    cpsr_s = 64,
+    cpsr_f = 128,
 
-	// independent registers
-	APSR = 256,
-	APSR_G,
-	APSR_NZCVQ,
-	APSR_NZCVQG,
+    // Independent registers
+    apsr = 256,
+    apsr_g,
+    apsr_nzcvq,
+    apsr_nzcvqg,
 
-	IAPSR,
-	IAPSR_G,
-	IAPSR_NZCVQG,
+    iapsr,
+    iapsr_g,
+    iapsr_nzcvqg,
 
-	EAPSR,
-	EAPSR_G,
-	EAPSR_NZCVQG,
+    eapsr,
+    eapsr_g,
+    eapsr_nzcvqg,
 
-	XPSR,
-	XPSR_G,
-	XPSR_NZCVQG,
+    xpsr,
+    xpsr_g,
+    xpsr_nzcvqg,
 
-	IPSR,
-	EPSR,
-	IEPSR,
+    ipsr,
+    epsr,
+    iepsr,
 
-	MSP,
-	PSP,
-	PRIMASK,
-	BASEPRI,
-	BASEPRI_MAX,
-	FAULTMASK,
-	CONTROL,
+    msp,
+    psp,
+    primask,
+    basepri,
+    basepri_max,
+    faultmask,
+    control,
 }
 
-//> The memory barrier constants map directly to the 4-bit encoding of
-//> the option field for Memory Barrier operations.
+/// The memory barrier constants map directly to the 4-bit encoding of the option field for Memory Barrier operations
 enum ArmMemBarrier {
-	INVALID = 0,
-	RESERVED_0,
-	OSHLD,
-	OSHST,
-	OSH,
-	RESERVED_4,
-	NSHLD,
-	NSHST,
-	NSH,
-	RESERVED_8,
-	ISHLD,
-	ISHST,
-	ISH,
-	RESERVED_12,
-	LD,
-	ST,
-	SY,
+    invalid = 0,
+    reserved_0,
+    oshld,
+    oshst,
+    osh,
+    reserved_4,
+    nshld,
+    nshst,
+    nsh,
+    reserved_8,
+    ishld,
+    ishst,
+    ish,
+    reserved_12,
+    ld,
+    st,
+    sy,
 }
 
-//> Operand type for instruction's operands
+/// Operand type for instruction's operands
 enum ArmOpType {
-	INVALID = 0, // = CS_OP_INVALID (Uninitialized).
-	REG, // = CS_OP_REG (Register operand).
-	IMM, // = CS_OP_IMM (Immediate operand).
-	MEM, // = CS_OP_MEM (Memory operand).
-	FP,  // = CS_OP_FP (Floating-Point operand).
-	CIMM = 64, // C-Immediate (coprocessor registers)
-	PIMM, // P-Immediate (coprocessor registers)
-	SETEND,	// operand for SETEND instruction
-	SYSREG,	// MSR/MRS special register operand
+    INVALID = 0, /// Invalid
+    REG,         /// Register operand (`ArmRegister`)
+    IMM,         /// Immediate operand (`int`)
+    MEM,         /// Memory operand (`ArmOpMem`)
+    FP,          /// Floating-Point operand (`double`).
+    CIMM = 64,   /// C-Immediate (`int` / coprocessor registers)
+    PIMM,        /// P-Immediate (`int` / coprocessor registers)
+    SETEND,      /// Operand for SETEND instruction (`ArmSetendType`)
+    SYSREG,      /// MSR/MRS special register operand (`ArmRegister`)
 }
 
-//> Operand type for SETEND instruction
+/// Operand type for SETEND instruction
 enum ArmSetendType {
-	INVALID = 0,	// Uninitialized.
-	BE,	// BE operand.
-	LE, // LE operand
+    invalid = 0, /// Invalid
+    be,          /// Big-endian operand
+    le,          /// Little-endian operand
 }
 
+/// Mode operand of CPS instruction
 enum ArmCpsmodeType {
-	INVALID = 0,
-	IE = 2,
-	ID = 3
+    invalid = 0, /// Invalid
+    ie = 2,      /// Interrupt or abort enable
+    id = 3       /// Interrupt or abort disable
 }
 
-//> Operand type for SETEND instruction
+/// Flags operand of CPS instruction
 enum ArmCpsflagType {
-	INVALID = 0,
-	F = 1,
-	I = 2,
-	A = 4,
-	NONE = 16,	// no flag
+    invalid = 0, /// Invalid
+    f = 1,       /// Enables or disables FIQ interrupts
+    i = 2,       /// Enables or disables IRQ interrupts
+    a = 4,       /// Enables or disables imprecise aborts
+    none = 16,   /// No flag
 }
 
-//> Data type for elements of vector instructions.
+/// Data type for elements of vector instructions.
 enum ArmVectordataType {
-	INVALID = 0,
+    invalid = 0,
 
-	// Integer type
-	I8,
-	I16,
-	I32,
-	I64,
+    // Integer type
+    i8,
+    i16,
+    i32,
+    i64,
 
-	// Signed integer type
-	S8,
-	S16,
-	S32,
-	S64,
+    // Signed integer type
+    s8,
+    s16,
+    s32,
+    s64,
 
-	// Unsigned integer type
-	U8,
-	U16,
-	U32,
-	U64,
+    // Unsigned integer type
+    u8,
+    u16,
+    u32,
+    u64,
 
-	// Data type for VMUL/VMULL
-	P8,
+    // Data type for VMUL/VMULL
+    p8,
 
-	// Floating type
-	F32,
-	F64,
+    // Floating type
+    f32,
+    f64,
 
-	// Convert float <-> float
-	F16F64,	// f16.f64
-	F64F16,	// f64.f16
-	F32F16,	// f32.f16
-	F16F32,	// f32.f16
-	F64F32,	// f64.f32
-	F32F64,	// f32.f64
+    // Convert float <-> float
+    f16f64, // f16.f64
+    f64f16, // f64.f16
+    f32f16, // f32.f16
+    f16f32, // f32.f16
+    f64f32, // f64.f32
+    f32f64, // f32.f64
 
-	// Convert integer <-> float
-	S32F32,	// s32.f32
-	U32F32,	// u32.f32
-	F32S32,	// f32.s32
-	F32U32,	// f32.u32
-	F64S16,	// f64.s16
-	F32S16,	// f32.s16
-	F64S32,	// f64.s32
-	S16F64,	// s16.f64
-	S16F32,	// s16.f64
-	S32F64,	// s32.f64
-	U16F64,	// u16.f64
-	U16F32,	// u16.f32
-	U32F64,	// u32.f64
-	F64U16,	// f64.u16
-	F32U16,	// f32.u16
-	F64U32,	// f64.u32
+    // Convert integer <-> float
+    s32f32, // s32.f32
+    u32f32, // u32.f32
+    f32s32, // f32.s32
+    f32u32, // f32.u32
+    f64s16, // f64.s16
+    f32s16, // f32.s16
+    f64s32, // f64.s32
+    s16f64, // s16.f64
+    s16f32, // s16.f64
+    s32f64, // s32.f64
+    u16f64, // u16.f64
+    u16f32, // u16.f32
+    u32f64, // u32.f64
+    f64u16, // f64.u16
+    f32u16, // f32.u16
+    f64u32, // f64.u32
 }
 
-//> ARM registers
+/// ARM registers
 enum ArmRegister {
-	INVALID = 0,
-	APSR,
-	APSR_NZCV,
-	CPSR,
-	FPEXC,
-	FPINST,
-	FPSCR,
-	FPSCR_NZCV,
-	FPSID,
-	ITSTATE,
-	LR,
-	PC,
-	SP,
-	SPSR,
-	D0,
-	D1,
-	D2,
-	D3,
-	D4,
-	D5,
-	D6,
-	D7,
-	D8,
-	D9,
-	D10,
-	D11,
-	D12,
-	D13,
-	D14,
-	D15,
-	D16,
-	D17,
-	D18,
-	D19,
-	D20,
-	D21,
-	D22,
-	D23,
-	D24,
-	D25,
-	D26,
-	D27,
-	D28,
-	D29,
-	D30,
-	D31,
-	FPINST2,
-	MVFR0,
-	MVFR1,
-	MVFR2,
-	Q0,
-	Q1,
-	Q2,
-	Q3,
-	Q4,
-	Q5,
-	Q6,
-	Q7,
-	Q8,
-	Q9,
-	Q10,
-	Q11,
-	Q12,
-	Q13,
-	Q14,
-	Q15,
-	R0,
-	R1,
-	R2,
-	R3,
-	R4,
-	R5,
-	R6,
-	R7,
-	R8,
-	R9,
-	R10,
-	R11,
-	R12,
-	S0,
-	S1,
-	S2,
-	S3,
-	S4,
-	S5,
-	S6,
-	S7,
-	S8,
-	S9,
-	S10,
-	S11,
-	S12,
-	S13,
-	S14,
-	S15,
-	S16,
-	S17,
-	S18,
-	S19,
-	S20,
-	S21,
-	S22,
-	S23,
-	S24,
-	S25,
-	S26,
-	S27,
-	S28,
-	S29,
-	S30,
-	S31,
+    invalid = 0,
+    apsr,
+    apsr_nzcv,
+    cpsr,
+    fpexc,
+    fpinst,
+    fpscr,
+    fpscr_nzcv,
+    fpsid,
+    itstate,
+    lr,
+    pc,
+    sp,
+    spsr,
+    d0,
+    d1,
+    d2,
+    d3,
+    d4,
+    d5,
+    d6,
+    d7,
+    d8,
+    d9,
+    d10,
+    d11,
+    d12,
+    d13,
+    d14,
+    d15,
+    d16,
+    d17,
+    d18,
+    d19,
+    d20,
+    d21,
+    d22,
+    d23,
+    d24,
+    d25,
+    d26,
+    d27,
+    d28,
+    d29,
+    d30,
+    d31,
+    fpinst2,
+    mvfr0,
+    mvfr1,
+    mvfr2,
+    q0,
+    q1,
+    q2,
+    q3,
+    q4,
+    q5,
+    q6,
+    q7,
+    q8,
+    q9,
+    q10,
+    q11,
+    q12,
+    q13,
+    q14,
+    q15,
+    r0,
+    r1,
+    r2,
+    r3,
+    r4,
+    r5,
+    r6,
+    r7,
+    r8,
+    r9,
+    r10,
+    r11,
+    r12,
+    s0,
+    s1,
+    s2,
+    s3,
+    s4,
+    s5,
+    s6,
+    s7,
+    s8,
+    s9,
+    s10,
+    s11,
+    s12,
+    s13,
+    s14,
+    s15,
+    s16,
+    s17,
+    s18,
+    s19,
+    s20,
+    s21,
+    s22,
+    s23,
+    s24,
+    s25,
+    s26,
+    s27,
+    s28,
+    s29,
+    s30,
+    s31,
 
-	//> alias registers
-	R13 = SP,
-	R14 = LR,
-	R15 = PC,
+    // Alias registers
+    r13 = sp,
+    r14 = lr,
+    r15 = pc,
 
-	SB = R9,
-	SL = R10,
-	FP = R11,
-	IP = R12,
+    sb = r9,
+    sl = r10,
+    fp = r11,
+    ip = r12,
 }
 
-//> ARM instruction
+/// ARM instruction
 enum ArmInstructionId {
-	INVALID = 0,
+    invalid = 0,
 
-	ADC,
-	ADD,
-	ADR,
-	AESD,
-	AESE,
-	AESIMC,
-	AESMC,
-	AND,
-	BFC,
-	BFI,
-	BIC,
-	BKPT,
-	BL,
-	BLX,
-	BX,
-	BXJ,
-	B,
-	CDP,
-	CDP2,
-	CLREX,
-	CLZ,
-	CMN,
-	CMP,
-	CPS,
-	CRC32B,
-	CRC32CB,
-	CRC32CH,
-	CRC32CW,
-	CRC32H,
-	CRC32W,
-	DBG,
-	DMB,
-	DSB,
-	EOR,
-	VMOV,
-	FLDMDBX,
-	FLDMIAX,
-	VMRS,
-	FSTMDBX,
-	FSTMIAX,
-	HINT,
-	HLT,
-	ISB,
-	LDA,
-	LDAB,
-	LDAEX,
-	LDAEXB,
-	LDAEXD,
-	LDAEXH,
-	LDAH,
-	LDC2L,
-	LDC2,
-	LDCL,
-	LDC,
-	LDMDA,
-	LDMDB,
-	LDM,
-	LDMIB,
-	LDRBT,
-	LDRB,
-	LDRD,
-	LDREX,
-	LDREXB,
-	LDREXD,
-	LDREXH,
-	LDRH,
-	LDRHT,
-	LDRSB,
-	LDRSBT,
-	LDRSH,
-	LDRSHT,
-	LDRT,
-	LDR,
-	MCR,
-	MCR2,
-	MCRR,
-	MCRR2,
-	MLA,
-	MLS,
-	MOV,
-	MOVT,
-	MOVW,
-	MRC,
-	MRC2,
-	MRRC,
-	MRRC2,
-	MRS,
-	MSR,
-	MUL,
-	MVN,
-	ORR,
-	PKHBT,
-	PKHTB,
-	PLDW,
-	PLD,
-	PLI,
-	QADD,
-	QADD16,
-	QADD8,
-	QASX,
-	QDADD,
-	QDSUB,
-	QSAX,
-	QSUB,
-	QSUB16,
-	QSUB8,
-	RBIT,
-	REV,
-	REV16,
-	REVSH,
-	RFEDA,
-	RFEDB,
-	RFEIA,
-	RFEIB,
-	RSB,
-	RSC,
-	SADD16,
-	SADD8,
-	SASX,
-	SBC,
-	SBFX,
-	SDIV,
-	SEL,
-	SETEND,
-	SHA1C,
-	SHA1H,
-	SHA1M,
-	SHA1P,
-	SHA1SU0,
-	SHA1SU1,
-	SHA256H,
-	SHA256H2,
-	SHA256SU0,
-	SHA256SU1,
-	SHADD16,
-	SHADD8,
-	SHASX,
-	SHSAX,
-	SHSUB16,
-	SHSUB8,
-	SMC,
-	SMLABB,
-	SMLABT,
-	SMLAD,
-	SMLADX,
-	SMLAL,
-	SMLALBB,
-	SMLALBT,
-	SMLALD,
-	SMLALDX,
-	SMLALTB,
-	SMLALTT,
-	SMLATB,
-	SMLATT,
-	SMLAWB,
-	SMLAWT,
-	SMLSD,
-	SMLSDX,
-	SMLSLD,
-	SMLSLDX,
-	SMMLA,
-	SMMLAR,
-	SMMLS,
-	SMMLSR,
-	SMMUL,
-	SMMULR,
-	SMUAD,
-	SMUADX,
-	SMULBB,
-	SMULBT,
-	SMULL,
-	SMULTB,
-	SMULTT,
-	SMULWB,
-	SMULWT,
-	SMUSD,
-	SMUSDX,
-	SRSDA,
-	SRSDB,
-	SRSIA,
-	SRSIB,
-	SSAT,
-	SSAT16,
-	SSAX,
-	SSUB16,
-	SSUB8,
-	STC2L,
-	STC2,
-	STCL,
-	STC,
-	STL,
-	STLB,
-	STLEX,
-	STLEXB,
-	STLEXD,
-	STLEXH,
-	STLH,
-	STMDA,
-	STMDB,
-	STM,
-	STMIB,
-	STRBT,
-	STRB,
-	STRD,
-	STREX,
-	STREXB,
-	STREXD,
-	STREXH,
-	STRH,
-	STRHT,
-	STRT,
-	STR,
-	SUB,
-	SVC,
-	SWP,
-	SWPB,
-	SXTAB,
-	SXTAB16,
-	SXTAH,
-	SXTB,
-	SXTB16,
-	SXTH,
-	TEQ,
-	TRAP,
-	TST,
-	UADD16,
-	UADD8,
-	UASX,
-	UBFX,
-	UDF,
-	UDIV,
-	UHADD16,
-	UHADD8,
-	UHASX,
-	UHSAX,
-	UHSUB16,
-	UHSUB8,
-	UMAAL,
-	UMLAL,
-	UMULL,
-	UQADD16,
-	UQADD8,
-	UQASX,
-	UQSAX,
-	UQSUB16,
-	UQSUB8,
-	USAD8,
-	USADA8,
-	USAT,
-	USAT16,
-	USAX,
-	USUB16,
-	USUB8,
-	UXTAB,
-	UXTAB16,
-	UXTAH,
-	UXTB,
-	UXTB16,
-	UXTH,
-	VABAL,
-	VABA,
-	VABDL,
-	VABD,
-	VABS,
-	VACGE,
-	VACGT,
-	VADD,
-	VADDHN,
-	VADDL,
-	VADDW,
-	VAND,
-	VBIC,
-	VBIF,
-	VBIT,
-	VBSL,
-	VCEQ,
-	VCGE,
-	VCGT,
-	VCLE,
-	VCLS,
-	VCLT,
-	VCLZ,
-	VCMP,
-	VCMPE,
-	VCNT,
-	VCVTA,
-	VCVTB,
-	VCVT,
-	VCVTM,
-	VCVTN,
-	VCVTP,
-	VCVTT,
-	VDIV,
-	VDUP,
-	VEOR,
-	VEXT,
-	VFMA,
-	VFMS,
-	VFNMA,
-	VFNMS,
-	VHADD,
-	VHSUB,
-	VLD1,
-	VLD2,
-	VLD3,
-	VLD4,
-	VLDMDB,
-	VLDMIA,
-	VLDR,
-	VMAXNM,
-	VMAX,
-	VMINNM,
-	VMIN,
-	VMLA,
-	VMLAL,
-	VMLS,
-	VMLSL,
-	VMOVL,
-	VMOVN,
-	VMSR,
-	VMUL,
-	VMULL,
-	VMVN,
-	VNEG,
-	VNMLA,
-	VNMLS,
-	VNMUL,
-	VORN,
-	VORR,
-	VPADAL,
-	VPADDL,
-	VPADD,
-	VPMAX,
-	VPMIN,
-	VQABS,
-	VQADD,
-	VQDMLAL,
-	VQDMLSL,
-	VQDMULH,
-	VQDMULL,
-	VQMOVUN,
-	VQMOVN,
-	VQNEG,
-	VQRDMULH,
-	VQRSHL,
-	VQRSHRN,
-	VQRSHRUN,
-	VQSHL,
-	VQSHLU,
-	VQSHRN,
-	VQSHRUN,
-	VQSUB,
-	VRADDHN,
-	VRECPE,
-	VRECPS,
-	VREV16,
-	VREV32,
-	VREV64,
-	VRHADD,
-	VRINTA,
-	VRINTM,
-	VRINTN,
-	VRINTP,
-	VRINTR,
-	VRINTX,
-	VRINTZ,
-	VRSHL,
-	VRSHRN,
-	VRSHR,
-	VRSQRTE,
-	VRSQRTS,
-	VRSRA,
-	VRSUBHN,
-	VSELEQ,
-	VSELGE,
-	VSELGT,
-	VSELVS,
-	VSHLL,
-	VSHL,
-	VSHRN,
-	VSHR,
-	VSLI,
-	VSQRT,
-	VSRA,
-	VSRI,
-	VST1,
-	VST2,
-	VST3,
-	VST4,
-	VSTMDB,
-	VSTMIA,
-	VSTR,
-	VSUB,
-	VSUBHN,
-	VSUBL,
-	VSUBW,
-	VSWP,
-	VTBL,
-	VTBX,
-	VCVTR,
-	VTRN,
-	VTST,
-	VUZP,
-	VZIP,
-	ADDW,
-	ASR,
-	DCPS1,
-	DCPS2,
-	DCPS3,
-	IT,
-	LSL,
-	LSR,
-	ASRS,
-	LSRS,
-	ORN,
-	ROR,
-	RRX,
-	SUBS,
-	SUBW,
-	TBB,
-	TBH,
-	CBNZ,
-	CBZ,
-	MOVS,
-	POP,
-	PUSH,
+    adc,
+    add,
+    adr,
+    aesd,
+    aese,
+    aesimc,
+    aesmc,
+    and,
+    bfc,
+    bfi,
+    bic,
+    bkpt,
+    bl,
+    blx,
+    bx,
+    bxj,
+    b,
+    cdp,
+    cdp2,
+    clrex,
+    clz,
+    cmn,
+    cmp,
+    cps,
+    crc32b,
+    crc32cb,
+    crc32ch,
+    crc32cw,
+    crc32h,
+    crc32w,
+    dbg,
+    dmb,
+    dsb,
+    eor,
+    vmov,
+    fldmdbx,
+    fldmiax,
+    vmrs,
+    fstmdbx,
+    fstmiax,
+    hint,
+    hlt,
+    isb,
+    lda,
+    ldab,
+    ldaex,
+    ldaexb,
+    ldaexd,
+    ldaexh,
+    ldah,
+    ldc2l,
+    ldc2,
+    ldcl,
+    ldc,
+    ldmda,
+    ldmdb,
+    ldm,
+    ldmib,
+    ldrbt,
+    ldrb,
+    ldrd,
+    ldrex,
+    ldrexb,
+    ldrexd,
+    ldrexh,
+    ldrh,
+    ldrht,
+    ldrsb,
+    ldrsbt,
+    ldrsh,
+    ldrsht,
+    ldrt,
+    ldr,
+    mcr,
+    mcr2,
+    mcrr,
+    mcrr2,
+    mla,
+    mls,
+    mov,
+    movt,
+    movw,
+    mrc,
+    mrc2,
+    mrrc,
+    mrrc2,
+    mrs,
+    msr,
+    mul,
+    mvn,
+    orr,
+    pkhbt,
+    pkhtb,
+    pldw,
+    pld,
+    pli,
+    qadd,
+    qadd16,
+    qadd8,
+    qasx,
+    qdadd,
+    qdsub,
+    qsax,
+    qsub,
+    qsub16,
+    qsub8,
+    rbit,
+    rev,
+    rev16,
+    revsh,
+    rfeda,
+    rfedb,
+    rfeia,
+    rfeib,
+    rsb,
+    rsc,
+    sadd16,
+    sadd8,
+    sasx,
+    sbc,
+    sbfx,
+    sdiv,
+    sel,
+    setend,
+    sha1c,
+    sha1h,
+    sha1m,
+    sha1p,
+    sha1su0,
+    sha1su1,
+    sha256h,
+    sha256h2,
+    sha256su0,
+    sha256su1,
+    shadd16,
+    shadd8,
+    shasx,
+    shsax,
+    shsub16,
+    shsub8,
+    smc,
+    smlabb,
+    smlabt,
+    smlad,
+    smladx,
+    smlal,
+    smlalbb,
+    smlalbt,
+    smlald,
+    smlaldx,
+    smlaltb,
+    smlaltt,
+    smlatb,
+    smlatt,
+    smlawb,
+    smlawt,
+    smlsd,
+    smlsdx,
+    smlsld,
+    smlsldx,
+    smmla,
+    smmlar,
+    smmls,
+    smmlsr,
+    smmul,
+    smmulr,
+    smuad,
+    smuadx,
+    smulbb,
+    smulbt,
+    smull,
+    smultb,
+    smultt,
+    smulwb,
+    smulwt,
+    smusd,
+    smusdx,
+    srsda,
+    srsdb,
+    srsia,
+    srsib,
+    ssat,
+    ssat16,
+    ssax,
+    ssub16,
+    ssub8,
+    stc2l,
+    stc2,
+    stcl,
+    stc,
+    stl,
+    stlb,
+    stlex,
+    stlexb,
+    stlexd,
+    stlexh,
+    stlh,
+    stmda,
+    stmdb,
+    stm,
+    stmib,
+    strbt,
+    strb,
+    strd,
+    strex,
+    strexb,
+    strexd,
+    strexh,
+    strh,
+    strht,
+    strt,
+    str,
+    sub,
+    svc,
+    swp,
+    swpb,
+    sxtab,
+    sxtab16,
+    sxtah,
+    sxtb,
+    sxtb16,
+    sxth,
+    teq,
+    trap,
+    tst,
+    uadd16,
+    uadd8,
+    uasx,
+    ubfx,
+    udf,
+    udiv,
+    uhadd16,
+    uhadd8,
+    uhasx,
+    uhsax,
+    uhsub16,
+    uhsub8,
+    umaal,
+    umlal,
+    umull,
+    uqadd16,
+    uqadd8,
+    uqasx,
+    uqsax,
+    uqsub16,
+    uqsub8,
+    usad8,
+    usada8,
+    usat,
+    usat16,
+    usax,
+    usub16,
+    usub8,
+    uxtab,
+    uxtab16,
+    uxtah,
+    uxtb,
+    uxtb16,
+    uxth,
+    vabal,
+    vaba,
+    vabdl,
+    vabd,
+    vabs,
+    vacge,
+    vacgt,
+    vadd,
+    vaddhn,
+    vaddl,
+    vaddw,
+    vand,
+    vbic,
+    vbif,
+    vbit,
+    vbsl,
+    vceq,
+    vcge,
+    vcgt,
+    vcle,
+    vcls,
+    vclt,
+    vclz,
+    vcmp,
+    vcmpe,
+    vcnt,
+    vcvta,
+    vcvtb,
+    vcvt,
+    vcvtm,
+    vcvtn,
+    vcvtp,
+    vcvtt,
+    vdiv,
+    vdup,
+    veor,
+    vext,
+    vfma,
+    vfms,
+    vfnma,
+    vfnms,
+    vhadd,
+    vhsub,
+    vld1,
+    vld2,
+    vld3,
+    vld4,
+    vldmdb,
+    vldmia,
+    vldr,
+    vmaxnm,
+    vmax,
+    vminnm,
+    vmin,
+    vmla,
+    vmlal,
+    vmls,
+    vmlsl,
+    vmovl,
+    vmovn,
+    vmsr,
+    vmul,
+    vmull,
+    vmvn,
+    vneg,
+    vnmla,
+    vnmls,
+    vnmul,
+    vorn,
+    vorr,
+    vpadal,
+    vpaddl,
+    vpadd,
+    vpmax,
+    vpmin,
+    vqabs,
+    vqadd,
+    vqdmlal,
+    vqdmlsl,
+    vqdmulh,
+    vqdmull,
+    vqmovun,
+    vqmovn,
+    vqneg,
+    vqrdmulh,
+    vqrshl,
+    vqrshrn,
+    vqrshrun,
+    vqshl,
+    vqshlu,
+    vqshrn,
+    vqshrun,
+    vqsub,
+    vraddhn,
+    vrecpe,
+    vrecps,
+    vrev16,
+    vrev32,
+    vrev64,
+    vrhadd,
+    vrinta,
+    vrintm,
+    vrintn,
+    vrintp,
+    vrintr,
+    vrintx,
+    vrintz,
+    vrshl,
+    vrshrn,
+    vrshr,
+    vrsqrte,
+    vrsqrts,
+    vrsra,
+    vrsubhn,
+    vseleq,
+    vselge,
+    vselgt,
+    vselvs,
+    vshll,
+    vshl,
+    vshrn,
+    vshr,
+    vsli,
+    vsqrt,
+    vsra,
+    vsri,
+    vst1,
+    vst2,
+    vst3,
+    vst4,
+    vstmdb,
+    vstmia,
+    vstr,
+    vsub,
+    vsubhn,
+    vsubl,
+    vsubw,
+    vswp,
+    vtbl,
+    vtbx,
+    vcvtr,
+    vtrn,
+    vtst,
+    vuzp,
+    vzip,
+    addw,
+    asr,
+    dcps1,
+    dcps2,
+    dcps3,
+    it,
+    lsl,
+    lsr,
+    asrs,
+    lsrs,
+    orn,
+    ror,
+    rrx,
+    subs,
+    subw,
+    tbb,
+    tbh,
+    cbnz,
+    cbz,
+    movs,
+    pop,
+    push,
 
-	// special instructions
-	NOP,
-	YIELD,
-	WFE,
-	WFI,
-	SEV,
-	SEVL,
-	VPUSH,
-	VPOP
+    // Special instructions
+    nop,
+    yield,
+    wfe,
+    wfi,
+    sev,
+    sevl,
+    vpush,
+    vpop
 }
 
-//> Group of ARM instructions
+/// Group of ARM instructions
 enum ArmInstructionGroup {
-	INVALID = 0, // = CS_GRP_INVALID
+    invalid = 0,
 
-	//> Generic groups
-	// all jump instructions (conditional+direct+indirect jumps)
-	JUMP,	// = CS_GRP_JUMP
+    // Generic groups
+    // All jump instructions (conditional+direct+indirect jumps)
+    jump,
 
-	//> Architecture-specific groups
-	CRYPTO = 128,
-	DATABARRIER,
-	DIVIDE,
-	FPARMV8,
-	MULTPRO,
-	NEON,
-	T2EXTRACTPACK,
-	THUMB2DSP,
-	TRUSTZONE,
-	V4T,
-	V5T,
-	V5TE,
-	V6,
-	V6T2,
-	V7,
-	V8,
-	VFP2,
-	VFP3,
-	VFP4,
-	ARM,
-	MCLASS,
-	NOTMCLASS,
-	THUMB,
-	THUMB1ONLY,
-	THUMB2,
-	PREV8,
-	FPVMLX,
-	MULOPS,
-	CRC,
-	DPVFP,
-	V6M
+    // Architecture-specific groups
+    crypto = 128,
+    databarrier,
+    divide,
+    fparmv8,
+    multpro,
+    neon,
+    t2extractpack,
+    thumb2dsp,
+    trustzone,
+    v4t,
+    v5t,
+    v5te,
+    v6,
+    v6t2,
+    v7,
+    v8,
+    vfp2,
+    vfp3,
+    vfp4,
+    arm,
+    mclass,
+    notmclass,
+    thumb,
+    thumb1only,
+    thumb2,
+    prev8,
+    fpvmlx,
+    mulops,
+    crc,
+    dpvfp,
+    v6m
 }
