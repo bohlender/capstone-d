@@ -6,13 +6,22 @@ matrix:
     - d: ldc
     - d: gdc
     - d: dmd
+      env: CODECOV=1
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y libcapstone-dev
+  - curl -sL https://github.com/aquynh/capstone/archive/3.0.5.tar.gz > capstone.tar.gz
+  - tar xzf capstone.tar.gz
+  - cd capstone-3.0.5
+  - sudo ./make.sh install
 
 script:
-  - dub test -b unittest-cov --compiler=${DC}
+- if [[ "$CODECOV" == "1" ]]; then
+    dub test -b unittest-cov;
+  else
+    dub test -b unittest;
+  fi
 
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+- if [[ "$CODECOV" == "1" ]]; then
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports";
+  fi
