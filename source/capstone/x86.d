@@ -23,7 +23,7 @@ struct X86Op {
 	X86OpType type;
 	// TODO: hide?
 	X86OpValue value;
-	alias value this; // for conventient access to value (as in original bindings)
+	alias value this; // for convenient access to value (as in original bindings)
 
     // size of this operand (in bytes)
     ubyte size;

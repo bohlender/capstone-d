@@ -29,7 +29,7 @@ struct ArmOp {
 	ArmOpType type;	// operand type
 	// TODO: hide?
 	ArmOpValue value;
-	alias value this; // for conventient access to value (as in original bindings)
+	alias value this; // for convenient access to value (as in original bindings)
 
 	// in some instructions, an operand can be subtracted or added to
 	// the base register,
