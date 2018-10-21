@@ -4,7 +4,6 @@ matrix:
   include:
     - d: dmd
     - d: ldc
-    - d: gdc
     - d: dmd
       env: CODECOV=1
 
