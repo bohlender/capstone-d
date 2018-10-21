@@ -1,0 +1,16 @@
+language: d
+
+matrix:
+  include:
+    - d: dmd
+    - d: ldc
+    - d: gdc
+    - d: dmd
+      env: CODECOV=1
+
+
+script:
+  - dub test -b unittest-cov --compiler=${DC}
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
