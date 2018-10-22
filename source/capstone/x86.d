@@ -1,3 +1,4 @@
+/// Types and constants of x86 architecture (both 32bit and 64bit)
 module capstone.x86;
 
 import std.variant;
@@ -6,36 +7,33 @@ import std.exception: enforce;
 import capstone.internal.x86;
 import capstone.utils;
 
-// Instruction's operand referring to memory
-// This is associated with X86_OP_MEM operand type above
+/** Instruction's operand referring to memory
+
+This is associated with the `X86OpType.mem` operand type
+*/
 struct X86OpMem {
-	X86Register segment; // segment register (or X86_REG_INVALID if irrelevant)
-	X86Register base;	// base register (or X86_REG_INVALID if irrelevant)
-	X86Register index;	// index register (or X86_REG_INVALID if irrelevant)
-	int scale;	// scale for index register
-	long disp;	// displacement value
+	X86Register segment; // Segment register (or `X86Register.invalid` if irrelevant)
+	X86Register base;	 // Base register (or `X86Register.invalid` if irrelevant)
+	X86Register index;	 // Index register (or `X86Register.invalid` if irrelevant)
+	int scale;			 // Scale for index register
+	long disp;			 // Displacement value
 }
 
+/// Tagged union of possible operand types
 alias X86OpValue = TaggedUnion!(X86Register, "reg", long, "imm", X86OpMem, "mem", double, "fp");
 
-// Instruction operand
+/// Instruction's operand
 struct X86Op {
-	X86OpType type;
-	// TODO: hide?
-	X86OpValue value;
-	alias value this; // for convenient access to value (as in original bindings)
+	X86OpType type;   /// Operand type
+	X86OpValue value; /// Operand value of type `type`
+	alias value this; /// Convenient access to value (as in original bindings)
 
-    // size of this operand (in bytes)
-    ubyte size;
+    ubyte size; /// Size of this operand (in bytes)
 
-    // AVX broadcast type, or 0 if irrelevant
-    X86AvxBroadcast avxBcast;
+    X86AvxBroadcast avxBcast; /// AVX broadcast type, or `X86AvxBroadcast.invalid`
+    bool avxZeroOpmask; 	  /// AVX zero opmask {z}
 
-    // AVX zero opmask {z}
-    bool avxZeroOpmask;
-
-	// TODO: Should not be visible
-	this(cs_x86_op internal){
+	package this(cs_x86_op internal){
 		type = internal.type;
 		final switch(internal.type) {
 			case X86OpType.invalid:
@@ -59,59 +57,46 @@ struct X86Op {
 	}
 }
 
-// Instruction structure
+/// X86-specific information about an instruction
 struct X86InstructionDetail {
-	// Instruction prefix, which can be up to 4 bytes.
-	// A prefix byte gets value 0 when irrelevant.
-	// prefix[0] indicates REP/REPNE/LOCK prefix (See X86_PREFIX_REP/REPNE/LOCK above)
-	// prefix[1] indicates segment override (irrelevant for x86_64):
-	// See X86_PREFIX_CS/SS/DS/ES/FS/GS above.
-	// prefix[2] indicates operand-size override (X86_PREFIX_OPSIZE)
-	// prefix[3] indicates address-size override (X86_PREFIX_ADDRSIZE)
-	ubyte[] prefix;
+	/** Instruction prefix, which can be up to 4 bytes.
 
-	// Instruction opcode, wich can be from 1 to 4 bytes in size.
-	// This contains VEX opcode as well.
-	// An trailing opcode byte gets value 0 when irrelevant.
-	ubyte[] opcode;
+	A prefix byte gets value 0 when irrelevant.
+	$(OL
+		$(LI `prefix[0]` indicates REP/REPNE/LOCK prefix (See `X86Prefix.rep`, `X86Prefix.repne`, `X86Prefix.lock`)
+		$(LI `prefix[1]` indicates segment override (irrelevant for x86_64):
+				See `X86Prefix.cs`,`X86Prefix.ss`,`X86Prefix.ds`,`X86Prefix.es`,`X86Prefix.fs`,`X86Prefix.gs`)
+		$(LI `prefix[2]` indicates operand-size override (`X86Prefix.opsize`)
+		$(LI `prefix[3]` indicates address-size override (`X86Prefix.addrsize`)
+	)
+	*/
+	ubyte[] prefix; // TODO: Split?
 
-	// REX prefix: only a non-zero value is relavant for x86_64
-	ubyte rex;
+	/** Instruction opcode, wich can be from 1 to 4 bytes in size.
 
-	// Address size, which can be overrided with above prefix[5].
-	ubyte addrSize;
+	This contains VEX opcode as well. A trailing opcode byte gets value 0 when irrelevant.
+	*/
+	ubyte[] opcode; // TODO: Get rid of irrelevant trailing bytes
+	ubyte rex; 		/// REX prefix: only a non-zero value is relavant for x86_64
+	ubyte addrSize; /// Address size, which can be overrided with above prefix[5].
+	ubyte modRM;	/// ModR/M byte
+	ubyte sib; 		/// SIB value, or 0 when irrelevant.
+	int disp; 		/// Displacement value, or 0 when irrelevant.
 
-	// ModR/M byte
-	ubyte modRM;
+	// SIB state
+	X86Register sibIndex; 	   /// SIB index register, or `X86Register.invalid` when irrelevant
+	byte sibScale; 		       /// SIB scale. Only applicable if `sibIndex` is relavant
+	X86Register sibBase;       /// SIB base register, or `X86Register.invalid` when irrelevant
 
-	// SIB value, or 0 when irrelevant.
-	ubyte sib;
+	X86SseCodeCondition sseCc; /// SSE Code Condition
+	X86AvxCodeCondition avxCc; /// AVX Code Condition
+	bool avxSae; 			   /// AVX Suppress all exceptions
+	X86AvxRoundingMode avxRM;  /// AVX static rounding mode
 
-	// Displacement value, or 0 when irrelevant.
-	int disp;
-
-	/* SIB state */
-	// SIB index register, or X86_REG_INVALID when irrelevant.
-	X86Register sibIndex;
-	// SIB scale. only applicable if sib_index is relavant.
-	byte sibScale;
-	// SIB base register, or X86_REG_INVALID when irrelevant.
-	X86Register sibBase;
-
-	// SSE Code Condition
-	X86SseCodeCondition sseCc;
-	// AVX Code Condition
-	X86AvxCodeCondition avxCc;
-	// AVX Suppress all Exception
-	bool avxSae;
-	// AVX static rounding mode
-	X86AvxRoundingMode avxRM;
-
-	X86Op[] operands;	// operands for this instruction.
+	X86Op[] operands; 		   /// Operands for this instruction.
 
 	// TODO: Check for copying/ownership issues
-	// TODO: Should not be visible
-	this(cs_x86 internal){
+	package this(cs_x86 internal){
 		prefix = internal.prefix.dup; // here [0..?]
 		opcode = internal.opcode.dup; // here [0..?]
 		rex = internal.rex;
@@ -135,7 +120,109 @@ struct X86InstructionDetail {
 // Constants
 ///////////////////////////////////////////////////////////////////////////////
 
-//> X86 registers
+/// Operand type for instruction's operands
+enum X86OpType {
+	invalid = 0,  /// Invalid
+	register, 	  /// Register operand (`X86Register`)
+	immediate,    /// Immediate operand (`long`)
+	memory, 	  /// Memory operand (`X86OpMem`)
+	floatingPoint /// Floating-Point operand (`double`)
+}
+
+/// AVX broadcast type
+enum X86AvxBroadcast {
+	invalid = 0, /// Invalid
+	bcast_2,	 /// avx512 broadcast type {1to2}
+	bcast_4,	 /// avx512 broadcast type {1to4}
+	bcast_8,	 /// avx512 broadcast type {1to8}
+	bcast_16	 /// avx512 broadcast type {1to16}
+}
+
+/// SSE code condition type
+enum X86SseCodeCondition {
+	invalid = 0,
+	eq,
+	lt,
+	le,
+	unord,
+	neq,
+	nlt,
+	nle,
+	ord,
+	eq_uq,
+	nge,
+	ngt,
+	false_,
+	neq_oq,
+	ge,
+	gt,
+	true_
+}
+
+/// AVX code condition type
+enum X86AvxCodeCondition {
+	invalid = 0,
+	eq,
+	lt,
+	le,
+	unord,
+	neq,
+	nlt,
+	nle,
+	ord,
+	eq_uq,
+	nge,
+	ngt,
+	false_,
+	neq_oq,
+	ge,
+	gt,
+	true_,
+	eq_os,
+	lt_oq,
+	le_oq,
+	unord_s,
+	neq_us,
+	nlt_uq,
+	nle_uq,
+	ord_s,
+	eq_us,
+	nge_uq,
+	ngt_uq,
+	false_os,
+	neq_os,
+	ge_oq,
+	gt_oq,
+	true_us
+}
+
+/// AVX static rounding mode type
+enum X86AvxRoundingMode {
+	invalid = 0, /// Invalid
+	rn,			 /// Round to nearest
+	rd,			 /// Round down
+	ru,			 /// Round up
+	rz			 /// Round toward zero
+}
+
+/// Instruction prefixes - used in `X86InstructionDetail.prefix[]`
+enum X86Prefix {
+	lock		= 	0xf0,	// lock (cs_x86.prefix[0]
+	rep			= 	0xf3,	// rep (cs_x86.prefix[0]
+	repne		= 	0xf2,	// repne (cs_x86.prefix[0]
+
+	cs			= 	0x2e,	// segment override cs (cs_x86.prefix[1]
+	ss			= 	0x36,	// segment override ss (cs_x86.prefix[1]
+	ds			= 	0x3e,	// segment override ds (cs_x86.prefix[1]
+	es			= 	0x26,	// segment override es (cs_x86.prefix[1]
+	fs			= 	0x64,	// segment override fs (cs_x86.prefix[1]
+	gs			= 	0x65,	// segment override gs (cs_x86.prefix[1]
+
+	opsize		=	0x66,	// operand-size override (cs_x86.prefix[2]
+	addrsize	=	0x67	// address-size override (cs_x86.prefix[3]
+}
+
+/// X86 registers
 enum X86Register {
 	invalid = 0,
 	ah, al, ax, bh, bl,
@@ -187,109 +274,7 @@ enum X86Register {
 	r11w, r12w, r13w, r14w, r15w
 }
 
-//> Operand type for instruction's operands
-enum X86OpType {
-	invalid = 0, // = CS_OP_INVALID (Uninitialized).
-	register, // = CS_OP_REG (Register operand).
-	immediate, // = CS_OP_IMM (Immediate operand).
-	memory, // = CS_OP_MEM (Memory operand).
-	floatingPoint  //  = CS_OP_FP  (Floating-Point operand).
-}
-
-//> AVX broadcast type
-enum X86AvxBroadcast {
-	invalid = 0,	// uninitialized.
-	bcast_2,	// avx512 broadcast type {1to2}
-	bcast_4,	// avx512 broadcast type {1to4}
-	bcast_8,	// avx512 broadcast type {1to8}
-	bcast_16	// avx512 broadcast type {1to16}
-}
-
-//> SSE Code Condition type
-enum X86SseCodeCondition {
-	invalid = 0,	// uninitialized.
-	eq,
-	lt,
-	le,
-	unord,
-	neq,
-	nlt,
-	nle,
-	ord,
-	eq_uq,
-	nge,
-	ngt,
-	false_,
-	neq_oq,
-	ge,
-	gt,
-	true_
-}
-
-//> AVX Code Condition type
-enum X86AvxCodeCondition {
-	invalid = 0,	// uninitialized.
-	eq,
-	lt,
-	le,
-	unord,
-	neq,
-	nlt,
-	nle,
-	ord,
-	eq_uq,
-	nge,
-	ngt,
-	false_,
-	neq_oq,
-	ge,
-	gt,
-	true_,
-	eq_os,
-	lt_oq,
-	le_oq,
-	unord_s,
-	neq_us,
-	nlt_uq,
-	nle_uq,
-	ord_s,
-	eq_us,
-	nge_uq,
-	ngt_uq,
-	false_os,
-	neq_os,
-	ge_oq,
-	gt_oq,
-	true_us
-}
-
-//> AVX static rounding mode type
-enum X86AvxRoundingMode {
-	invalid = 0,	// uninitialized.
-	rn,	// round to nearest
-	rd,	// round down
-	ru,	// round up
-	rz	// round toward zero
-}
-
-//> Instruction prefixes - to be used in cs_x86.prefix[]
-enum X86Prefix {
-	lock		= 	0xf0,	// lock (cs_x86.prefix[0]
-	rep		= 	0xf3,	// rep (cs_x86.prefix[0]
-	repne	= 	0xf2,	// repne (cs_x86.prefix[0]
-
-	cs		= 	0x2e,	// segment override cs (cs_x86.prefix[1]
-	ss		= 	0x36,	// segment override ss (cs_x86.prefix[1]
-	ds		= 	0x3e,	// segment override ds (cs_x86.prefix[1]
-	es		= 	0x26,	// segment override es (cs_x86.prefix[1]
-	fs		= 	0x64,	// segment override fs (cs_x86.prefix[1]
-	gs		= 	0x65,	// segment override gs (cs_x86.prefix[1]
-
-	opsize	=	0x66,	// operand-size override (cs_x86.prefix[2]
-	addrsize	=	0x67	// address-size override (cs_x86.prefix[3]
-}
-
-//> X86 instructions
+/// X86 instructions
 enum X86InstructionId {
 	invalid = 0,
 
@@ -1589,24 +1574,25 @@ enum X86InstructionId {
 	xtest
 }
 
-//> Group of X86 instructions
+/// Group of X86 instructions
 enum  X86InstructionGroup {
-	invalid = 0, // = cs_grp_invalid
+	invalid = 0,
 
-	//> generic groups
-	// all jump instructions (conditional+direct+indirect jumps)
-	jump,	// = cs_grp_jump
-	// all call instructions
-	call,	// = cs_grp_call
-	// all return instructions
-	ret,	// = cs_grp_ret
-	// all interrupt instructions (int+syscall)
-	int_,	// = cs_grp_int
-	// all interrupt return instructions
-	iret,	// = cs_grp_iret
+	// Generic groups
+	// All jump instructions (conditional+direct+indirect jumps)
+	jump,
+	// All call instructions
+	call,
+	// All return instructions
+	ret,
+	// All interrupt instructions (int+syscall)
+	int_,
+	// All interrupt return instructions
+	iret,
 
-	//> architecture-specific groups
-	vm = 128,	// all virtualization instructions (vt-x + amd-v)
+	// Architecture-specific groups
+	// All virtualization instructions (vt-x + amd-v)
+	vm = 128,
 	grp_3dnow,
 	aes,
 	adx,

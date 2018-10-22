@@ -76,7 +76,7 @@ struct Arm64Op {
 	}
 }
 
-/// Detailed information about an ARM64 instruction
+/// ARM64-specific information about an instruction
 struct Arm64InstructionDetail {
 	Arm64Cc cc;		  	/// Conditional code for this instruction
 	bool updateFlags; 	/// Does this instruction update flags?

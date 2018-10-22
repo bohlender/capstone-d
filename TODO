@@ -1,6 +1,8 @@
 - consistent naming/capitalisation of constants
+- port the defines, e.g. in x86.h
 - support all archs
 - const pure nogc safe
+- extend TaggedUnion with get!(T)
 
 - get rid of ModeFlags? Do not help with safety anyway
 - get rid of/wrap all the types where zeroes indicate invalid values

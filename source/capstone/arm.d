@@ -14,9 +14,8 @@ This is associated with the `ArmOpType.mem` operand type
 struct ArmOpMem {
     ArmRegister base;   /// Base register
     ArmRegister index;  /// Index register
-    // TODO: use boolean to indicate +/- 1 and @property scale
     int scale;          /// Scale for index register (can be 1, or -1)
-    int disp;           /// Displacement/offset value
+    int disp;           /// Displacement value
 }
 
 /// Optional shift
@@ -69,7 +68,7 @@ struct ArmOp {
     }
 }
 
-/// Detailed information about an ARM instruction
+/// ARM-specific information about an instruction
 struct ArmInstructionDetail {
     bool usermode;                /// User-mode registers to be loaded (for LDM/STM instructions)
     int vectorSize;               /// Scalar size for vector instructions
