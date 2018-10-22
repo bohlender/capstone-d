@@ -31,7 +31,7 @@ alias ArmOpValue = TaggedUnion!(ArmRegister, "reg", int, "imm", double, "fp", Ar
 /// Instruction's operand
 struct ArmOp {
     int vectorIndex;  /// Vector index for some vector operands (or -1 if irrelevant)
-    ArmShift shift;   /// Optional shift
+    ArmShift shift;   /// Potential shifting of operand
     ArmOpType type;   /// Operand type
     ArmOpValue value; /// Operand value of type `type`
     alias value this; /// Convenient access to value (as in original bindings)
@@ -47,21 +47,21 @@ struct ArmOp {
         shift = internal.shift;
         type = internal.type;
         final switch(internal.type){
-            case ArmOpType.INVALID:
+            case ArmOpType.invalid:
                 break;
-            case ArmOpType.REG, ArmOpType.SYSREG:
+            case ArmOpType.reg, ArmOpType.sysreg:
                 value.reg = internal.reg;
                 break;
-            case ArmOpType.IMM, ArmOpType.CIMM, ArmOpType.PIMM:
+            case ArmOpType.imm, ArmOpType.cimm, ArmOpType.pimm:
                 value.imm = internal.imm;
                 break;
-            case ArmOpType.MEM:
+            case ArmOpType.mem:
                 value.mem = internal.mem;
                 break;
-            case ArmOpType.FP:
+            case ArmOpType.fp:
                 value.fp = internal.fp;
                 break;
-            case ArmOpType.SETEND:
+            case ArmOpType.setend:
                 value.setend = internal.setend;
                 break;
         }
@@ -99,6 +99,10 @@ struct ArmInstructionDetail {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Constants
+///////////////////////////////////////////////////////////////////////////////
+
 /// ARM shift type
 enum ArmShiftType {
     invalid = 0, /// Invalid
@@ -134,7 +138,7 @@ enum ArmCc {
     al           /// Always (unconditional)     Always (unconditional)
 }
 
-/// Special registers for MSR
+/// System registers for MSR
 enum ArmSysreg {
     invalid = 0,
 
@@ -204,15 +208,15 @@ enum ArmMemBarrier {
 
 /// Operand type for instruction's operands
 enum ArmOpType {
-    INVALID = 0, /// Invalid
-    REG,         /// Register operand (`ArmRegister`)
-    IMM,         /// Immediate operand (`int`)
-    MEM,         /// Memory operand (`ArmOpMem`)
-    FP,          /// Floating-Point operand (`double`).
-    CIMM = 64,   /// C-Immediate (`int` / coprocessor registers)
-    PIMM,        /// P-Immediate (`int` / coprocessor registers)
-    SETEND,      /// Operand for SETEND instruction (`ArmSetendType`)
-    SYSREG,      /// MSR/MRS special register operand (`ArmRegister`)
+    invalid = 0, /// Invalid
+    reg,         /// Register operand (`ArmRegister`)
+    imm,         /// Immediate operand (`int`)
+    mem,         /// Memory operand (`ArmOpMem`)
+    fp,          /// Floating-Point operand (`double`).
+    cimm = 64,   /// C-Immediate (`int` / coprocessor registers)
+    pimm,        /// P-Immediate (`int` / coprocessor registers)
+    setend,      /// Operand for SETEND instruction (`ArmSetendType`)
+    sysreg,      /// MSR/MRS system register operand (`ArmRegister`)
 }
 
 /// Operand type for SETEND instruction

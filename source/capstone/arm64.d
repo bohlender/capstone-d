@@ -1,3 +1,4 @@
+/// Types and constants of ARM64 architecture
 module capstone.arm64;
 
 import std.variant;
@@ -6,33 +7,37 @@ import std.exception: enforce;
 import capstone.internal.arm64;
 import capstone.utils;
 
-// Instruction's operand referring to memory
-// This is associated with MEM operand type above
+/** Instruction's operand referring to memory
+
+This is associated with the `Arm64OpType.mem` operand type
+*/
 struct Arm64OpMem {
-	Arm64Register base;	// base register
-	Arm64Register index;	// index register
-	int disp;	// displacement/offset value
+	Arm64Register base;	 /// Base register
+	Arm64Register index; /// Index register
+	int disp;			 /// displacement/offset value
 }
 
+/// Optional shift
 struct Arm64Shift{
-	Arm64ShiftType type;	// shifter type of this operand
-	uint value;	// shifter value of this operand
+	Arm64ShiftType type; /// Type of shift
+	uint value;			 /// value (constant or register) to shift by
 }
 
+/// Tagged union of possible operand values
 alias Arm64OperandValue = TaggedUnion!(Arm64Register, "reg", long, "imm", double, "fp", Arm64OpMem, "mem", Arm64PState, "pstate", uint, "sys", Arm64PrefetchOp, "prefetch", Arm64BarrierOp, "barrier");
 
-// Instruction operand
+/// Instruction operand
 struct Arm64Op {
-	int vectorIndex;	// Vector Index for some vector operands (or -1 if irrelevant)
-	Arm64Vas vas;		// Vector Arrangement Specifier
-	Arm64Vess vess;	// Vector Element Size Specifier
-	Arm64Shift shift;
-	Arm64Extender ext;		// extender type of this operand
-	Arm64OpType type;	// operand type
-	Arm64OperandValue value;
-	alias value this; // for conventient access to value (as in original bindings)
+	int vectorIndex;  		 /// Vector index for some vector operands (or -1 if irrelevant)
+	Arm64Vas vas;	   		 /// Vector arrangement specifier
+	Arm64Vess vess;	  		 /// Vector element size specifier
+	Arm64Shift shift; 		 /// Potential shifting of operand
+	Arm64Extender ext;		 /// Extender type of this operand
+	Arm64OpType type; 		 /// Operand type
+	Arm64OperandValue value; /// Operand value of type `type`
+	alias value this; 		 /// Conventient access to value (as in original bindings)
 
-	this(cs_arm64_op internal){
+	package this(cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
 		vas = internal.vas;
 		vess = internal.vess;
@@ -71,15 +76,15 @@ struct Arm64Op {
 	}
 }
 
-// Instruction structure
+/// Detailed information about an ARM64 instruction
 struct Arm64InstructionDetail {
-	Arm64Cc cc;	// conditional code for this insn
-	bool updateFlags;	// does this insn update flags?
-	bool writeback;	// does this insn request writeback? 'True' means 'yes'
+	Arm64Cc cc;		  	/// Conditional code for this instruction
+	bool updateFlags; 	/// Does this instruction update flags?
+	bool writeback;	  	/// Does this instruction request writeback?
 
-	Arm64Op[] operands; // operands for this instruction.
+	Arm64Op[] operands; /// Operands for this instruction.
 
-	this(cs_arm64 internal){
+	package this(cs_arm64 internal){
 		cc = internal.cc;
 		updateFlags = internal.update_flags;
 		writeback = internal.writeback;
@@ -93,1080 +98,1078 @@ struct Arm64InstructionDetail {
 // Constants
 ///////////////////////////////////////////////////////////////////////////////
 
-//> ARM64 shift type
+/// ARM64 shift type
 enum Arm64ShiftType {
-	INVALID = 0,
-	LSL = 1,
-	MSL = 2,
-	LSR = 3,
-	ASR = 4,
-	ROR = 5,
+	invalid = 0, /// Invalid
+	lsl = 1,	 /// Logical shift left
+	msl = 2,	 /// Move shift left
+	lsr = 3,	 /// Logical shift right
+	asr = 4,	 /// Arithmetic shift right
+	ror = 5,	 /// Rotate right
 }
 
-//> ARM64 extender type
+/// ARM64 extender type
 enum Arm64Extender {
-	INVALID = 0,
-	UXTB = 1,
-	UXTH = 2,
-	UXTW = 3,
-	UXTX = 4,
-	SXTB = 5,
-	SXTH = 6,
-	SXTW = 7,
-	SXTX = 8,
+	invalid = 0,
+	uxtb = 1,
+	uxth = 2,
+	uxtw = 3,
+	uxtx = 4,
+	sxtb = 5,
+	sxth = 6,
+	sxtw = 7,
+	sxtx = 8,
 }
 
-//> ARM64 condition code
+/// ARM64 condition code
 enum Arm64Cc {
-	INVALID = 0,
-	EQ = 1,     // Equal
-	NE = 2,     // Not equal:                 Not equal, or unordered
-	HS = 3,     // Unsigned higher or same:   >, ==, or unordered
-	LO = 4,     // Unsigned lower or same:    Less than
-	MI = 5,     // Minus, negative:           Less than
-	PL = 6,     // Plus, positive or zero:    >, ==, or unordered
-	VS = 7,     // Overflow:                  Unordered
-	VC = 8,     // No overflow:               Ordered
-	HI = 9,     // Unsigned higher:           Greater than, or unordered
-	LS = 10,     // Unsigned lower or same:    Less than or equal
-	GE = 11,     // Greater than or equal:     Greater than or equal
-	LT = 12,     // Less than:                 Less than, or unordered
-	GT = 13,     // Signed greater than:       Greater than
-	LE = 14,     // Signed less than or equal: <, ==, or unordered
-	AL = 15,     // Always (unconditional):    Always (unconditional)
-	NV = 16,     // Always (unconditional):   Always (unconditional)
-	// Note the NV exists purely to disassemble 0b1111. Execution
-	// is "always".
+	invalid = 0,
+	eq = 1,      /// Equal
+	ne = 2,      /// Not equal:                 Not equal, or unordered
+	hs = 3,      /// Unsigned higher or same:   >, ==, or unordered
+	lo = 4,      /// Unsigned lower or same:    Less than
+	mi = 5,      /// Minus, negative:           Less than
+	pl = 6,      /// Plus, positive or zero:    >, ==, or unordered
+	vs = 7,      /// Overflow:                  Unordered
+	vc = 8,      /// No overflow:               Ordered
+	hi = 9,      /// Unsigned higher:           Greater than, or unordered
+	ls = 10,     /// Unsigned lower or same:    Less than or equal
+	ge = 11,     /// Greater than or equal:     Greater than or equal
+	lt = 12,     /// Less than:                 Less than, or unordered
+	gt = 13,     /// Signed greater than:       Greater than
+	le = 14,     /// Signed less than or equal: <, ==, or unordered
+	al = 15,     /// Always (unconditional):    Always (unconditional)
+
+	nv = 16,     /// Always (unconditional):    Always (unconditional) - exists purely to disassemble 0b1111
 }
 
-//> System registers
+/// System registers for MRS
 enum Arm64MrsReg {
-	//> System registers for MRS
-	INVALID           = 0,
-	MDCCSR_EL0        = 0x9808, // 10  011  0000  0001  000
-	DBGDTRRX_EL0      = 0x9828, // 10  011  0000  0101  000
-	MDRAR_EL1         = 0x8080, // 10  000  0001  0000  000
-	OSLSR_EL1         = 0x808c, // 10  000  0001  0001  100
-	DBGAUTHSTATUS_EL1 = 0x83f6, // 10  000  0111  1110  110
-	PMCEID0_EL0       = 0xdce6, // 11  011  1001  1100  110
-	PMCEID1_EL0       = 0xdce7, // 11  011  1001  1100  111
-	MIDR_EL1          = 0xc000, // 11  000  0000  0000  000
-	CCSIDR_EL1        = 0xc800, // 11  001  0000  0000  000
-	CLIDR_EL1         = 0xc801, // 11  001  0000  0000  001
-	CTR_EL0           = 0xd801, // 11  011  0000  0000  001
-	MPIDR_EL1         = 0xc005, // 11  000  0000  0000  101
-	REVIDR_EL1        = 0xc006, // 11  000  0000  0000  110
-	AIDR_EL1          = 0xc807, // 11  001  0000  0000  111
-	DCZID_EL0         = 0xd807, // 11  011  0000  0000  111
-	ID_PFR0_EL1       = 0xc008, // 11  000  0000  0001  000
-	ID_PFR1_EL1       = 0xc009, // 11  000  0000  0001  001
-	ID_DFR0_EL1       = 0xc00a, // 11  000  0000  0001  010
-	ID_AFR0_EL1       = 0xc00b, // 11  000  0000  0001  011
-	ID_MMFR0_EL1      = 0xc00c, // 11  000  0000  0001  100
-	ID_MMFR1_EL1      = 0xc00d, // 11  000  0000  0001  101
-	ID_MMFR2_EL1      = 0xc00e, // 11  000  0000  0001  110
-	ID_MMFR3_EL1      = 0xc00f, // 11  000  0000  0001  111
-	ID_ISAR0_EL1      = 0xc010, // 11  000  0000  0010  000
-	ID_ISAR1_EL1      = 0xc011, // 11  000  0000  0010  001
-	ID_ISAR2_EL1      = 0xc012, // 11  000  0000  0010  010
-	ID_ISAR3_EL1      = 0xc013, // 11  000  0000  0010  011
-	ID_ISAR4_EL1      = 0xc014, // 11  000  0000  0010  100
-	ID_ISAR5_EL1      = 0xc015, // 11  000  0000  0010  101
-	ID_A64PFR0_EL1   = 0xc020, // 11  000  0000  0100  000
-	ID_A64PFR1_EL1   = 0xc021, // 11  000  0000  0100  001
-	ID_A64DFR0_EL1   = 0xc028, // 11  000  0000  0101  000
-	ID_A64DFR1_EL1   = 0xc029, // 11  000  0000  0101  001
-	ID_A64AFR0_EL1   = 0xc02c, // 11  000  0000  0101  100
-	ID_A64AFR1_EL1   = 0xc02d, // 11  000  0000  0101  101
-	ID_A64ISAR0_EL1  = 0xc030, // 11  000  0000  0110  000
-	ID_A64ISAR1_EL1  = 0xc031, // 11  000  0000  0110  001
-	ID_A64MMFR0_EL1  = 0xc038, // 11  000  0000  0111  000
-	ID_A64MMFR1_EL1  = 0xc039, // 11  000  0000  0111  001
-	MVFR0_EL1         = 0xc018, // 11  000  0000  0011  000
-	MVFR1_EL1         = 0xc019, // 11  000  0000  0011  001
-	MVFR2_EL1         = 0xc01a, // 11  000  0000  0011  010
-	RVBAR_EL1         = 0xc601, // 11  000  1100  0000  001
-	RVBAR_EL2         = 0xe601, // 11  100  1100  0000  001
-	RVBAR_EL3         = 0xf601, // 11  110  1100  0000  001
-	ISR_EL1           = 0xc608, // 11  000  1100  0001  000
-	CNTPCT_EL0        = 0xdf01, // 11  011  1110  0000  001
-	CNTVCT_EL0        = 0xdf02,  // 11  011  1110  0000  010
+	invalid           = 0,
+	mdccsr_el0        = 0x9808, // 10  011  0000  0001  000
+	dbgdtrrx_el0      = 0x9828, // 10  011  0000  0101  000
+	mdrar_el1         = 0x8080, // 10  000  0001  0000  000
+	oslsr_el1         = 0x808c, // 10  000  0001  0001  100
+	dbgauthstatus_el1 = 0x83f6, // 10  000  0111  1110  110
+	pmceid0_el0       = 0xdce6, // 11  011  1001  1100  110
+	pmceid1_el0       = 0xdce7, // 11  011  1001  1100  111
+	midr_el1          = 0xc000, // 11  000  0000  0000  000
+	ccsidr_el1        = 0xc800, // 11  001  0000  0000  000
+	clidr_el1         = 0xc801, // 11  001  0000  0000  001
+	ctr_el0           = 0xd801, // 11  011  0000  0000  001
+	mpidr_el1         = 0xc005, // 11  000  0000  0000  101
+	revidr_el1        = 0xc006, // 11  000  0000  0000  110
+	aidr_el1          = 0xc807, // 11  001  0000  0000  111
+	dczid_el0         = 0xd807, // 11  011  0000  0000  111
+	id_pfr0_el1       = 0xc008, // 11  000  0000  0001  000
+	id_pfr1_el1       = 0xc009, // 11  000  0000  0001  001
+	id_dfr0_el1       = 0xc00a, // 11  000  0000  0001  010
+	id_afr0_el1       = 0xc00b, // 11  000  0000  0001  011
+	id_mmfr0_el1      = 0xc00c, // 11  000  0000  0001  100
+	id_mmfr1_el1      = 0xc00d, // 11  000  0000  0001  101
+	id_mmfr2_el1      = 0xc00e, // 11  000  0000  0001  110
+	id_mmfr3_el1      = 0xc00f, // 11  000  0000  0001  111
+	id_isar0_el1      = 0xc010, // 11  000  0000  0010  000
+	id_isar1_el1      = 0xc011, // 11  000  0000  0010  001
+	id_isar2_el1      = 0xc012, // 11  000  0000  0010  010
+	id_isar3_el1      = 0xc013, // 11  000  0000  0010  011
+	id_isar4_el1      = 0xc014, // 11  000  0000  0010  100
+	id_isar5_el1      = 0xc015, // 11  000  0000  0010  101
+	id_a64pfr0_el1    = 0xc020, // 11  000  0000  0100  000
+	id_a64pfr1_el1    = 0xc021, // 11  000  0000  0100  001
+	id_a64dfr0_el1    = 0xc028, // 11  000  0000  0101  000
+	id_a64dfr1_el1    = 0xc029, // 11  000  0000  0101  001
+	id_a64afr0_el1    = 0xc02c, // 11  000  0000  0101  100
+	id_a64afr1_el1    = 0xc02d, // 11  000  0000  0101  101
+	id_a64isar0_el1   = 0xc030, // 11  000  0000  0110  000
+	id_a64isar1_el1   = 0xc031, // 11  000  0000  0110  001
+	id_a64mmfr0_el1   = 0xc038, // 11  000  0000  0111  000
+	id_a64mmfr1_el1   = 0xc039, // 11  000  0000  0111  001
+	mvfr0_el1         = 0xc018, // 11  000  0000  0011  000
+	mvfr1_el1         = 0xc019, // 11  000  0000  0011  001
+	mvfr2_el1         = 0xc01a, // 11  000  0000  0011  010
+	rvbar_el1         = 0xc601, // 11  000  1100  0000  001
+	rvbar_el2         = 0xe601, // 11  100  1100  0000  001
+	rvbar_el3         = 0xf601, // 11  110  1100  0000  001
+	isr_el1           = 0xc608, // 11  000  1100  0001  000
+	cntpct_el0        = 0xdf01, // 11  011  1110  0000  001
+	cntvct_el0        = 0xdf02, // 11  011  1110  0000  010
 
 	// Trace registers
-	TRCSTATR          = 0x8818, // 10  001  0000  0011  000
-	TRCIDR8           = 0x8806, // 10  001  0000  0000  110
-	TRCIDR9           = 0x880e, // 10  001  0000  0001  110
-	TRCIDR10          = 0x8816, // 10  001  0000  0010  110
-	TRCIDR11          = 0x881e, // 10  001  0000  0011  110
-	TRCIDR12          = 0x8826, // 10  001  0000  0100  110
-	TRCIDR13          = 0x882e, // 10  001  0000  0101  110
-	TRCIDR0           = 0x8847, // 10  001  0000  1000  111
-	TRCIDR1           = 0x884f, // 10  001  0000  1001  111
-	TRCIDR2           = 0x8857, // 10  001  0000  1010  111
-	TRCIDR3           = 0x885f, // 10  001  0000  1011  111
-	TRCIDR4           = 0x8867, // 10  001  0000  1100  111
-	TRCIDR5           = 0x886f, // 10  001  0000  1101  111
-	TRCIDR6           = 0x8877, // 10  001  0000  1110  111
-	TRCIDR7           = 0x887f, // 10  001  0000  1111  111
-	TRCOSLSR          = 0x888c, // 10  001  0001  0001  100
-	TRCPDSR           = 0x88ac, // 10  001  0001  0101  100
-	TRCDEVAFF0        = 0x8bd6, // 10  001  0111  1010  110
-	TRCDEVAFF1        = 0x8bde, // 10  001  0111  1011  110
-	TRCLSR            = 0x8bee, // 10  001  0111  1101  110
-	TRCAUTHSTATUS     = 0x8bf6, // 10  001  0111  1110  110
-	TRCDEVARCH        = 0x8bfe, // 10  001  0111  1111  110
-	TRCDEVID          = 0x8b97, // 10  001  0111  0010  111
-	TRCDEVTYPE        = 0x8b9f, // 10  001  0111  0011  111
-	TRCPIDR4          = 0x8ba7, // 10  001  0111  0100  111
-	TRCPIDR5          = 0x8baf, // 10  001  0111  0101  111
-	TRCPIDR6          = 0x8bb7, // 10  001  0111  0110  111
-	TRCPIDR7          = 0x8bbf, // 10  001  0111  0111  111
-	TRCPIDR0          = 0x8bc7, // 10  001  0111  1000  111
-	TRCPIDR1          = 0x8bcf, // 10  001  0111  1001  111
-	TRCPIDR2          = 0x8bd7, // 10  001  0111  1010  111
-	TRCPIDR3          = 0x8bdf, // 10  001  0111  1011  111
-	TRCCIDR0          = 0x8be7, // 10  001  0111  1100  111
-	TRCCIDR1          = 0x8bef, // 10  001  0111  1101  111
-	TRCCIDR2          = 0x8bf7, // 10  001  0111  1110  111
-	TRCCIDR3          = 0x8bff, // 10  001  0111  1111  111
+	trcstatr          = 0x8818, // 10  001  0000  0011  000
+	trcidr8           = 0x8806, // 10  001  0000  0000  110
+	trcidr9           = 0x880e, // 10  001  0000  0001  110
+	trcidr10          = 0x8816, // 10  001  0000  0010  110
+	trcidr11          = 0x881e, // 10  001  0000  0011  110
+	trcidr12          = 0x8826, // 10  001  0000  0100  110
+	trcidr13          = 0x882e, // 10  001  0000  0101  110
+	trcidr0           = 0x8847, // 10  001  0000  1000  111
+	trcidr1           = 0x884f, // 10  001  0000  1001  111
+	trcidr2           = 0x8857, // 10  001  0000  1010  111
+	trcidr3           = 0x885f, // 10  001  0000  1011  111
+	trcidr4           = 0x8867, // 10  001  0000  1100  111
+	trcidr5           = 0x886f, // 10  001  0000  1101  111
+	trcidr6           = 0x8877, // 10  001  0000  1110  111
+	trcidr7           = 0x887f, // 10  001  0000  1111  111
+	trcoslsr          = 0x888c, // 10  001  0001  0001  100
+	trcpdsr           = 0x88ac, // 10  001  0001  0101  100
+	trcdevaff0        = 0x8bd6, // 10  001  0111  1010  110
+	trcdevaff1        = 0x8bde, // 10  001  0111  1011  110
+	trclsr            = 0x8bee, // 10  001  0111  1101  110
+	trcauthstatus     = 0x8bf6, // 10  001  0111  1110  110
+	trcdevarch        = 0x8bfe, // 10  001  0111  1111  110
+	trcdevid          = 0x8b97, // 10  001  0111  0010  111
+	trcdevtype        = 0x8b9f, // 10  001  0111  0011  111
+	trcpidr4          = 0x8ba7, // 10  001  0111  0100  111
+	trcpidr5          = 0x8baf, // 10  001  0111  0101  111
+	trcpidr6          = 0x8bb7, // 10  001  0111  0110  111
+	trcpidr7          = 0x8bbf, // 10  001  0111  0111  111
+	trcpidr0          = 0x8bc7, // 10  001  0111  1000  111
+	trcpidr1          = 0x8bcf, // 10  001  0111  1001  111
+	trcpidr2          = 0x8bd7, // 10  001  0111  1010  111
+	trcpidr3          = 0x8bdf, // 10  001  0111  1011  111
+	trccidr0          = 0x8be7, // 10  001  0111  1100  111
+	trccidr1          = 0x8bef, // 10  001  0111  1101  111
+	trccidr2          = 0x8bf7, // 10  001  0111  1110  111
+	trccidr3          = 0x8bff, // 10  001  0111  1111  111
 
 	// GICv3 registers
-	ICC_IAR1_EL1      = 0xc660, // 11  000  1100  1100  000
-	ICC_IAR0_EL1      = 0xc640, // 11  000  1100  1000  000
-	ICC_HPPIR1_EL1    = 0xc662, // 11  000  1100  1100  010
-	ICC_HPPIR0_EL1    = 0xc642, // 11  000  1100  1000  010
-	ICC_RPR_EL1       = 0xc65b, // 11  000  1100  1011  011
-	ICH_VTR_EL2       = 0xe659, // 11  100  1100  1011  001
-	ICH_EISR_EL2      = 0xe65b, // 11  100  1100  1011  011
-	ICH_ELSR_EL2      = 0xe65d, // 11  100  1100  1011  101
+	icc_iar1_el1      = 0xc660, // 11  000  1100  1100  000
+	icc_iar0_el1      = 0xc640, // 11  000  1100  1000  000
+	icc_hppir1_el1    = 0xc662, // 11  000  1100  1100  010
+	icc_hppir0_el1    = 0xc642, // 11  000  1100  1000  010
+	icc_rpr_el1       = 0xc65b, // 11  000  1100  1011  011
+	ich_vtr_el2       = 0xe659, // 11  100  1100  1011  001
+	ich_eisr_el2      = 0xe65b, // 11  100  1100  1011  011
+	ich_elsr_el2      = 0xe65d, // 11  100  1100  1011  101
 }
 
+/// System registers for MSR
 enum Arm64MsrReg {
-	//> System registers for MSR
-	DBGDTRTX_EL0      = 0x9828, // 10  011  0000  0101  000
-	OSLAR_EL1         = 0x8084, // 10  000  0001  0000  100
-	PMSWINC_EL0       = 0xdce4,  // 11  011  1001  1100  100
+	dbgdtrtx_el0      = 0x9828, // 10  011  0000  0101  000
+	oslar_el1         = 0x8084, // 10  000  0001  0000  100
+	pmswinc_el0       = 0xdce4, // 11  011  1001  1100  100
 
-	// Trace Registers
-	TRCOSLAR          = 0x8884, // 10  001  0001  0000  100
-	TRCLAR            = 0x8be6, // 10  001  0111  1100  110
+	// Trace registers
+	trcoslar          = 0x8884, // 10  001  0001  0000  100
+	trclar            = 0x8be6, // 10  001  0111  1100  110
 
 	// GICv3 registers
-	ICC_EOIR1_EL1     = 0xc661, // 11  000  1100  1100  001
-	ICC_EOIR0_EL1     = 0xc641, // 11  000  1100  1000  001
-	ICC_DIR_EL1       = 0xc659, // 11  000  1100  1011  001
-	ICC_SGI1R_EL1     = 0xc65d, // 11  000  1100  1011  101
-	ICC_ASGI1R_EL1    = 0xc65e, // 11  000  1100  1011  110
-	ICC_SGI0R_EL1     = 0xc65f, // 11  000  1100  1011  111
+	icc_eoir1_el1     = 0xc661, // 11  000  1100  1100  001
+	icc_eoir0_el1     = 0xc641, // 11  000  1100  1000  001
+	icc_dir_el1       = 0xc659, // 11  000  1100  1011  001
+	icc_sgi1r_el1     = 0xc65d, // 11  000  1100  1011  101
+	icc_asgi1r_el1    = 0xc65e, // 11  000  1100  1011  110
+	icc_sgi0r_el1     = 0xc65f, // 11  000  1100  1011  111
 }
 
-//> System PState Field (MSR instruction)
+/// System PState Field (MSR instruction)
 enum Arm64PState {
-	INVALID = 0,
-	SPSEL = 0x05,
-	DAIFSET = 0x1e,
-	DAIFCLR = 0x1f
+	invalid = 0,
+	spsel   = 0x05,
+	daifset = 0x1e,
+	daifclr = 0x1f
 }
 
-//> Vector arrangement specifier (for FloatingPoint/Advanced SIMD insn)
+/// Vector arrangement specifier (for FloatingPoint/Advanced SIMD instructions)
 enum Arm64Vas {
-	INVALID = 0,
-	VAS_8B,
-	VAS_16B,
-	VAS_4H,
-	VAS_8H,
-	VAS_2S,
-	VAS_4S,
-	VAS_1D,
-	VAS_2D,
-	VAS_1Q,
+	invalid = 0,
+	vas_8b,
+	vas_16b,
+	vas_4h,
+	vas_8h,
+	vas_2s,
+	vas_4s,
+	vas_1d,
+	vas_2d,
+	vas_1q,
 }
 
-//> Vector element size specifier
+/// Vector element size specifier
 enum Arm64Vess {
-	INVALID = 0,
-	B,
-	H,
-	S,
-	D,
+	invalid = 0,
+	b,
+	h,
+	s,
+	d,
 }
 
-//> Memory barrier operands
+/// Memory barrier operands
 enum Arm64BarrierOp {
-	INVALID = 0,
-	OSHLD = 0x1,
-	OSHST = 0x2,
-	OSH =   0x3,
-	NSHLD = 0x5,
-	NSHST = 0x6,
-	NSH =   0x7,
-	ISHLD = 0x9,
-	ISHST = 0xa,
-	ISH =   0xb,
-	LD =    0xd,
-	ST =    0xe,
-	SY =    0xf
+	invalid = 0,
+	oshld = 0x1,
+	oshst = 0x2,
+	osh =   0x3,
+	nshld = 0x5,
+	nshst = 0x6,
+	nsh =   0x7,
+	ishld = 0x9,
+	ishst = 0xa,
+	ish =   0xb,
+	ld =    0xd,
+	st =    0xe,
+	sy =    0xf
 }
 
-//> Operand type for instruction's operands
+/// Operand type for instruction's operands
 enum Arm64OpType {
-	invalid = 0, // = cs_op_invalid (uninitialized).
-	reg, // = cs_op_reg (register operand).
-	imm, // = cs_op_imm (immediate operand).
-	mem, // = cs_op_mem (memory operand).
-	fp,  // = cs_op_fp (floating-point operand).
-	cimm = 64, // c-immediate
-	reg_mrs, // mrs register operand.
-	reg_msr, // msr register operand.
-	pstate, // pstate operand.
-	sys, // sys operand for ic/dc/at/tlbi instructions.
-	prefetch, // prefetch operand (prfm).
-	barrier, // memory barrier operand (isb/dmb/dsb instructions).
+	invalid = 0,  /// Invalid
+	reg, 		  /// Register operand (`Arm64Register`)
+	imm, 		  /// Immediate operand (`long`)
+	mem, 		  /// Memory operand (`Arm64OpMem`)
+	fp,  		  /// Floating-point operand (`double`)
+	cimm = 64, 	  /// C-Immediate (`long`)
+	reg_mrs, 	  /// MRS register operand (`Arm64Register`)
+	reg_msr,      /// MSR register operand (`Arm64Register`)
+	pstate, 	  /// P-state operand (`Arm64PState`)
+	sys, 		  /// Sys operand for ic/dc/at/tlbi instructions (`uint`)
+	prefetch, 	  /// Prefetch operand prfm (`Arm64PrefetchOp`)
+	barrier,	  /// Memory barrier operand for isb/dmb/dsb instructions (`Arm64BarrierOp`)
 }
 
-//> TLBI operations
+/// TLBI operations
 enum Arm64TlbiOp {
-	INVALID = 0,
-	VMALLE1IS,
-	VAE1IS,
-	ASIDE1IS,
-	VAAE1IS,
-	VALE1IS,
-	VAALE1IS,
-	ALLE2IS,
-	VAE2IS,
-	ALLE1IS,
-	VALE2IS,
-	VMALLS12E1IS,
-	ALLE3IS,
-	VAE3IS,
-	VALE3IS,
-	IPAS2E1IS,
-	IPAS2LE1IS,
-	IPAS2E1,
-	IPAS2LE1,
-	VMALLE1,
-	VAE1,
-	ASIDE1,
-	VAAE1,
-	VALE1,
-	VAALE1,
-	ALLE2,
-	VAE2,
-	ALLE1,
-	VALE2,
-	VMALLS12E1,
-	ALLE3,
-	VAE3,
-	VALE3,
+	invalid = 0,
+	vmalle1is,
+	vae1is,
+	aside1is,
+	vaae1is,
+	vale1is,
+	vaale1is,
+	alle2is,
+	vae2is,
+	alle1is,
+	vale2is,
+	vmalls12e1is,
+	alle3is,
+	vae3is,
+	vale3is,
+	ipas2e1is,
+	ipas2le1is,
+	ipas2e1,
+	ipas2le1,
+	vmalle1,
+	vae1,
+	aside1,
+	vaae1,
+	vale1,
+	vaale1,
+	alle2,
+	vae2,
+	alle1,
+	vale2,
+	vmalls12e1,
+	alle3,
+	vae3,
+	vale3,
 }
 
-//> AT operations
+/// AT operations
 enum Arm64AtOp {
-	S1E1R,
-	S1E1W,
-	S1E0R,
-	S1E0W,
-	S1E2R,
-	S1E2W,
-	S12E1R,
-	S12E1W,
-	S12E0R,
-	S12E0W,
-	S1E3R,
-	S1E3W,
+	s1e1r,
+	s1e1w,
+	s1e0r,
+	s1e0w,
+	s1e2r,
+	s1e2w,
+	s12e1r,
+	s12e1w,
+	s12e0r,
+	s12e0w,
+	s1e3r,
+	s1e3w,
 }
 
-//> DC operations
+/// DC operations
 enum Arm64DcOp {
-	INVALID = 0,
-	ZVA,
-	IVAC,
-	ISW,
-	CVAC,
-	CSW,
-	CVAU,
-	CIVAC,
-	CISW,
+	invalid = 0,
+	zva,
+	ivac,
+	isw,
+	cvac,
+	csw,
+	cvau,
+	civac,
+	cisw,
 }
 
-//> IC operations
+/// IC operations
 enum Arm64IcOp {
-	INVALID = 0,
-	IALLUIS,
-	IALLU,
-	IVAU,
+	invalid = 0,
+	ialluis,
+	iallu,
+	ivau,
 }
 
-//> Prefetch operations (PRFM)
+/// Prefetch operations (PRFM)
 enum Arm64PrefetchOp {
-	INVALID = 0,
-	PLDL1KEEP = 0x00 + 1,
-	PLDL1STRM = 0x01 + 1,
-	PLDL2KEEP = 0x02 + 1,
-	PLDL2STRM = 0x03 + 1,
-	PLDL3KEEP = 0x04 + 1,
-	PLDL3STRM = 0x05 + 1,
-	PLIL1KEEP = 0x08 + 1,
-	PLIL1STRM = 0x09 + 1,
-	PLIL2KEEP = 0x0a + 1,
-	PLIL2STRM = 0x0b + 1,
-	PLIL3KEEP = 0x0c + 1,
-	PLIL3STRM = 0x0d + 1,
-	PSTL1KEEP = 0x10 + 1,
-	PSTL1STRM = 0x11 + 1,
-	PSTL2KEEP = 0x12 + 1,
-	PSTL2STRM = 0x13 + 1,
-	PSTL3KEEP = 0x14 + 1,
-	PSTL3STRM = 0x15 + 1,
+	invalid = 0,
+	pldl1keep = 0x00 + 1,
+	pldl1strm = 0x01 + 1,
+	pldl2keep = 0x02 + 1,
+	pldl2strm = 0x03 + 1,
+	pldl3keep = 0x04 + 1,
+	pldl3strm = 0x05 + 1,
+	plil1keep = 0x08 + 1,
+	plil1strm = 0x09 + 1,
+	plil2keep = 0x0a + 1,
+	plil2strm = 0x0b + 1,
+	plil3keep = 0x0c + 1,
+	plil3strm = 0x0d + 1,
+	pstl1keep = 0x10 + 1,
+	pstl1strm = 0x11 + 1,
+	pstl2keep = 0x12 + 1,
+	pstl2strm = 0x13 + 1,
+	pstl3keep = 0x14 + 1,
+	pstl3strm = 0x15 + 1,
 }
 
-//> ARM64 registers
+/// ARM64 registers
 enum Arm64Register {
-	INVALID = 0,
+	invalid = 0,
 
-	X29,
-	X30,
-	NZCV,
-	SP,
-	WSP,
-	WZR,
-	XZR,
-	B0,
-	B1,
-	B2,
-	B3,
-	B4,
-	B5,
-	B6,
-	B7,
-	B8,
-	B9,
-	B10,
-	B11,
-	B12,
-	B13,
-	B14,
-	B15,
-	B16,
-	B17,
-	B18,
-	B19,
-	B20,
-	B21,
-	B22,
-	B23,
-	B24,
-	B25,
-	B26,
-	B27,
-	B28,
-	B29,
-	B30,
-	B31,
-	D0,
-	D1,
-	D2,
-	D3,
-	D4,
-	D5,
-	D6,
-	D7,
-	D8,
-	D9,
-	D10,
-	D11,
-	D12,
-	D13,
-	D14,
-	D15,
-	D16,
-	D17,
-	D18,
-	D19,
-	D20,
-	D21,
-	D22,
-	D23,
-	D24,
-	D25,
-	D26,
-	D27,
-	D28,
-	D29,
-	D30,
-	D31,
-	H0,
-	H1,
-	H2,
-	H3,
-	H4,
-	H5,
-	H6,
-	H7,
-	H8,
-	H9,
-	H10,
-	H11,
-	H12,
-	H13,
-	H14,
-	H15,
-	H16,
-	H17,
-	H18,
-	H19,
-	H20,
-	H21,
-	H22,
-	H23,
-	H24,
-	H25,
-	H26,
-	H27,
-	H28,
-	H29,
-	H30,
-	H31,
-	Q0,
-	Q1,
-	Q2,
-	Q3,
-	Q4,
-	Q5,
-	Q6,
-	Q7,
-	Q8,
-	Q9,
-	Q10,
-	Q11,
-	Q12,
-	Q13,
-	Q14,
-	Q15,
-	Q16,
-	Q17,
-	Q18,
-	Q19,
-	Q20,
-	Q21,
-	Q22,
-	Q23,
-	Q24,
-	Q25,
-	Q26,
-	Q27,
-	Q28,
-	Q29,
-	Q30,
-	Q31,
-	S0,
-	S1,
-	S2,
-	S3,
-	S4,
-	S5,
-	S6,
-	S7,
-	S8,
-	S9,
-	S10,
-	S11,
-	S12,
-	S13,
-	S14,
-	S15,
-	S16,
-	S17,
-	S18,
-	S19,
-	S20,
-	S21,
-	S22,
-	S23,
-	S24,
-	S25,
-	S26,
-	S27,
-	S28,
-	S29,
-	S30,
-	S31,
-	W0,
-	W1,
-	W2,
-	W3,
-	W4,
-	W5,
-	W6,
-	W7,
-	W8,
-	W9,
-	W10,
-	W11,
-	W12,
-	W13,
-	W14,
-	W15,
-	W16,
-	W17,
-	W18,
-	W19,
-	W20,
-	W21,
-	W22,
-	W23,
-	W24,
-	W25,
-	W26,
-	W27,
-	W28,
-	W29,
-	W30,
-	X0,
-	X1,
-	X2,
-	X3,
-	X4,
-	X5,
-	X6,
-	X7,
-	X8,
-	X9,
-	X10,
-	X11,
-	X12,
-	X13,
-	X14,
-	X15,
-	X16,
-	X17,
-	X18,
-	X19,
-	X20,
-	X21,
-	X22,
-	X23,
-	X24,
-	X25,
-	X26,
-	X27,
-	X28,
+	x29,
+	x30,
+	nzcv,
+	sp,
+	wsp,
+	wzr,
+	xzr,
+	b0,
+	b1,
+	b2,
+	b3,
+	b4,
+	b5,
+	b6,
+	b7,
+	b8,
+	b9,
+	b10,
+	b11,
+	b12,
+	b13,
+	b14,
+	b15,
+	b16,
+	b17,
+	b18,
+	b19,
+	b20,
+	b21,
+	b22,
+	b23,
+	b24,
+	b25,
+	b26,
+	b27,
+	b28,
+	b29,
+	b30,
+	b31,
+	d0,
+	d1,
+	d2,
+	d3,
+	d4,
+	d5,
+	d6,
+	d7,
+	d8,
+	d9,
+	d10,
+	d11,
+	d12,
+	d13,
+	d14,
+	d15,
+	d16,
+	d17,
+	d18,
+	d19,
+	d20,
+	d21,
+	d22,
+	d23,
+	d24,
+	d25,
+	d26,
+	d27,
+	d28,
+	d29,
+	d30,
+	d31,
+	h0,
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
+	h7,
+	h8,
+	h9,
+	h10,
+	h11,
+	h12,
+	h13,
+	h14,
+	h15,
+	h16,
+	h17,
+	h18,
+	h19,
+	h20,
+	h21,
+	h22,
+	h23,
+	h24,
+	h25,
+	h26,
+	h27,
+	h28,
+	h29,
+	h30,
+	h31,
+	q0,
+	q1,
+	q2,
+	q3,
+	q4,
+	q5,
+	q6,
+	q7,
+	q8,
+	q9,
+	q10,
+	q11,
+	q12,
+	q13,
+	q14,
+	q15,
+	q16,
+	q17,
+	q18,
+	q19,
+	q20,
+	q21,
+	q22,
+	q23,
+	q24,
+	q25,
+	q26,
+	q27,
+	q28,
+	q29,
+	q30,
+	q31,
+	s0,
+	s1,
+	s2,
+	s3,
+	s4,
+	s5,
+	s6,
+	s7,
+	s8,
+	s9,
+	s10,
+	s11,
+	s12,
+	s13,
+	s14,
+	s15,
+	s16,
+	s17,
+	s18,
+	s19,
+	s20,
+	s21,
+	s22,
+	s23,
+	s24,
+	s25,
+	s26,
+	s27,
+	s28,
+	s29,
+	s30,
+	s31,
+	w0,
+	w1,
+	w2,
+	w3,
+	w4,
+	w5,
+	w6,
+	w7,
+	w8,
+	w9,
+	w10,
+	w11,
+	w12,
+	w13,
+	w14,
+	w15,
+	w16,
+	w17,
+	w18,
+	w19,
+	w20,
+	w21,
+	w22,
+	w23,
+	w24,
+	w25,
+	w26,
+	w27,
+	w28,
+	w29,
+	w30,
+	x0,
+	x1,
+	x2,
+	x3,
+	x4,
+	x5,
+	x6,
+	x7,
+	x8,
+	x9,
+	x10,
+	x11,
+	x12,
+	x13,
+	x14,
+	x15,
+	x16,
+	x17,
+	x18,
+	x19,
+	x20,
+	x21,
+	x22,
+	x23,
+	x24,
+	x25,
+	x26,
+	x27,
+	x28,
 
-	V0,
-	V1,
-	V2,
-	V3,
-	V4,
-	V5,
-	V6,
-	V7,
-	V8,
-	V9,
-	V10,
-	V11,
-	V12,
-	V13,
-	V14,
-	V15,
-	V16,
-	V17,
-	V18,
-	V19,
-	V20,
-	V21,
-	V22,
-	V23,
-	V24,
-	V25,
-	V26,
-	V27,
-	V28,
-	V29,
-	V30,
-	V31,
+	v0,
+	v1,
+	v2,
+	v3,
+	v4,
+	v5,
+	v6,
+	v7,
+	v8,
+	v9,
+	v10,
+	v11,
+	v12,
+	v13,
+	v14,
+	v15,
+	v16,
+	v17,
+	v18,
+	v19,
+	v20,
+	v21,
+	v22,
+	v23,
+	v24,
+	v25,
+	v26,
+	v27,
+	v28,
+	v29,
+	v30,
+	v31,
 
-	//> alias registers
-	IP1 = X16,
-	IP0 = X17,
-	FP = X29,
-	LR = X30,
+	// Alias registers
+	ip1 = x16,
+	ip0 = x17,
+	fp = x29,
+	lr = x30,
 }
 
-//> ARM64 instruction
+/// ARM64 instruction
 enum Arm64InstructionId {
-	INVALID = 0,
+	invalid = 0,
 
-	ABS,
-	ADC,
-	ADDHN,
-	ADDHN2,
-	ADDP,
-	ADD,
-	ADDV,
-	ADR,
-	ADRP,
-	AESD,
-	AESE,
-	AESIMC,
-	AESMC,
-	AND,
-	ASR,
-	B,
-	BFM,
-	BIC,
-	BIF,
-	BIT,
-	BL,
-	BLR,
-	BR,
-	BRK,
-	BSL,
-	CBNZ,
-	CBZ,
-	CCMN,
-	CCMP,
-	CLREX,
-	CLS,
-	CLZ,
-	CMEQ,
-	CMGE,
-	CMGT,
-	CMHI,
-	CMHS,
-	CMLE,
-	CMLT,
-	CMTST,
-	CNT,
-	MOV,
-	CRC32B,
-	CRC32CB,
-	CRC32CH,
-	CRC32CW,
-	CRC32CX,
-	CRC32H,
-	CRC32W,
-	CRC32X,
-	CSEL,
-	CSINC,
-	CSINV,
-	CSNEG,
-	DCPS1,
-	DCPS2,
-	DCPS3,
-	DMB,
-	DRPS,
-	DSB,
-	DUP,
-	EON,
-	EOR,
-	ERET,
-	EXTR,
-	EXT,
-	FABD,
-	FABS,
-	FACGE,
-	FACGT,
-	FADD,
-	FADDP,
-	FCCMP,
-	FCCMPE,
-	FCMEQ,
-	FCMGE,
-	FCMGT,
-	FCMLE,
-	FCMLT,
-	FCMP,
-	FCMPE,
-	FCSEL,
-	FCVTAS,
-	FCVTAU,
-	FCVT,
-	FCVTL,
-	FCVTL2,
-	FCVTMS,
-	FCVTMU,
-	FCVTNS,
-	FCVTNU,
-	FCVTN,
-	FCVTN2,
-	FCVTPS,
-	FCVTPU,
-	FCVTXN,
-	FCVTXN2,
-	FCVTZS,
-	FCVTZU,
-	FDIV,
-	FMADD,
-	FMAX,
-	FMAXNM,
-	FMAXNMP,
-	FMAXNMV,
-	FMAXP,
-	FMAXV,
-	FMIN,
-	FMINNM,
-	FMINNMP,
-	FMINNMV,
-	FMINP,
-	FMINV,
-	FMLA,
-	FMLS,
-	FMOV,
-	FMSUB,
-	FMUL,
-	FMULX,
-	FNEG,
-	FNMADD,
-	FNMSUB,
-	FNMUL,
-	FRECPE,
-	FRECPS,
-	FRECPX,
-	FRINTA,
-	FRINTI,
-	FRINTM,
-	FRINTN,
-	FRINTP,
-	FRINTX,
-	FRINTZ,
-	FRSQRTE,
-	FRSQRTS,
-	FSQRT,
-	FSUB,
-	HINT,
-	HLT,
-	HVC,
-	INS,
+	abs,
+	adc,
+	addhn,
+	addhn2,
+	addp,
+	add,
+	addv,
+	adr,
+	adrp,
+	aesd,
+	aese,
+	aesimc,
+	aesmc,
+	and,
+	asr,
+	b,
+	bfm,
+	bic,
+	bif,
+	bit,
+	bl,
+	blr,
+	br,
+	brk,
+	bsl,
+	cbnz,
+	cbz,
+	ccmn,
+	ccmp,
+	clrex,
+	cls,
+	clz,
+	cmeq,
+	cmge,
+	cmgt,
+	cmhi,
+	cmhs,
+	cmle,
+	cmlt,
+	cmtst,
+	cnt,
+	mov,
+	crc32b,
+	crc32cb,
+	crc32ch,
+	crc32cw,
+	crc32cx,
+	crc32h,
+	crc32w,
+	crc32x,
+	csel,
+	csinc,
+	csinv,
+	csneg,
+	dcps1,
+	dcps2,
+	dcps3,
+	dmb,
+	drps,
+	dsb,
+	dup,
+	eon,
+	eor,
+	eret,
+	extr,
+	ext,
+	fabd,
+	fabs,
+	facge,
+	facgt,
+	fadd,
+	faddp,
+	fccmp,
+	fccmpe,
+	fcmeq,
+	fcmge,
+	fcmgt,
+	fcmle,
+	fcmlt,
+	fcmp,
+	fcmpe,
+	fcsel,
+	fcvtas,
+	fcvtau,
+	fcvt,
+	fcvtl,
+	fcvtl2,
+	fcvtms,
+	fcvtmu,
+	fcvtns,
+	fcvtnu,
+	fcvtn,
+	fcvtn2,
+	fcvtps,
+	fcvtpu,
+	fcvtxn,
+	fcvtxn2,
+	fcvtzs,
+	fcvtzu,
+	fdiv,
+	fmadd,
+	fmax,
+	fmaxnm,
+	fmaxnmp,
+	fmaxnmv,
+	fmaxp,
+	fmaxv,
+	fmin,
+	fminnm,
+	fminnmp,
+	fminnmv,
+	fminp,
+	fminv,
+	fmla,
+	fmls,
+	fmov,
+	fmsub,
+	fmul,
+	fmulx,
+	fneg,
+	fnmadd,
+	fnmsub,
+	fnmul,
+	frecpe,
+	frecps,
+	frecpx,
+	frinta,
+	frinti,
+	frintm,
+	frintn,
+	frintp,
+	frintx,
+	frintz,
+	frsqrte,
+	frsqrts,
+	fsqrt,
+	fsub,
+	hint,
+	hlt,
+	hvc,
+	ins,
 
-	ISB,
-	LD1,
-	LD1R,
-	LD2R,
-	LD2,
-	LD3R,
-	LD3,
-	LD4,
-	LD4R,
+	isb,
+	ld1,
+	ld1r,
+	ld2r,
+	ld2,
+	ld3r,
+	ld3,
+	ld4,
+	ld4r,
 
-	LDARB,
-	LDARH,
-	LDAR,
-	LDAXP,
-	LDAXRB,
-	LDAXRH,
-	LDAXR,
-	LDNP,
-	LDP,
-	LDPSW,
-	LDRB,
-	LDR,
-	LDRH,
-	LDRSB,
-	LDRSH,
-	LDRSW,
-	LDTRB,
-	LDTRH,
-	LDTRSB,
+	ldarb,
+	ldarh,
+	ldar,
+	ldaxp,
+	ldaxrb,
+	ldaxrh,
+	ldaxr,
+	ldnp,
+	ldp,
+	ldpsw,
+	ldrb,
+	ldr,
+	ldrh,
+	ldrsb,
+	ldrsh,
+	ldrsw,
+	ldtrb,
+	ldtrh,
+	ldtrsb,
 
-	LDTRSH,
-	LDTRSW,
-	LDTR,
-	LDURB,
-	LDUR,
-	LDURH,
-	LDURSB,
-	LDURSH,
-	LDURSW,
-	LDXP,
-	LDXRB,
-	LDXRH,
-	LDXR,
-	LSL,
-	LSR,
-	MADD,
-	MLA,
-	MLS,
-	MOVI,
-	MOVK,
-	MOVN,
-	MOVZ,
-	MRS,
-	MSR,
-	MSUB,
-	MUL,
-	MVNI,
-	NEG,
-	NOT,
-	ORN,
-	ORR,
-	PMULL2,
-	PMULL,
-	PMUL,
-	PRFM,
-	PRFUM,
-	RADDHN,
-	RADDHN2,
-	RBIT,
-	RET,
-	REV16,
-	REV32,
-	REV64,
-	REV,
-	ROR,
-	RSHRN2,
-	RSHRN,
-	RSUBHN,
-	RSUBHN2,
-	SABAL2,
-	SABAL,
+	ldtrsh,
+	ldtrsw,
+	ldtr,
+	ldurb,
+	ldur,
+	ldurh,
+	ldursb,
+	ldursh,
+	ldursw,
+	ldxp,
+	ldxrb,
+	ldxrh,
+	ldxr,
+	lsl,
+	lsr,
+	madd,
+	mla,
+	mls,
+	movi,
+	movk,
+	movn,
+	movz,
+	mrs,
+	msr,
+	msub,
+	mul,
+	mvni,
+	neg,
+	not,
+	orn,
+	orr,
+	pmull2,
+	pmull,
+	pmul,
+	prfm,
+	prfum,
+	raddhn,
+	raddhn2,
+	rbit,
+	ret,
+	rev16,
+	rev32,
+	rev64,
+	rev,
+	ror,
+	rshrn2,
+	rshrn,
+	rsubhn,
+	rsubhn2,
+	sabal2,
+	sabal,
 
-	SABA,
-	SABDL2,
-	SABDL,
-	SABD,
-	SADALP,
-	SADDLP,
-	SADDLV,
-	SADDL2,
-	SADDL,
-	SADDW2,
-	SADDW,
-	SBC,
-	SBFM,
-	SCVTF,
-	SDIV,
-	SHA1C,
-	SHA1H,
-	SHA1M,
-	SHA1P,
-	SHA1SU0,
-	SHA1SU1,
-	SHA256H2,
-	SHA256H,
-	SHA256SU0,
-	SHA256SU1,
-	SHADD,
-	SHLL2,
-	SHLL,
-	SHL,
-	SHRN2,
-	SHRN,
-	SHSUB,
-	SLI,
-	SMADDL,
-	SMAXP,
-	SMAXV,
-	SMAX,
-	SMC,
-	SMINP,
-	SMINV,
-	SMIN,
-	SMLAL2,
-	SMLAL,
-	SMLSL2,
-	SMLSL,
-	SMOV,
-	SMSUBL,
-	SMULH,
-	SMULL2,
-	SMULL,
-	SQABS,
-	SQADD,
-	SQDMLAL,
-	SQDMLAL2,
-	SQDMLSL,
-	SQDMLSL2,
-	SQDMULH,
-	SQDMULL,
-	SQDMULL2,
-	SQNEG,
-	SQRDMULH,
-	SQRSHL,
-	SQRSHRN,
-	SQRSHRN2,
-	SQRSHRUN,
-	SQRSHRUN2,
-	SQSHLU,
-	SQSHL,
-	SQSHRN,
-	SQSHRN2,
-	SQSHRUN,
-	SQSHRUN2,
-	SQSUB,
-	SQXTN2,
-	SQXTN,
-	SQXTUN2,
-	SQXTUN,
-	SRHADD,
-	SRI,
-	SRSHL,
-	SRSHR,
-	SRSRA,
-	SSHLL2,
-	SSHLL,
-	SSHL,
-	SSHR,
-	SSRA,
-	SSUBL2,
-	SSUBL,
-	SSUBW2,
-	SSUBW,
-	ST1,
-	ST2,
-	ST3,
-	ST4,
-	STLRB,
-	STLRH,
-	STLR,
-	STLXP,
-	STLXRB,
-	STLXRH,
-	STLXR,
-	STNP,
-	STP,
-	STRB,
-	STR,
-	STRH,
-	STTRB,
-	STTRH,
-	STTR,
-	STURB,
-	STUR,
-	STURH,
-	STXP,
-	STXRB,
-	STXRH,
-	STXR,
-	SUBHN,
-	SUBHN2,
-	SUB,
-	SUQADD,
-	SVC,
-	SYSL,
-	SYS,
-	TBL,
-	TBNZ,
-	TBX,
-	TBZ,
-	TRN1,
-	TRN2,
-	UABAL2,
-	UABAL,
-	UABA,
-	UABDL2,
-	UABDL,
-	UABD,
-	UADALP,
-	UADDLP,
-	UADDLV,
-	UADDL2,
-	UADDL,
-	UADDW2,
-	UADDW,
-	UBFM,
-	UCVTF,
-	UDIV,
-	UHADD,
-	UHSUB,
-	UMADDL,
-	UMAXP,
-	UMAXV,
-	UMAX,
-	UMINP,
-	UMINV,
-	UMIN,
-	UMLAL2,
-	UMLAL,
-	UMLSL2,
-	UMLSL,
-	UMOV,
-	UMSUBL,
-	UMULH,
-	UMULL2,
-	UMULL,
-	UQADD,
-	UQRSHL,
-	UQRSHRN,
-	UQRSHRN2,
-	UQSHL,
-	UQSHRN,
-	UQSHRN2,
-	UQSUB,
-	UQXTN2,
-	UQXTN,
-	URECPE,
-	URHADD,
-	URSHL,
-	URSHR,
-	URSQRTE,
-	URSRA,
-	USHLL2,
-	USHLL,
-	USHL,
-	USHR,
-	USQADD,
-	USRA,
-	USUBL2,
-	USUBL,
-	USUBW2,
-	USUBW,
-	UZP1,
-	UZP2,
-	XTN2,
-	XTN,
-	ZIP1,
-	ZIP2,
+	saba,
+	sabdl2,
+	sabdl,
+	sabd,
+	sadalp,
+	saddlp,
+	saddlv,
+	saddl2,
+	saddl,
+	saddw2,
+	saddw,
+	sbc,
+	sbfm,
+	scvtf,
+	sdiv,
+	sha1c,
+	sha1h,
+	sha1m,
+	sha1p,
+	sha1su0,
+	sha1su1,
+	sha256h2,
+	sha256h,
+	sha256su0,
+	sha256su1,
+	shadd,
+	shll2,
+	shll,
+	shl,
+	shrn2,
+	shrn,
+	shsub,
+	sli,
+	smaddl,
+	smaxp,
+	smaxv,
+	smax,
+	smc,
+	sminp,
+	sminv,
+	smin,
+	smlal2,
+	smlal,
+	smlsl2,
+	smlsl,
+	smov,
+	smsubl,
+	smulh,
+	smull2,
+	smull,
+	sqabs,
+	sqadd,
+	sqdmlal,
+	sqdmlal2,
+	sqdmlsl,
+	sqdmlsl2,
+	sqdmulh,
+	sqdmull,
+	sqdmull2,
+	sqneg,
+	sqrdmulh,
+	sqrshl,
+	sqrshrn,
+	sqrshrn2,
+	sqrshrun,
+	sqrshrun2,
+	sqshlu,
+	sqshl,
+	sqshrn,
+	sqshrn2,
+	sqshrun,
+	sqshrun2,
+	sqsub,
+	sqxtn2,
+	sqxtn,
+	sqxtun2,
+	sqxtun,
+	srhadd,
+	sri,
+	srshl,
+	srshr,
+	srsra,
+	sshll2,
+	sshll,
+	sshl,
+	sshr,
+	ssra,
+	ssubl2,
+	ssubl,
+	ssubw2,
+	ssubw,
+	st1,
+	st2,
+	st3,
+	st4,
+	stlrb,
+	stlrh,
+	stlr,
+	stlxp,
+	stlxrb,
+	stlxrh,
+	stlxr,
+	stnp,
+	stp,
+	strb,
+	str,
+	strh,
+	sttrb,
+	sttrh,
+	sttr,
+	sturb,
+	stur,
+	sturh,
+	stxp,
+	stxrb,
+	stxrh,
+	stxr,
+	subhn,
+	subhn2,
+	sub,
+	suqadd,
+	svc,
+	sysl,
+	sys,
+	tbl,
+	tbnz,
+	tbx,
+	tbz,
+	trn1,
+	trn2,
+	uabal2,
+	uabal,
+	uaba,
+	uabdl2,
+	uabdl,
+	uabd,
+	uadalp,
+	uaddlp,
+	uaddlv,
+	uaddl2,
+	uaddl,
+	uaddw2,
+	uaddw,
+	ubfm,
+	ucvtf,
+	udiv,
+	uhadd,
+	uhsub,
+	umaddl,
+	umaxp,
+	umaxv,
+	umax,
+	uminp,
+	uminv,
+	umin,
+	umlal2,
+	umlal,
+	umlsl2,
+	umlsl,
+	umov,
+	umsubl,
+	umulh,
+	umull2,
+	umull,
+	uqadd,
+	uqrshl,
+	uqrshrn,
+	uqrshrn2,
+	uqshl,
+	uqshrn,
+	uqshrn2,
+	uqsub,
+	uqxtn2,
+	uqxtn,
+	urecpe,
+	urhadd,
+	urshl,
+	urshr,
+	ursqrte,
+	ursra,
+	ushll2,
+	ushll,
+	ushl,
+	ushr,
+	usqadd,
+	usra,
+	usubl2,
+	usubl,
+	usubw2,
+	usubw,
+	uzp1,
+	uzp2,
+	xtn2,
+	xtn,
+	zip1,
+	zip2,
 
-	// alias insn
-	MNEG,
-	UMNEGL,
-	SMNEGL,
-	NOP,
-	YIELD,
-	WFE,
-	WFI,
-	SEV,
-	SEVL,
-	NGC,
-	SBFIZ,
-	UBFIZ,
-	SBFX,
-	UBFX,
-	BFI,
-	BFXIL,
-	CMN,
-	MVN,
-	TST,
-	CSET,
-	CINC,
-	CSETM,
-	CINV,
-	CNEG,
-	SXTB,
-	SXTH,
-	SXTW,
-	CMP,
-	UXTB,
-	UXTH,
-	UXTW,
-	IC,
-	DC,
-	AT,
-	TLBI
+	// Alias instructions
+	mneg,
+	umnegl,
+	smnegl,
+	nop,
+	yield,
+	wfe,
+	wfi,
+	sev,
+	sevl,
+	ngc,
+	sbfiz,
+	ubfiz,
+	sbfx,
+	ubfx,
+	bfi,
+	bfxil,
+	cmn,
+	mvn,
+	tst,
+	cset,
+	cinc,
+	csetm,
+	cinv,
+	cneg,
+	sxtb,
+	sxth,
+	sxtw,
+	cmp,
+	uxtb,
+	uxth,
+	uxtw,
+	ic,
+	dc,
+	at,
+	tlbi
 }
 
-//> Group of ARM64 instructions
+/// Group of ARM64 instructions
 enum Arm64InstructionGroup {
-	INVALID = 0, // = CS_GRP_INVALID
+	invalid = 0,
 
-	//> Generic groups
-	// all jump instructions (conditional+direct+indirect jumps)
-	JUMP,	// = CS_GRP_JUMP
+	// Generic groups
+	// All jump instructions (conditional+direct+indirect jumps)
+	jump,
 
-	//> Architecture-specific groups
-	CRYPTO = 128,
-	FPARMV8,
-	NEON,
-	CRC
+	// Architecture-specific groups
+	crypto = 128,
+	fparmv8,
+	neon,
+	crc
 }

@@ -25,24 +25,24 @@ enum platforms = [
 void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone!(Arch.arm) cs){
 	// TODO: No exception
 	assert(!instr.detail.isNull);
-	auto arm = instr.detail; //auto arm = instr.detail.archSpecific;
+	auto arm = instr.detail; // = instr.detail.archSpecific;
 	
 	if(arm.operands.length > 0)
 		buf.writefln("\top_count: %d", arm.operands.length);
 	foreach(i, operand; arm.operands){
 		final switch(operand.type){
-			case ArmOpType.INVALID:
+			case ArmOpType.invalid:
 				break;
-			case ArmOpType.REG:
+			case ArmOpType.reg:
 				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
 				break;
-			case ArmOpType.IMM:
+			case ArmOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
-			case ArmOpType.FP:
+			case ArmOpType.fp:
 				buf.writefln("\t\toperands[%d].type: FP = %f", i, operand.fp);
 				break;
-			case ArmOpType.MEM:
+			case ArmOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
 				if (operand.mem.base != ArmRegister.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
@@ -53,16 +53,16 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 				if (operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;
-			case ArmOpType.PIMM:
+			case ArmOpType.pimm:
 				buf.writefln("\t\toperands[%d].type: P-IMM = %d", i, operand.imm);
 				break;
-			case ArmOpType.CIMM:
+			case ArmOpType.cimm:
 				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, operand.imm);
 				break;
-			case ArmOpType.SETEND:
+			case ArmOpType.setend:
 				buf.writefln("\t\toperands[%d].type: SETEND = %s", i, operand.setend == ArmSetendType.be? "be" : "le");
 				break;
-			case ArmOpType.SYSREG:
+			case ArmOpType.sysreg:
 				buf.writefln("\t\toperands[%d].type: SYSREG = %d", i, operand.reg);
 				break;
 		}

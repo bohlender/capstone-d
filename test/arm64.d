@@ -34,9 +34,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capsto
 				break;
 			case Arm64OpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (op.mem.base != Arm64Register.INVALID)
+				if (op.mem.base != Arm64Register.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(op.mem.base));
-				if (op.mem.index != Arm64Register.INVALID)
+				if (op.mem.index != Arm64Register.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(op.mem.index));
 				if (op.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, op.mem.disp);
@@ -64,13 +64,13 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capsto
 				break;
 		}
 
-		if(op.shift.type != Arm64ShiftType.INVALID && op.shift.value)
+		if(op.shift.type != Arm64ShiftType.invalid && op.shift.value)
 			buf.writefln("\t\t\tShift: type = %d, value = %d", op.shift.type, op.shift.value);
-		if(op.ext != Arm64Extender.INVALID)
+		if(op.ext != Arm64Extender.invalid)
 			buf.writefln("\t\t\tExt: %d", op.ext);
-		if(op.vas != Arm64Vas.INVALID)
+		if(op.vas != Arm64Vas.invalid)
 			buf.writefln("\t\t\tVector Arrangement Specifier: 0x%x", op.vas);
-		if(op.vess != Arm64Vess.INVALID)
+		if(op.vess != Arm64Vess.invalid)
 			buf.writefln("\t\t\tVector Element Size Specifier: %d", op.vess);
 		if(op.vectorIndex != -1)
 			buf.writefln("\t\t\tVector Index: %d", op.vectorIndex);
