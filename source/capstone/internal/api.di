@@ -144,9 +144,8 @@ extern (C){
     //bool cs_disasm_iter(csh handle, const uint8_t **code, size_t *size, uint64_t *address, cs_insn *insn);
 
     const(char)* cs_reg_name(size_t handle, uint reg_id);
-	
-    // const char* cs_insn_name(csh handle, unsigned int insn_id);
-    // const char * cs_group_name(csh handle, unsigned int group_id);
+    const(char)* cs_insn_name(size_t handle, uint insn_id);
+    const(char)* cs_group_name(size_t handle, uint group_id);
     // bool cs_insn_group(csh handle, const cs_insn *insn, unsigned int group_id);
     // bool cs_reg_read(csh handle, const cs_insn *insn, unsigned int reg_id);
     // bool cs_reg_write(csh handle, const cs_insn *insn, unsigned int reg_id);

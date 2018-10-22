@@ -418,12 +418,12 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     }
 
     // TODO: Really needed? Almost identical to regular `toString`
-    /** Determines user-friendly name of a register
+    /** Determines friendly name of a register
     
     When in diet mode, this API is irrelevant because engine does not store register names
     Param:
-        regId = register id
-    Returns: user-friendly string representation of the register's name
+        regId = Register id
+    Returns: Friendly string representation of the register's name
     */
     string regName(Register!arch regId) const {
         if(diet)
@@ -434,10 +434,50 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     unittest{
         import std.conv: to;
 
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-        if(!diet){
-            assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
-            assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
-        }
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
+        assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
+    }
+
+    // TODO: Really needed? Almost identical to regular `toString`
+    /** Determines friendly name of an instruction
+    
+    When in diet mode, this API is irrelevant because engine does not store instruction names
+    Param:
+        instrId = Instruction id
+    Returns: Friendly string representation of the instruction's name
+    */
+    string instrName(InstructionId!arch instrId) const {
+        if(diet)
+            throw new CapstoneException("Instruction names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
+        return cs_insn_name(handle, instrId).to!string;
+    }
+    ///
+    unittest{
+        import std.conv: to;
+
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        assert(cs.instrName(X86InstructionId.add) == X86InstructionId.add.to!string); // Mostly same as `to!string`
+    }
+
+    // TODO: Really needed? Almost identical to regular `toString`
+    /** Determines friendly name of a group id (that an instruction can belong to)
+    
+    When in diet mode, this API is irrelevant because engine does not store group names
+    Param:
+        groupId = Group id
+    Returns: Friendly string representation of the group's name, or null if `groupId` is invalid
+    */
+    string groupName(InstructionGroup!arch groupId) const {
+        if(diet)
+            throw new CapstoneException("Group names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
+        return cs_group_name(handle, groupId).to!string;
+    }
+    ///
+    unittest{
+        import std.conv: to;
+
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        assert(cs.groupName(X86InstructionGroup.sse1) == X86InstructionGroup.sse1.to!string); // Mostly same as `to!string`
     }
 }
