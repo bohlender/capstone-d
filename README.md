@@ -84,7 +84,7 @@ Because in D, accessing operands of a given type is easier than using such a fun
 auto opsOfGivenType = operands.filter!(op => op.type == givenType)
 ```
 
-> How to determine an instructions length in bytes ?
+> How to determine an instruction's length in bytes ?
 
 Unlike in the C API, an instruction `instr` does indeed not have a `size` member. In D, arrays & slices have `length`, so you can simpliy use `instr.bytes.length`.
 
