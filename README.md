@@ -69,6 +69,25 @@ x86Reduce : false
 The package is available in the [D package management](http://code.dlang.org/packages/capstone-d) s.t. it suffices to add `capstone-d` as a dependency in the `dub.json` of your project.
 Furthermore, the examples folder contains a [basic project](https://github.com/bohlender/capstone-d/tree/master/examples/basic) to get you started.
 
+## F.A.Q.
+> The C API had `cs_op_count` to count an instruction's number of operands of a `givenType`. Why is it missing?
+
+Because this can easily be accomplished in D as follows:
+```D
+auto number = operands.count!(op => op.type == givenType)
+```
+
+> In the C API, if you want to iterate over an instruction's operands of a given type, you first have to determine those operands' indices in the operands array. To this end the C API provides `cs_op_index` to determine the index of an instruction's `k`-th operand of a `givenType` in the operands array. Why is this function missing in these bindings?
+
+Because in D, accessing operands of a given type is easier than using such a function:
+```D
+auto opsOfGivenType = operands.filter!(op => op.type == givenType)
+```
+
+> How to determine an instructions length in bytes ?
+
+Unlike in the C API, an instruction `instr` does indeed not have a `size` member. In D, arrays & slices have `length`, so you can simpliy use `instr.bytes.length`.
+
 ## Contribute
 Keep in mind that the bindings are still under development, but you can always create an issue if you find bugs or think that something could be improved.
 If you want to tackle an issue or contribute to the plugin feel free to create a pull request.
