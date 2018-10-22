@@ -7,7 +7,6 @@
 - make sure everything works as expected in diet mode
 - fuzz api
 
-- doc: more unittests as examples
-- unittests of functions
+- example-cstool
 
 - support manual memory management ?
