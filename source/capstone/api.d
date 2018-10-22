@@ -358,7 +358,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         this.callback = callback;
         
         auto setup = cs_opt_skipdata(this.mnemonic.ptr, this.callback ? &cCallback : null, &this.callback);
-        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(ulong)&setup).checkErrno;
+        cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(size_t)&setup).checkErrno;
     }
 
     // TODO: for system with scarce memory to be dynamically allocated such as OS kernel or firmware, the API cs_disasm_iter() might be a better choice than cs_disasm()
