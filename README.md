@@ -4,7 +4,7 @@
 # capstone-d
 
 ## What is this?
-This package implements idiomatic D bindings for [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
+This package implements idiomatic D bindings for version [3.0.5](https://github.com/aquynh/capstone/releases/tag/3.0.5) of [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
 
 *Note: The development is still in progress and not all architectures are supported yet. However, x86 and ARM work already.*
 
@@ -27,7 +27,7 @@ auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit64));
         writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
 }
 ```
-Running this will dissassemble the byte sequence `\x55\x48\x8b\x05\xb8\x13\x00\x00` on a x86_64 architecture and output the following
+Running this will disassemble the byte sequence `\x55\x48\x8b\x05\xb8\x13\x00\x00` on a x86_64 architecture and output the following
 ```
 0x1000: push            rbp
 0x1001: mov             rax, qword ptr [rip + 0x13b8]
