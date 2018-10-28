@@ -2,11 +2,12 @@
 module capstone.api;
 
 import std.typecons: Tuple, BitFlags, Yes, Nullable;
-import std.exception: enforce;
+import std.exception: enforce, assertThrown;
 import std.format;
 import std.conv;
 import std.string;
 import std.array;
+import std.range.primitives: isInputRange;
 
 import capstone;
 
@@ -384,9 +385,9 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         assert(instrs.length == 6);
     }
 
-    // TODO: for system with scarce memory to be dynamically allocated such as OS kernel or firmware, the API cs_disasm_iter() might be a better choice than cs_disasm()
-    /** Disassemble binary code, given the code buffer, address and number of instructions to be decoded
+    /** Disassemble binary code, given the code buffer, start address and number of instructions to be decoded
     
+    For systems with scarce memory, the API `disasmIter` might be a better choice than `disasm`
     Params:
         code    = Buffer containing raw binary code to be disassembled
         address = Address of the first instruction in given raw code buffer
@@ -417,6 +418,99 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
     }
 
+    /** Provides a range to iteratively disassemble binary code - one instruction at a time
+
+    Fast API to disassemble binary code, given the code buffer and start address.
+    Provides access to only one disassembled instruction at a time, resulting in a smaller memory footprint.
+    Params:
+        code    = Buffer containing raw binary code to be disassembled
+        address = Address of the first instruction in given raw code buffer
+    Returns: An input range over the disassembled instructions
+    */
+    auto disasmIter(in ubyte[] code, in ulong address){
+        /// An input range that provides access to one disassembled instruction at a time
+        struct DisasmRange{
+            import core.exception: RangeError;
+            private{
+                Capstone!arch cs;
+                const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
+                const(ubyte)* pCode;
+                ulong codeLength;
+                ulong address;
+
+                Instruction!arch instr;
+                cs_insn cInsn;
+
+                bool hasFront;
+            }
+
+            private this(Capstone!arch cs, in ubyte[] code, in ulong address){
+                this.cs = cs;
+                this.code = code;
+                this.pCode = code.ptr;
+                this.codeLength = code.length;
+                this.address = address;
+                this.hasFront = true;
+
+                popFront;
+            }
+
+            /// True if no disassemblable instructions remain
+            @property empty() const {return !hasFront;}
+
+            /** The latest disassembled instruction
+
+            Throws if called on an `empty` range.
+            */
+            @property auto front() const {
+                enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
+                return instr;
+            }
+
+            /** Advances the range, disassembling the next instruction
+
+            Throws if called on an `empty` range.
+            */
+            void popFront(){
+                enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
+                hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, &cInsn);
+                if(hasFront)
+                    instr = Instruction!arch(cInsn, cs.detail, cs.skipData);
+                else
+                    cs_errno(cs.handle).checkErrno;
+            }
+        }
+        static assert(isInputRange!DisasmRange);
+        return DisasmRange(this, code, address);
+    }
+    /// This is how the example for `disasm` can be realised with `disasmIter`
+    unittest{
+        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+        auto range = cs.disasmIter(CODE, 0x1000);                 // Disassemble one instruction at a time, offsetting addresses by 0x1000
+        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
+        range.popFront;
+        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
+        range.popFront;
+        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
+        range.popFront;
+        assert(range.empty);
+
+        import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
+        assertThrown!RangeError(range.front);
+        assertThrown!RangeError(range.popFront);
+    }
+
+    unittest{
+        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+        
+        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+        assert(cs.disasmIter(CODE, 0x1000).array.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+        cs.skipData = true;
+        assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
+    }
+
     // TODO: Really needed? Almost identical to regular `toString`
     /** Determines friendly name of a register
     
@@ -427,7 +521,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     */
     string regName(Register!arch regId) const {
         if(diet)
-            throw new CapstoneException("Register names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
+            throw new CapstoneException("Register names are not stored when running Capstone in diet mode",
+                ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_reg_name(handle, regId).to!string;
     }
     ///
@@ -449,7 +544,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     */
     string instrName(InstructionId!arch instrId) const {
         if(diet)
-            throw new CapstoneException("Instruction names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
+            throw new CapstoneException("Instruction names are not stored when running Capstone in diet mode",
+                ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_insn_name(handle, instrId).to!string;
     }
     ///
@@ -470,7 +566,8 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     */
     string groupName(InstructionGroup!arch groupId) const {
         if(diet)
-            throw new CapstoneException("Group names are not stored when running Capstone in diet mode", ErrorCode.IrrelevantDataAccessInDietEngine);
+            throw new CapstoneException("Group names are not stored when running Capstone in diet mode",
+                ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_group_name(handle, groupId).to!string;
     }
     ///

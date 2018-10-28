@@ -141,7 +141,7 @@ extern (C){
     void cs_free(cs_insn* insn, size_t count);
     //cs_insn* cs_malloc(csh handle);
     
-    //bool cs_disasm_iter(csh handle, const uint8_t **code, size_t *size, uint64_t *address, cs_insn *insn);
+    bool cs_disasm_iter(size_t handle, const(ubyte)** code, size_t* size, ulong* address, cs_insn* insn);
 
     const(char)* cs_reg_name(size_t handle, uint reg_id);
     const(char)* cs_insn_name(size_t handle, uint insn_id);
