@@ -79,6 +79,8 @@ private{
             alias ArchSpec = AliasSeq!(Arm64InstructionId, Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail);
         else static if(arch == Arch.x86)
             alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
+        else static if(arch == Arch.mips)
+            alias ArchSpec = AliasSeq!(MipsInstructionId, MipsRegister, MipsInstructionGroup, MipsInstructionDetail);
         else static assert(false);
     }
     alias InstructionId(Arch arch) = ArchSpec!(arch)[0];
@@ -109,6 +111,8 @@ struct Detail(Arch arch) {
             archSpecific = InstructionDetail!arch(internal.arm64);
         else static if(arch == Arch.x86)
             archSpecific = InstructionDetail!arch(internal.x86);
+        else static if(arch == Arch.mips)
+            archSpecific = InstructionDetail!arch(internal.mips);
         else static assert(false);
     }
 }
