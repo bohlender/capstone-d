@@ -429,7 +429,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     */
     auto disasmIter(in ubyte[] code, in ulong address){
         /// An input range that provides access to one disassembled instruction at a time
-        struct DisasmRange{
+        class DisasmRange{
             import core.exception: RangeError;
             private{
                 Capstone!arch cs;
@@ -439,7 +439,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
                 ulong address;
 
                 Instruction!arch instr;
-                cs_insn cInsn;
+                cs_insn* pInsn;
 
                 bool hasFront;
             }
@@ -452,7 +452,15 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
                 this.address = address;
                 this.hasFront = true;
 
+                pInsn = cs_malloc(cs.handle);
+                if(!pInsn)
+                    throw new CapstoneException("Insufficient memory to allocate an instruction", ErrorCode.OutOfMemory);
                 popFront;
+            }
+
+            ~this(){
+                if(pInsn)
+                    cs_free(pInsn, 1);
             }
 
             /// True if no disassemblable instructions remain
@@ -473,15 +481,15 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
             */
             void popFront(){
                 enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
-                hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, &cInsn);
+                hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, pInsn);
                 if(hasFront)
-                    instr = Instruction!arch(cInsn, cs.detail, cs.skipData);
+                    instr = Instruction!arch(*pInsn, cs.detail, cs.skipData);
                 else
                     cs_errno(cs.handle).checkErrno;
             }
         }
         static assert(isInputRange!DisasmRange);
-        return DisasmRange(this, code, address);
+        return new DisasmRange(this, code, address);
     }
     /// This is how the example for `disasm` can be realised with `disasmIter`
     unittest{

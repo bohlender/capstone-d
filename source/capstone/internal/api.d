@@ -139,7 +139,7 @@ extern (C){
 
     
     void cs_free(cs_insn* insn, size_t count);
-    //cs_insn* cs_malloc(csh handle);
+    cs_insn* cs_malloc(size_t handle);
     
     bool cs_disasm_iter(size_t handle, const(ubyte)** code, size_t* size, ulong* address, cs_insn* insn);
 
