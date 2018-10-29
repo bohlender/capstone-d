@@ -18,9 +18,9 @@ before_install:
 
 script:
 - if [[ "$CODECOV" == "1" ]]; then
-    dub test -b unittest-cov;
+    dub test -b unittest-cov --build-mode=singleFile;
   else
-    dub test -b unittest;
+    dub test --build-mode=singleFile;
   fi
 
 after_success:
