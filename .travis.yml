@@ -3,7 +3,6 @@ language: d
 matrix:
   include:
     - d: dmd
-    - d: ldc
     - d: dmd
       env: CODECOV=1
 
