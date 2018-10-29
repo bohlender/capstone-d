@@ -12,11 +12,11 @@ import capstone.utils;
 This is associated with the `X86OpType.mem` operand type
 */
 struct X86OpMem {
-    X86Register segment; // Segment register (or `X86Register.invalid` if irrelevant)
-    X86Register base;    // Base register (or `X86Register.invalid` if irrelevant)
-    X86Register index;   // Index register (or `X86Register.invalid` if irrelevant)
-    int scale;           // Scale for index register
-    long disp;           // Displacement value
+    X86Register segment; /// Segment register (or `X86Register.invalid` if irrelevant)
+    X86Register base;    /// Base register (or `X86Register.invalid` if irrelevant)
+    X86Register index;   /// Index register (or `X86Register.invalid` if irrelevant)
+    int scale;           /// Scale for index register
+    long disp;           /// Displacement value
 }
 
 /// Tagged union of possible operand types
@@ -116,9 +116,9 @@ struct X86InstructionDetail {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//=============================================================================
 // Constants
-///////////////////////////////////////////////////////////////////////////////
+//=============================================================================
 
 /// Operand type for instruction's operands
 enum X86OpType {
