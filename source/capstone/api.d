@@ -8,6 +8,7 @@ import std.conv;
 import std.string;
 import std.array;
 import std.range.primitives: isInputRange;
+import std.algorithm: canFind;
 
 import capstone;
 
@@ -145,6 +146,43 @@ struct Instruction(Arch arch) {
             throw new CapstoneException("Trying to access unavailable instruction detail", ErrorCode.UnavailableInstructionDetail);
         return _detail;
     }
+
+    /** Checks whether the instruction belongs to the instruction group `group`
+
+    Convenience method for searching through `detail.groups`.
+    */
+    bool isInGroup(InstructionGroup!arch group) const {
+        return detail.groups.canFind(group);
+    }
+
+    /** Checks if the instruction IMPLICITLY uses a particular register
+
+    Convenience method for searching through `detail.readRegs`.
+    */
+    bool readsReg(Register!arch reg) const {
+        return detail.regsRead.canFind(reg);
+    }
+
+    /** Checks if the instruction IMPLICITLY modifies a particular register
+
+    Convenience method for searching through `detail.writeRegs`.
+    */
+    bool writesReg(Register!arch reg) const {
+        return detail.regsWrite.canFind(reg);
+    }
+}
+///
+unittest{
+    enum code = cast(ubyte[])"\x55";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit64));
+    cs.detail = true;
+
+    auto range = cs.disasmIter(code, 0x1000);
+    auto pushInstr = range.front;                            // 0x55 disassembles to "push"
+    assert(pushInstr.mnemonic == "push");
+    assert(pushInstr.isInGroup(X86InstructionGroup.mode64)); // "push" is part of the mode64 instructions
+    assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
+    assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
 }
 
 /** User-defined callback function type for SKIPDATA mode of operation
