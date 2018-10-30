@@ -50,6 +50,8 @@ enum platforms = [
 	Platform(Arch.arm, Mode.armThumb, THUMB_CODE2, "THUMB-2"),
 	Platform(Arch.arm, Mode.arm, ARM_CODE2, "ARM: Cortex-A15 + NEON"),
 	Platform(Arch.arm, Mode.armThumb, THUMB_CODE, "THUMB"),
+	Platform(Arch.mips, Mode.mips32 + Mode.bigEndian, MIPS_CODE, "MIPS-32 (Big-endian)"),
+	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_CODE2, "MIPS-64-EL (Little-endian)"),
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
 ];
 

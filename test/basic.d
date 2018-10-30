@@ -62,27 +62,36 @@ enum platforms = [
 	Platform(Arch.arm, Mode.arm, ARM_CODE2, "ARM: Cortex-A15 + NEON"),
 	Platform(Arch.arm, Mode.armThumb, THUMB_CODE, "THUMB"),
 	Platform(Arch.arm, Mode.armThumb + Mode.armCortexM, THUMB_MCLASS, "Thumb-MClass"),
-	Platform(Arch.arm, Mode.arm + Mode.armV8, ARMV8, "Arm-V8")
+	Platform(Arch.arm, Mode.arm + Mode.armV8, ARMV8, "Arm-V8"),
+	Platform(Arch.mips, Mode.mips32 + Mode.bigEndian, MIPS_CODE, "MIPS-32 (Big-endian)"),
+	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_CODE2, "MIPS-64-EL (Little-endian)"),
+	Platform(Arch.mips, Mode.mips32r6 + Mode.mipsMicro + Mode.bigEndian, MIPS_32R6M, "MIPS-32R6 | Micro (Big-endian)"),
+	Platform(Arch.mips, Mode.mips32r6 + Mode.bigEndian, MIPS_32R6, "MIPS-32R6 (Big-endian)"),
+	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
 ];
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(i, platform; platforms) {{
+	static foreach(i, platform; platforms) {{ 
+		// Weird code structure to be consistent with original tests in C
+		buf.writefln("****************");
+		buf.writefln("Platform: %s", platform.comment);
 		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 
 		auto res = cs.disasm(platform.code, 0x1000);
-		assert(res.length > 0);
-
-		buf.writefln("****************");
-		buf.writefln("Platform: %s", platform.comment);
-		buf.writefln("Code: %s", platform.code.bytesToHex);
-		buf.writefln("Disasm:");
-
-		foreach(instr; res)
-			buf.writefln("0x%x:\t%s\t\t%s", instr.address, instr.mnemonic, instr.opStr);
-
-		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
+		if(res.length > 0){
+			buf.writefln("Code: %s", platform.code.bytesToHex);
+			buf.writefln("Disasm:");
+			foreach(instr; res)
+				buf.writefln("0x%x:\t%s\t\t%s", instr.address, instr.mnemonic, instr.opStr);
+			buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
+		}else{
+			buf.writefln("****************");
+			buf.writefln("Platform: %s", platform.comment);
+			buf.writefln("Code: %s", platform.code.bytesToHex);
+			buf.writefln("ERROR: Failed to disasm given code!");
+		}
 		buf.writefln("");
 	}}
 
