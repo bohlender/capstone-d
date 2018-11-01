@@ -59,6 +59,18 @@ struct cs_opt_skipdata {
 	void* user_data;
 }
 
+union cs_arch_detail{
+	cs_x86 x86;		// X86 architecture, including 16-bit, 32-bit & 64-bit mode
+
+	cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
+	cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
+	cs_mips mips;	// MIPS architecture
+	// cs_ppc ppc;	// PowerPC architecture
+	// cs_sparc sparc;	// Sparc architecture
+	// cs_sysz sysz;	// SystemZ architecture
+	// cs_xcore xcore;	// XCore architecture
+}
+
 struct cs_detail {
 	ubyte[12] regs_read; // list of implicit registers read by this insn
 	ubyte regs_read_count; // number of implicit registers read by this insn
@@ -69,20 +81,7 @@ struct cs_detail {
 	ubyte[8] groups; // list of group this instruction belong to
 	ubyte groups_count; // number of groups this insn belongs to
 
-	// Architecture-specific instruction info
-	union {
-		cs_x86 x86;	// X86 architecture, including 16-bit, 32-bit & 64-bit mode
-
-		cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
-		cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
-		cs_mips mips;	// MIPS architecture
-		/*
-		cs_ppc ppc;	// PowerPC architecture
-		cs_sparc sparc;	// Sparc architecture
-		cs_sysz sysz;	// SystemZ architecture
-		cs_xcore xcore;	// XCore architecture
-        */
-	};
+	cs_arch_detail arch_detail; // Architecture-specific instruction info
 }
 
 struct cs_insn {

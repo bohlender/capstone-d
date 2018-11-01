@@ -4,7 +4,7 @@ module capstone.x86;
 import std.variant;
 import std.exception: enforce;
 
-import capstone.internal.x86;
+import capstone.internal;
 import capstone.utils;
 
 /** Instruction's operand referring to memory
@@ -96,7 +96,8 @@ struct X86InstructionDetail {
     X86Op[] operands;          /// Operands for this instruction.
 
     // TODO: Check for copying/ownership issues
-    package this(cs_x86 internal){
+    package this(cs_arch_detail arch_detail){
+        auto internal = arch_detail.x86;
         prefix = internal.prefix.dup; // here [0..?]
         opcode = internal.opcode.dup; // here [0..?]
         rex = internal.rex;

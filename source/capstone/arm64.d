@@ -4,7 +4,7 @@ module capstone.arm64;
 import std.variant;
 import std.exception: enforce;
 
-import capstone.internal.arm64;
+import capstone.internal;
 import capstone.utils;
 
 /** Instruction's operand referring to memory
@@ -37,7 +37,7 @@ struct Arm64Op {
 	Arm64OperandValue value; /// Operand value of type `type`
 	alias value this; 		 /// Conventient access to value (as in original bindings)
 
-	package this(cs_arm64_op internal){
+    package this(cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
 		vas = internal.vas;
 		vess = internal.vess;
@@ -84,7 +84,10 @@ struct Arm64InstructionDetail {
 
 	Arm64Op[] operands; /// Operands for this instruction.
 
-	package this(cs_arm64 internal){
+    package this(cs_arch_detail arch_detail){
+		this(arch_detail.arm64);
+	}
+    package this(cs_arm64 internal){
 		cc = internal.cc;
 		updateFlags = internal.update_flags;
 		writeback = internal.writeback;

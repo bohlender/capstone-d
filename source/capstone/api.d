@@ -104,16 +104,7 @@ struct Detail(Arch arch) {
         regsRead = internal.regs_read[0..internal.regs_read_count].to!(Register!arch[]);
         regsWrite = internal.regs_write[0..internal.regs_write_count].to!(Register!arch[]);
         groups = internal.groups[0..internal.groups_count].to!(InstructionGroup!arch[]);
-
-        static if(arch == Arch.arm)
-            archSpecific = InstructionDetail!arch(internal.arm);
-        else static if(arch == Arch.arm64)
-            archSpecific = InstructionDetail!arch(internal.arm64);
-        else static if(arch == Arch.x86)
-            archSpecific = InstructionDetail!arch(internal.x86);
-        else static if(arch == Arch.mips)
-            archSpecific = InstructionDetail!arch(internal.mips);
-        else static assert(false);
+        archSpecific = InstructionDetail!arch(internal.arch_detail);
     }
 }
 
@@ -333,14 +324,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         _mode = modeFlags;
         cs_option(handle, cs_opt_type.CS_OPT_MODE, modeFlags.to!uint).checkErrno;
     }
-    ///
-    unittest{
-        const code = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit16));
-        cs.disasm(code, 0x1000);
-        cs.mode = ModeFlags(Mode.bit32);
-        cs.disasm(code, 0x1000);
-    }
 
     /// Gets the disassembly syntax variant
     @property auto syntax() const {return _syntax;}
@@ -367,17 +350,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         auto option = (enable ? cs_opt_value.CS_OPT_ON : cs_opt_value.CS_OPT_OFF);
         cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA, option).checkErrno;
     }
-    ///
-    unittest{
-        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        auto instrs = cs.disasm(CODE, 0x1000);
-        assert(instrs.length == 3); // With skipdata disabled, disassembling will halt when encountering data
-        cs.skipData = true;
-        instrs = cs.disasm(CODE, 0x1000);
-        assert(instrs.length == 6);
-    }
 
     /** Customises behaviour in SKIPDATA mode of operation
      
@@ -398,6 +370,20 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     Params:
         mnemonic = The mnemonic to use for representing skipped data
         callback = The optional callback to use for handling bytes that cannot be interpreted as an instruction.
+    
+    Example:
+    ---
+    // Custom data that can be referred to in a callback delegate
+    struct CallbackData{
+        int bytesToSkip;
+    }
+    auto myData = CallbackData(1);
+    size_t myCallback(in ubyte[] code, size_t offset) {
+        return myData.bytesToSkip++; // Always skip one more byte when encountering data
+    }
+    cs.skipData = true;                     // Enable skipdata mode
+    cs.setupSkipdata("db", &myCallback);    // Use custom callback, and "db" as custom mnemonic for data
+    ---
     */
     void setupSkipdata(in string mnemonic = ".byte", Callback callback = null){
         if(!mnemonic)
@@ -408,24 +394,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         auto setup = cs_opt_skipdata(this.mnemonic.ptr, this.callback ? &cCallback : null, &this.callback);
         cs_option(handle, cs_opt_type.CS_OPT_SKIPDATA_SETUP, cast(size_t)&setup).checkErrno;
     }
-    ///
-    unittest{
-        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-        // Custom data that can be referred to in a callback delegate
-        struct CallbackData{
-            int bytesToSkip;
-        }
-        auto myData = CallbackData(1);
-        size_t myCallback(in ubyte[] code, size_t offset) {
-            return myData.bytesToSkip++; // Always skip one more byte when encountering data
-        }
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        cs.skipData = true;                    // Enable skipdata mode
-        cs.setupSkipdata("db", &myCallback);   // Use custom callback, and "db" as custom mnemonic for data
-        const instrs = cs.disasm(CODE, 0x1000); // Disassemble (offsetting addresses by 0x1000)
-        assert(instrs.length == 6);
-    }
 
     /** Disassemble binary code, given the code buffer, start address and number of instructions to be decoded
     
@@ -435,6 +403,16 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         address = Address of the first instruction in given raw code buffer
         count   = Number of instructions to be disassembled, or 0 to get all of them
     Returns: The successfully disassembled instructions
+
+    Example:
+    ---
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto res = cs.disasm(CODE, 0x1000);                       // Disassemble, offsetting addresses by 0x1000
+    assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, dword ptr [edx + esi + 8]");
+    assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
+    assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
+    ---
     */
     auto disasm(in ubyte[] code, in ulong address, in size_t count = 0){
         cs_insn* internalInstrs;
@@ -449,16 +427,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
 
         return instrAppnd.data;
     }
-    ///
-    unittest{
-        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-        auto res = cs.disasm(CODE, 0x1000);                       // Disassemble, offsetting addresses by 0x1000
-        assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, dword ptr [edx + esi + 8]");
-        assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
-        assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
-    }
 
     /** Provides a range to iteratively disassemble binary code - one instruction at a time
 
@@ -468,6 +436,21 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         code    = Buffer containing raw binary code to be disassembled
         address = Address of the first instruction in given raw code buffer
     Returns: An input range over the disassembled instructions
+
+    Example:
+    ---
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto range = cs.disasmIter(CODE, 0x1000);                 // Disassemble one instruction at a time, offsetting addresses by 0x1000
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
+    range.popFront;
+    assert(range.empty);
+    ---
     */
     auto disasmIter(in ubyte[] code, in ulong address){
         /// An input range that provides access to one disassembled instruction at a time
@@ -533,33 +516,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         static assert(isInputRange!DisasmRange);
         return new DisasmRange(this, code, address);
     }
-    /// This is how the example for `disasm` can be realised with `disasmIter`
-    unittest{
-        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-        auto range = cs.disasmIter(CODE, 0x1000);                 // Disassemble one instruction at a time, offsetting addresses by 0x1000
-        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
-        range.popFront;
-        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
-        range.popFront;
-        assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
-        range.popFront;
-        assert(range.empty);
-
-        import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
-        assertThrown!RangeError(range.front);
-        assertThrown!RangeError(range.popFront);
-    }
-
-    unittest{
-        auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-        
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        assert(cs.disasmIter(CODE, 0x1000).array.length == 3); // With skipdata disabled, disassembling will halt when encountering data
-        cs.skipData = true;
-        assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
-    }
 
     // TODO: Really needed? Almost identical to regular `toString`
     /** Determines friendly name of a register
@@ -574,14 +530,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
             throw new CapstoneException("Register names are not stored when running Capstone in diet mode",
                 ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_reg_name(handle, regId).to!string;
-    }
-    ///
-    unittest{
-        import std.conv: to;
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
-        assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
     }
 
     // TODO: Really needed? Almost identical to regular `toString`
@@ -598,13 +546,6 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
                 ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_insn_name(handle, instrId).to!string;
     }
-    ///
-    unittest{
-        import std.conv: to;
-
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        assert(cs.instrName(X86InstructionId.add) == X86InstructionId.add.to!string); // Mostly same as `to!string`
-    }
 
     // TODO: Really needed? Almost identical to regular `toString`
     /** Determines friendly name of a group id (that an instruction can belong to)
@@ -620,11 +561,92 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
                 ErrorCode.IrrelevantDataAccessInDietEngine);
         return cs_group_name(handle, groupId).to!string;
     }
-    ///
-    unittest{
-        import std.conv: to;
+}
 
-        auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
-        assert(cs.groupName(X86InstructionGroup.sse1) == X86InstructionGroup.sse1.to!string); // Mostly same as `to!string`
+unittest{
+    const code = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit16));
+    cs.disasm(code, 0x1000);
+    cs.mode = ModeFlags(Mode.bit32);
+    cs.disasm(code, 0x1000);
+}
+
+unittest{
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto instrs = cs.disasm(CODE, 0x1000);
+    assert(instrs.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+    cs.skipData = true;
+    instrs = cs.disasm(CODE, 0x1000);
+    assert(instrs.length == 6);
+}
+
+unittest{
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    // Custom data that can be referred to in a callback delegate
+    struct CallbackData{
+        int bytesToSkip;
     }
+    auto myData = CallbackData(1);
+    size_t myCallback(in ubyte[] code, size_t offset) {
+        return myData.bytesToSkip++; // Always skip one more byte when encountering data
+    }
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    cs.skipData = true;                     // Enable skipdata mode
+    cs.setupSkipdata("db", &myCallback);    // Use custom callback, and "db" as custom mnemonic for data
+    const instrs = cs.disasm(CODE, 0x1000); // Disassemble (offsetting addresses by 0x1000)
+    assert(instrs.length == 6);
+}
+
+unittest{
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto res = cs.disasm(CODE, 0x1000);                       // Disassemble, offsetting addresses by 0x1000
+    assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, dword ptr [edx + esi + 8]");
+    assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
+    assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
+}
+
+unittest{
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto range = cs.disasmIter(CODE, 0x1000);                 // Disassemble one instruction at a time, offsetting addresses by 0x1000
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
+    range.popFront;
+    assert(range.empty);
+    import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
+    assertThrown!RangeError(range.front);
+    assertThrown!RangeError(range.popFront);
+}
+
+unittest{
+    auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
+    
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    assert(cs.disasmIter(CODE, 0x1000).array.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+    cs.skipData = true;
+    assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
+}
+
+unittest{
+    import std.conv: to;
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
+    assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
+}
+
+unittest{
+    import std.conv: to;
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    assert(cs.instrName(X86InstructionId.add) == X86InstructionId.add.to!string); // Mostly same as `to!string`
+}
+
+unittest{
+    import std.conv: to;
+    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    assert(cs.groupName(X86InstructionGroup.sse1) == X86InstructionGroup.sse1.to!string); // Mostly same as `to!string`
 }

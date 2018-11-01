@@ -4,7 +4,7 @@ module capstone.mips;
 import std.variant;
 import std.exception: enforce;
 
-import capstone.internal.mips;
+import capstone.internal;
 import capstone.utils;
 
 /** Instruction's operand referring to memory
@@ -47,7 +47,9 @@ struct MipsOp {
 struct MipsInstructionDetail {
     MipsOp[] operands;          /// Operands for this instruction.
 
-    // TODO: Check for copying/ownership issues
+    package this(cs_arch_detail arch_detail){
+		this(arch_detail.mips);
+	}
     package this(cs_mips internal){
         foreach(op; internal.operands[0..internal.op_count])
             operands ~= MipsOp(op);

@@ -4,7 +4,7 @@ module capstone.arm;
 import std.variant;
 import std.exception: enforce;
 
-import capstone.internal.arm;
+import capstone.internal;
 import capstone.utils;
 
 /** Instruction's operand referring to memory
@@ -82,7 +82,10 @@ struct ArmInstructionDetail {
 
     ArmOp[] operands;             /// Operands for this instruction.
 
-    package this(cs_arm internal){
+    package this(cs_arch_detail arch_detail){
+        this(arch_detail.arm);
+    }
+    package this(cs_arm internal) {
         usermode = internal.usermode;
         vectorSize = internal.vector_size;
         vectorData = internal.vector_data;
