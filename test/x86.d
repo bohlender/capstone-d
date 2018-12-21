@@ -19,8 +19,7 @@ enum platforms = [
 	Platform(Arch.x86, Mode.bit64, X86_CODE64, "X86 64 (Intel syntax)")		
 ];
 
-void writeDetail(ref OutBuffer buf, in Instruction!(Arch.x86) instr, in Capstone!(Arch.x86) cs){
-	// TODO: No exception
+void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 	assert(!instr.detail.isNull);
 	auto x86 = instr.detail; //auto x86 = instr.detail.archSpecific;
 
@@ -95,8 +94,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.x86) instr, in Capstone
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(platform; platforms) {{
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+	foreach(platform; platforms) {
+		assert(platform.arch == Arch.x86);
+		auto cs = new CapstoneX86(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 		cs.detail = true;
 		
@@ -114,7 +114,7 @@ unittest{
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
-	}}
+	}
 
 	const expected = import("x86.expected");
 	const actual = buf.toString;

@@ -12,7 +12,7 @@ enum platforms = [
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64")
 ];
 
-void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capstone!(Arch.arm64) cs){
+void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 cs){
 	assert(!instr.detail.isNull);
 	auto arm64 = instr.detail; //auto arm64 = instr.detail.archSpecific;
 
@@ -87,8 +87,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm64) instr, in Capsto
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(platform; platforms) {{
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+	foreach(platform; platforms) {
+		assert(platform.arch == Arch.arm64);
+		auto cs = new CapstoneArm64(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 		cs.detail = true;
 		
@@ -106,7 +107,7 @@ unittest{
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
-	}}
+	}
 
 	const expected = import("arm64.expected");
 	const actual = buf.toString;

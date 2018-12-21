@@ -55,10 +55,33 @@ enum platforms = [
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
 ];
 
+void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in CapstoneImpl!arch cs) {
+	buf.writefln("0x%x:\t%s\t\t%s // insn-ID: %d, insn-mnem: %s", instr.address, instr.mnemonic, instr.opStr, instr.id, cs.instrName(instr.id));
+	auto detail = instr.detail;
+	if(detail.regsRead.length > 0) {
+		buf.writef("\tImplicit registers read: ");
+		foreach(reg; detail.regsRead)
+			buf.writef("%s ", cs.regName(reg));
+		buf.writefln("");
+	}
+	if(detail.regsWrite.length > 0) {
+		buf.writef("\tImplicit registers modified: ");
+		foreach(reg; detail.regsWrite)
+			buf.writef("%s ", cs.regName(reg));
+		buf.writefln("");
+	}
+	if(detail.groups.length > 0) {
+		buf.writef("\tThis instruction belongs to groups: ");
+		foreach(group; detail.groups)
+			buf.writef("%s ", cs.groupName(group));
+		buf.writefln("");
+	}
+}
+
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(i, platform; platforms) {{
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+	foreach(i, platform; platforms) {
+		auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 		cs.detail = true;
 
@@ -68,30 +91,25 @@ unittest{
 		buf.writefln("Disasm:");
 
 		foreach(instr; cs.disasmIter(platform.code, 0x1000)){ 
-			buf.writefln("0x%x:\t%s\t\t%s // insn-ID: %d, insn-mnem: %s", instr.address, instr.mnemonic, instr.opStr, instr.id, cs.instrName(instr.id));
-			auto detail = instr.detail;
-
-			if(detail.regsRead.length > 0){
-				buf.writef("\tImplicit registers read: ");
-				foreach(reg; detail.regsRead)
-					buf.writef("%s ", cs.regName(reg));
-				buf.writefln("");
-			}
-			if(detail.regsWrite.length > 0){
-				buf.writef("\tImplicit registers modified: ");
-				foreach(reg; detail.regsWrite)
-					buf.writef("%s ", cs.regName(reg));
-				buf.writefln("");
-			}
-			if(detail.groups.length > 0){
-				buf.writef("\tThis instruction belongs to groups: ");
-				foreach(group; detail.groups)
-					buf.writef("%s ",cs.groupName(group));
-				buf.writefln("");
+			switch(platform.arch){
+				case Arch.arm:
+					buf.writeDetail(cast(InstructionImpl!(Arch.arm))instr, cast(CapstoneImpl!(Arch.arm))cs);
+					break;
+				case Arch.arm64:
+					buf.writeDetail(cast(InstructionImpl!(Arch.arm64))instr, cast(CapstoneImpl!(Arch.arm64))cs);
+					break;
+				case Arch.mips:
+					buf.writeDetail(cast(InstructionImpl!(Arch.mips))instr, cast(CapstoneImpl!(Arch.mips))cs);
+					break;
+				case Arch.x86:
+					buf.writeDetail(cast(InstructionImpl!(Arch.x86))instr, cast(CapstoneImpl!(Arch.x86))cs);
+					break;
+				default:
+					assert(false);
 			}
 		}
 		buf.writefln("");
-	}}
+	}
 
 	const expected = import("iter.expected");
 	const actual = buf.toString;

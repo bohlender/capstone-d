@@ -33,8 +33,8 @@ unittest{
     callbacks[3] = toDelegate(&mycallback);
 
     auto buf = new OutBuffer;
-    static foreach(i, platform; platforms) {{
-        auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+    foreach(i, platform; platforms) {{
+        auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
         cs.syntax = platform.syntax;
         cs.detail = true;
         cs.skipData = true;

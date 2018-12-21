@@ -7,10 +7,25 @@ import std.format;
 import std.conv;
 import std.string;
 import std.array;
-import std.range.primitives: isInputRange;
+import std.range: isInputRange;
 import std.algorithm: canFind;
+import std.traits: EnumMembers;
 
 import capstone;
+
+// Aliases
+alias CapstoneArm = CapstoneImpl!(Arch.arm);
+alias InstructionArm = InstructionImpl!(Arch.arm);
+alias CapstoneArm64 = CapstoneImpl!(Arch.arm64);
+alias InstructionArm64 = InstructionImpl!(Arch.arm64);
+alias CapstoneMips = CapstoneImpl!(Arch.mips);
+alias InstructionMips = InstructionImpl!(Arch.mips);
+alias CapstoneX86 = CapstoneImpl!(Arch.x86);
+alias InstructionX86 = InstructionImpl!(Arch.x86);
+// TODO: Add alias for each arch
+// static foreach(arch; EnumMembers!Arch) {
+//     pragma(msg, "alias %s = %s;".format(arch.to!string[0..1].toUpper ~ arch.to!string[1..$] ~ "Instruction", InstructionImpl!arch.stringof));
+// }
 
 /// Architecture type
 enum Arch{
@@ -89,6 +104,7 @@ private{
     alias InstructionDetail(Arch arch) = ArchSpec!(arch)[3];
 }
 
+
 /// Architecture-independent instruction details
 struct Detail(Arch arch) {
 	Register!arch[] regsRead;       /// Registers implicitly read by this instruction
@@ -109,26 +125,32 @@ struct Detail(Arch arch) {
 }
 
 /// Disassembled instruction
-struct Instruction(Arch arch) {
-	InstructionId!arch id; /// Instruction ID (basically a numeric ID for the instruction mnemonic)
+abstract class Instruction {
 	ulong address;         /// Address (EIP) of this instruction
 	ubyte[] bytes;         /// Machine bytes of this instruction
 	string mnemonic;       /// Ascii text of instruction mnemonic
 	string opStr;          /// Ascii text of instruction operands
 	
-    private Nullable!(Detail!arch) _detail;
-
-    private this(cs_insn internal, bool detail, bool skipData){
-        id = internal.id.to!(InstructionId!arch);
+    private this(cs_insn internal){
         address = internal.address;
         bytes = internal.bytes[0..internal.size].dup;
         mnemonic = internal.mnemonic.ptr.to!string;
         opStr = internal.op_str.ptr.to!string;
+    }
+}
+
+// TODO: Add aliases
+class InstructionImpl(Arch arch) : Instruction {
+	InstructionId!arch id; /// Instruction ID (basically a numeric ID for the instruction mnemonic)
+    private Nullable!(Detail!arch) _detail;
+
+    private this(cs_insn internal, bool detail, bool skipData){
+        super(internal);
+        id = internal.id.to!(InstructionId!arch);
 
         if(detail && !skipData)
             _detail = Detail!arch(*internal.detail);
     }
-
     /** More details about the instruction
     
     Note that this is only available if both requirements are met: 
@@ -165,19 +187,6 @@ struct Instruction(Arch arch) {
     bool writesReg(Register!arch reg) const {
         return detail.regsWrite.canFind(reg);
     }
-}
-///
-unittest{
-    enum code = cast(ubyte[])"\x55";
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit64));
-    cs.detail = true;
-
-    auto range = cs.disasmIter(code, 0x1000);
-    auto pushInstr = range.front;                            // 0x55 disassembles to "push"
-    assert(pushInstr.mnemonic == "push");
-    assert(pushInstr.isInGroup(X86InstructionGroup.mode64)); // "push" is part of the mode64 instructions
-    assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
-    assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
 }
 
 /** User-defined callback function type for SKIPDATA mode of operation
@@ -276,7 +285,7 @@ $(UL
 Params:
     arch = The CPU architecture that the engine will disassemble the byte-stream for
 */
-class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId, InstructionDetail and InstructionGroup but those are uniquely implied by the architecture
+abstract class Capstone{
     private{
         alias Handle = size_t;
         Handle handle;    
@@ -289,19 +298,21 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         string mnemonic;
         Callback callback;
     }
+    const Arch arch;
 
     /** Constructs an instance of the disassembly engine
 
     Params:
         modeFlags = A combination of flags to further specify how bytes will be interpreted, e.g. in little-endian.
     */
-    this(in ModeFlags modeFlags){
+    private this(in Arch arch, in ModeFlags modeFlags){
         const libVer = versionOfLibrary;
         const bindVer = versionOfBindings;
         if(libVer != bindVer)
             throw new CapstoneException("API version mismatch between library (%s) and bindings (%s)".format(libVer, bindVer), ErrorCode.UnsupportedVersion);
 
         // Create Capstone engine instance
+        this.arch = arch;
         this._mode = modeFlags;
         cs_open(arch, modeFlags.to!uint, &handle).checkErrno;
 
@@ -316,7 +327,22 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         if(handle)
            cs_close(&handle).checkErrno;
     }
-
+    
+    // TODO: Finish
+    static Capstone create(Arch arch, ModeFlags modeFlags){
+        switch(arch){
+            case Arch.arm:
+                return new CapstoneImpl!(Arch.arm)(modeFlags);
+            case Arch.arm64:
+                return new CapstoneImpl!(Arch.arm64)(modeFlags);
+            case Arch.mips:
+                return new CapstoneImpl!(Arch.mips)(modeFlags);
+            case Arch.x86:
+                return new CapstoneImpl!(Arch.x86)(modeFlags);
+            default:
+                assert(false);
+    }
+}
     /// Gets the mode of interpretation
     @property auto mode() const {return _mode;}
     /// Sets the mode of interpretation
@@ -414,20 +440,9 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
     ---
     */
-    auto disasm(in ubyte[] code, in ulong address, in size_t count = 0){
-        cs_insn* internalInstrs;
-        auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
-        scope(exit){if(internalInstrs){cs_free(internalInstrs, actualCount);}}
-        cs_errno(handle).checkErrno;
+    abstract const(Instruction)[] disasm(in ubyte[] code, in ulong address, in size_t count = 0);
 
-        auto instrAppnd = appender!(Instruction!arch[]);
-        instrAppnd.reserve(actualCount);
-        foreach(instr; internalInstrs[0..actualCount])
-            instrAppnd.put(Instruction!arch(instr, detail, skipData));
-
-        return instrAppnd.data;
-    }
-
+    // TODO: Update docstring
     /** Provides a range to iteratively disassemble binary code - one instruction at a time
 
     Fast API to disassemble binary code, given the code buffer and start address.
@@ -452,69 +467,99 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
     assert(range.empty);
     ---
     */
-    auto disasmIter(in ubyte[] code, in ulong address){
-        /// An input range that provides access to one disassembled instruction at a time
-        class DisasmRange{
-            import core.exception: RangeError;
-            private{
-                Capstone!arch cs;
-                const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
-                const(ubyte)* pCode;
-                ulong codeLength;
-                ulong address;
+    abstract InstructionRange disasmIter(in ubyte[] code, in ulong address);
+}
 
-                Instruction!arch instr;
-                cs_insn* pInsn;
+abstract class InstructionRange {
+    @property Instruction front();
+    @property bool empty();
+    void popFront();
+}
+static assert(isInputRange!InstructionRange);
 
-                bool hasFront;
-            }
+/// An input range that provides access to one disassembled instruction at a time
+class InstructionImplRange(Arch arch) : InstructionRange {
+    import core.exception: RangeError;
+    private{
+        CapstoneImpl!arch cs;
+        const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
+        const(ubyte)* pCode;
+        ulong codeLength;
+        ulong address;
 
-            private this(Capstone!arch cs, in ubyte[] code, in ulong address){
-                this.cs = cs;
-                this.code = code;
-                this.pCode = code.ptr;
-                this.codeLength = code.length;
-                this.address = address;
-                this.hasFront = true;
+        InstructionImpl!arch instr;
+        cs_insn* pInsn;
 
-                pInsn = cs_malloc(cs.handle);
-                if(!pInsn)
-                    throw new CapstoneException("Insufficient memory to allocate an instruction", ErrorCode.OutOfMemory);
-                popFront;
-            }
+        bool hasFront;
+    }
 
-            ~this(){
-                if(pInsn)
-                    cs_free(pInsn, 1);
-            }
+    private this(CapstoneImpl!arch cs, in ubyte[] code, in ulong address){
+        this.cs = cs;
+        this.code = code;
+        this.pCode = code.ptr;
+        this.codeLength = code.length;
+        this.address = address;
+        this.hasFront = true;
 
-            /// True if no disassemblable instructions remain
-            @property empty() const {return !hasFront;}
+        pInsn = cs_malloc(cs.handle);
+        if(!pInsn)
+            throw new CapstoneException("Insufficient memory to allocate an instruction", ErrorCode.OutOfMemory);
+        popFront;
+    }
 
-            /** The latest disassembled instruction
+    ~this(){
+        if(pInsn)
+            cs_free(pInsn, 1);
+    }
 
-            Throws if called on an `empty` range.
-            */
-            @property auto front() const {
-                enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
-                return instr;
-            }
+    /// True if no disassemblable instructions remain
+    @property override bool empty() const {return !hasFront;}
 
-            /** Advances the range, disassembling the next instruction
+    /** The latest disassembled instruction
 
-            Throws if called on an `empty` range.
-            */
-            void popFront(){
-                enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
-                hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, pInsn);
-                if(hasFront)
-                    instr = Instruction!arch(*pInsn, cs.detail, cs.skipData);
-                else
-                    cs_errno(cs.handle).checkErrno;
-            }
-        }
-        static assert(isInputRange!DisasmRange);
-        return new DisasmRange(this, code, address);
+    Throws if called on an `empty` range.
+    */
+    @property override InstructionImpl!arch front() {
+        enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
+        return instr;
+    }
+
+    /** Advances the range, disassembling the next instruction
+
+    Throws if called on an `empty` range.
+    */
+    override void popFront(){
+        enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
+        hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, pInsn);
+        if(hasFront)
+            instr = new InstructionImpl!arch(*pInsn, cs.detail, cs.skipData);
+        else
+            cs_errno(cs.handle).checkErrno;
+    }
+}
+static assert(isInputRange!(InstructionRange));
+// TODO: static assert(isInputRange!(InstructionImplRange!(Arch.x86)));
+
+class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Registers, InstructionId, InstructionDetail and InstructionGroup but those are uniquely implied by the architecture
+    this(in ModeFlags modeFlags){
+        super(archParam, modeFlags);
+    }
+
+    override InstructionImpl!archParam[] disasm(in ubyte[] code, in ulong address, in size_t count = 0){
+        cs_insn* internalInstrs;
+        auto actualCount = cs_disasm(handle, code.ptr, code.length, address, count, &internalInstrs);
+        scope(exit){if(internalInstrs){cs_free(internalInstrs, actualCount);}}
+        cs_errno(handle).checkErrno;
+
+        auto instrAppnd = appender!(InstructionImpl!archParam[]);
+        instrAppnd.reserve(actualCount);
+        foreach(instr; internalInstrs[0..actualCount])
+            instrAppnd.put(new InstructionImpl!archParam(instr, detail, skipData));
+        return instrAppnd.data;
+    }
+
+    override InstructionImplRange!archParam disasmIter(in ubyte[] code, in ulong address){
+        return new InstructionImplRange!archParam(this, code, address);
     }
 
     // TODO: Really needed? Almost identical to regular `toString`
@@ -525,7 +570,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         regId = Register id
     Returns: Friendly string representation of the register's name
     */
-    string regName(Register!arch regId) const {
+    string regName(Register!archParam regId) const {
         if(diet)
             throw new CapstoneException("Register names are not stored when running Capstone in diet mode",
                 ErrorCode.IrrelevantDataAccessInDietEngine);
@@ -540,7 +585,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         instrId = Instruction id
     Returns: Friendly string representation of the instruction's name
     */
-    string instrName(InstructionId!arch instrId) const {
+    string instrName(InstructionId!archParam instrId) const {
         if(diet)
             throw new CapstoneException("Instruction names are not stored when running Capstone in diet mode",
                 ErrorCode.IrrelevantDataAccessInDietEngine);
@@ -555,7 +600,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
         groupId = Group id
     Returns: Friendly string representation of the group's name, or null if `groupId` is invalid
     */
-    string groupName(InstructionGroup!arch groupId) const {
+    string groupName(InstructionGroup!archParam groupId) const {
         if(diet)
             throw new CapstoneException("Group names are not stored when running Capstone in diet mode",
                 ErrorCode.IrrelevantDataAccessInDietEngine);
@@ -565,7 +610,7 @@ class Capstone(Arch arch){ // Actually parametrised by Registers, InstructionId,
 
 unittest{
     const code = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit16));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit16));
     cs.disasm(code, 0x1000);
     cs.mode = ModeFlags(Mode.bit32);
     cs.disasm(code, 0x1000);
@@ -573,7 +618,7 @@ unittest{
 
 unittest{
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     auto instrs = cs.disasm(CODE, 0x1000);
     assert(instrs.length == 3); // With skipdata disabled, disassembling will halt when encountering data
     cs.skipData = true;
@@ -591,7 +636,7 @@ unittest{
     size_t myCallback(in ubyte[] code, size_t offset) {
         return myData.bytesToSkip++; // Always skip one more byte when encountering data
     }
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     cs.skipData = true;                     // Enable skipdata mode
     cs.setupSkipdata("db", &myCallback);    // Use custom callback, and "db" as custom mnemonic for data
     const instrs = cs.disasm(CODE, 0x1000); // Disassemble (offsetting addresses by 0x1000)
@@ -600,7 +645,7 @@ unittest{
 
 unittest{
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
     auto res = cs.disasm(CODE, 0x1000);                       // Disassemble, offsetting addresses by 0x1000
     assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, dword ptr [edx + esi + 8]");
     assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
@@ -609,8 +654,8 @@ unittest{
 
 unittest{
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-    auto range = cs.disasmIter(CODE, 0x1000);                 // Disassemble one instruction at a time, offsetting addresses by 0x1000
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto range = cs.disasmIter(CODE, 0x1000);         // Disassemble one instruction at a time, offsetting addresses by 0x1000
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
     range.popFront;
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
@@ -626,27 +671,37 @@ unittest{
 unittest{
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
     
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     assert(cs.disasmIter(CODE, 0x1000).array.length == 3); // With skipdata disabled, disassembling will halt when encountering data
     cs.skipData = true;
     assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
 }
 
 unittest{
-    import std.conv: to;
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
     assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
 }
 
 unittest{
-    import std.conv: to;
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     assert(cs.instrName(X86InstructionId.add) == X86InstructionId.add.to!string); // Mostly same as `to!string`
 }
 
 unittest{
-    import std.conv: to;
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
     assert(cs.groupName(X86InstructionGroup.sse1) == X86InstructionGroup.sse1.to!string); // Mostly same as `to!string`
+}
+
+unittest{
+    enum code = cast(ubyte[])"\x55";
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit64));
+    cs.detail = true;
+
+    auto range = cs.disasmIter(code, 0x1000);
+    auto pushInstr = range.front;                            // 0x55 disassembles to "push"
+    assert(pushInstr.mnemonic == "push");
+    assert(pushInstr.isInGroup(X86InstructionGroup.mode64)); // "push" is part of the mode64 instructions
+    assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
+    assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
 }

@@ -72,11 +72,11 @@ enum platforms = [
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(i, platform; platforms) {{ 
+	foreach(i, platform; platforms) {{ 
 		// Weird code structure to be consistent with original tests in C
 		buf.writefln("****************");
 		buf.writefln("Platform: %s", platform.comment);
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+		auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 
 		auto res = cs.disasm(platform.code, 0x1000);

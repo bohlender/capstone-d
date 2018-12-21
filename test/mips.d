@@ -18,7 +18,7 @@ enum platforms = [
 	Platform(Arch.mips, Mode.mips32r6 + Mode.bigEndian, MIPS_32R6, "MIPS-32R6 (Big-endian)"),
 ];
 
-void writeDetail(ref OutBuffer buf, in Instruction!(Arch.mips) instr, in Capstone!(Arch.mips) cs){
+void writeDetail(ref OutBuffer buf, in InstructionMips instr, in CapstoneMips cs){
 	assert(!instr.detail.isNull);
 	auto mips = instr.detail; // = instr.detail.archSpecific;
 	
@@ -48,8 +48,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.mips) instr, in Capston
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(platform; platforms) {{
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+	foreach(platform; platforms) {
+		assert(platform.arch == Arch.mips);
+		auto cs = new CapstoneMips(ModeFlags(platform.mode));
 		cs.detail = true;
 		
 		buf.writefln("****************");
@@ -68,7 +69,7 @@ unittest{
 			buf.writefln("ERROR: Failed to disasm given code!");
 		}
 		buf.writefln("");
-	}}
+	}
 
 	const expected = import("mips.expected");
 	const actual = buf.toString;

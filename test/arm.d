@@ -22,7 +22,7 @@ enum platforms = [
 	Platform(Arch.arm, Mode.arm + Mode.armV8, ARMV8, "Arm-V8")
 ];
 
-void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone!(Arch.arm) cs){
+void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 	// TODO: No exception
 	assert(!instr.detail.isNull);
 	auto arm = instr.detail; // = instr.detail.archSpecific;
@@ -105,8 +105,9 @@ void writeDetail(ref OutBuffer buf, in Instruction!(Arch.arm) instr, in Capstone
 
 unittest{
 	auto buf = new OutBuffer;
-	static foreach(platform; platforms) {{
-		auto cs = new Capstone!(platform.arch)(ModeFlags(platform.mode));
+	foreach(platform; platforms) {
+		assert(platform.arch == Arch.arm);
+		auto cs = new CapstoneArm(ModeFlags(platform.mode));
 		cs.syntax = platform.syntax;
 		cs.detail = true;
 		
@@ -124,7 +125,7 @@ unittest{
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
-	}}
+	}
 
 	const expected = import("arm.expected");
 	const actual = buf.toString;
