@@ -1,5 +1,3 @@
-module app;
-
 import std.algorithm: map;
 import std.array: replicate, join;
 import std.format: format;
@@ -19,10 +17,10 @@ void main(){
     foreach(query; EnumMembers!SupportQuery)
         writefln!"%-10s: %s"(query, supports(query));
 
-    auto cs = new Capstone!(Arch.x86)(ModeFlags(Mode.bit32));
+    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit32));
     cs.skipData = true;
     
-    writefln!"\nDisassembling (X86): %s"(CODE.bytesToHex);
+    writefln!"\nDisassembling (%s): %s"(cs.arch, CODE.bytesToHex);
     auto res = cs.disasm(CODE, 0x1000);
     foreach(instr; res)
         writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
