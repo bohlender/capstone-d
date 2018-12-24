@@ -70,6 +70,8 @@ enum platforms = [
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
 	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64"),
 	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64, print register with number only", Syntax.noregname),
+	Platform(Arch.sparc, Mode.bigEndian, SPARC_CODE, "Sparc"),
+	Platform(Arch.sparc, Mode.bigEndian + Mode.sparcV9, SPARCV9_CODE, "SparcV9"),
 ];
 
 unittest{

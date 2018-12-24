@@ -184,3 +184,44 @@ Disasm:
 	Implicit registers read: ctr rm 
 	Implicit registers modified: ctr 
 
+****************
+Platform: Sparc
+Code: 0x80 0xa0 0x40 0x02 0x85 0xc2 0x60 0x08 0x85 0xe8 0x20 0x01 0x81 0xe8 0x00 0x00 0x90 0x10 0x20 0x01 0xd5 0xf6 0x10 0x16 0x21 0x00 0x00 0x0a 0x86 0x00 0x40 0x02 0x01 0x00 0x00 0x00 0x12 0xbf 0xff 0xff 0x10 0xbf 0xff 0xff 0xa0 0x02 0x00 0x09 0x0d 0xbf 0xff 0xff 0xd4 0x20 0x60 0x00 0xd4 0x4e 0x00 0x16 0x2a 0xc2 0x80 0x03 
+Disasm:
+0x1000:	cmp		%g1, %g2 // insn-ID: 33, insn-mnem: cmp
+	Implicit registers modified: icc 
+0x1004:	jmpl		%o1+8, %g2 // insn-ID: 194, insn-mnem: jmpl
+0x1008:	restore		%g0, 1, %g2 // insn-ID: 226, insn-mnem: restore
+0x100c:	restore		 // insn-ID: 226, insn-mnem: restore
+0x1010:	mov		1, %o0 // insn-ID: 207, insn-mnem: mov
+0x1014:	casx		[%i0], %l6, %o2 // insn-ID: 28, insn-mnem: casx
+	This instruction belongs to groups: 64bit 
+0x1018:	sethi		0xa, %l0 // insn-ID: 232, insn-mnem: sethi
+0x101c:	add		%g1, %g2, %g3 // insn-ID: 6, insn-mnem: add
+0x1020:	nop		 // insn-ID: 217, insn-mnem: nop
+0x1024:	bne		0x1020 // insn-ID: 16, insn-mnem: b
+	Implicit registers read: icc 
+	This instruction belongs to groups: jump 
+0x1028:	ba		0x1024 // insn-ID: 16, insn-mnem: b
+	This instruction belongs to groups: jump 
+0x102c:	add		%o0, %o1, %l0 // insn-ID: 6, insn-mnem: add
+0x1030:	fbg		0x102c // insn-ID: 19, insn-mnem: fb
+	Implicit registers read: fcc0 
+	This instruction belongs to groups: jump 
+0x1034:	st		%o2, [%g1] // insn-ID: 246, insn-mnem: st
+0x1038:	ldsb		[%i0+%l6], %o2 // insn-ID: 198, insn-mnem: ldsb
+0x103c:	brnz,a,pn		%o2, 0x1048 // insn-ID: 24, insn-mnem: brnz
+	This instruction belongs to groups: 64bit jump 
+
+****************
+Platform: SparcV9
+Code: 0x81 0xa8 0x0a 0x24 0x89 0xa0 0x10 0x20 0x89 0xa0 0x1a 0x60 0x89 0xa0 0x00 0xe0 
+Disasm:
+0x1000:	fcmps		%f0, %f4 // insn-ID: 70, insn-mnem: fcmps
+0x1004:	fstox		%f0, %f4 // insn-ID: 181, insn-mnem: fstox
+	This instruction belongs to groups: 64bit 
+0x1008:	fqtoi		%f0, %f4 // insn-ID: 159, insn-mnem: fqtoi
+	This instruction belongs to groups: hardquad 
+0x100c:	fnegq		%f0, %f4 // insn-ID: 127, insn-mnem: fnegq
+	This instruction belongs to groups: v9 
+

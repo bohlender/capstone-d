@@ -347,6 +347,8 @@ abstract class Capstone{
                 return new CapstoneImpl!(Arch.mips)(modeFlags);
             case Arch.ppc:
                 return new CapstoneImpl!(Arch.ppc)(modeFlags);
+            case Arch.sparc:
+                return new CapstoneImpl!(Arch.sparc)(modeFlags);
             case Arch.x86:
                 return new CapstoneImpl!(Arch.x86)(modeFlags);
             default:
