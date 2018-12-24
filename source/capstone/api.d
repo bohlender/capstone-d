@@ -20,6 +20,8 @@ alias CapstoneArm64 = CapstoneImpl!(Arch.arm64);
 alias InstructionArm64 = InstructionImpl!(Arch.arm64);
 alias CapstoneMips = CapstoneImpl!(Arch.mips);
 alias InstructionMips = InstructionImpl!(Arch.mips);
+alias CapstonePpc = CapstoneImpl!(Arch.ppc);
+alias InstructionPpc = InstructionImpl!(Arch.ppc);
 alias CapstoneX86 = CapstoneImpl!(Arch.x86);
 alias InstructionX86 = InstructionImpl!(Arch.x86);
 
@@ -29,7 +31,7 @@ enum Arch{
     arm64,   /// ARM-64 (also called AArch64)
     mips,    /// Mips architecture
     x86,     /// X86 architecture (including x86 & x86-64)
-    powerPc, /// Support for PowerPC architecture
+    ppc,     /// Support for PowerPC architecture
     sparc,   /// Support for Sparc architecture
     systemZ, /// Support for SystemZ architecture
     xCore    /// Support for XCore architecture
@@ -88,10 +90,12 @@ private{
             alias ArchSpec = AliasSeq!(ArmInstructionId, ArmRegister, ArmInstructionGroup, ArmInstructionDetail);
         else static if(arch == Arch.arm64)
             alias ArchSpec = AliasSeq!(Arm64InstructionId, Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail);
-        else static if(arch == Arch.x86)
-            alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
         else static if(arch == Arch.mips)
             alias ArchSpec = AliasSeq!(MipsInstructionId, MipsRegister, MipsInstructionGroup, MipsInstructionDetail);
+        else static if(arch == Arch.ppc)
+            alias ArchSpec = AliasSeq!(PpcInstructionId, PpcRegister, PpcInstructionGroup, PpcInstructionDetail);
+        else static if(arch == Arch.x86)
+            alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
         else static assert(false);
     }
     alias InstructionId(Arch arch) = ArchSpec!(arch)[0];

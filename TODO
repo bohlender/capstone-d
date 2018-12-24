@@ -1,7 +1,7 @@
+- consistent naming for each ArchOpType
+
 - support all archs
 - const pure nogc safe
-
-- Templates + CTFE require a lot of memory during compilation of tests -> reduce mem-usage somehow
 
 - get rid of ModeFlags? Do not help with safety anyway
 - get rid of/wrap all the types where zeroes indicate invalid values ?
