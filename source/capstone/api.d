@@ -334,13 +334,15 @@ abstract class Capstone{
         modeFlags = The mode of interpretation
      */
     static Capstone create(Arch arch, ModeFlags modeFlags){
-        switch(arch){
+        switch(arch){ // TODO: final switch
             case Arch.arm:
                 return new CapstoneImpl!(Arch.arm)(modeFlags);
             case Arch.arm64:
                 return new CapstoneImpl!(Arch.arm64)(modeFlags);
             case Arch.mips:
                 return new CapstoneImpl!(Arch.mips)(modeFlags);
+            case Arch.ppc:
+                return new CapstoneImpl!(Arch.ppc)(modeFlags);
             case Arch.x86:
                 return new CapstoneImpl!(Arch.x86)(modeFlags);
             default:

@@ -65,6 +65,7 @@ enum platforms = [
 	Platform(Arch.mips, Mode.mips32r6 + Mode.mipsMicro + Mode.bigEndian, MIPS_32R6M, "MIPS-32R6 | Micro (Big-endian)"),
 	Platform(Arch.mips, Mode.mips32r6 + Mode.bigEndian, MIPS_32R6, "MIPS-32R6 (Big-endian)"),
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
+	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64"),
 ];
 
 void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in CapstoneImpl!arch cs) {
@@ -116,7 +117,10 @@ unittest{
 					case Arch.mips:
 						buf.writeDetail(cast(InstructionImpl!(Arch.mips))instr, cast(CapstoneImpl!(Arch.mips))cs);
 						break;
-					case Arch.x86:
+					case Arch.ppc:
+						buf.writeDetail(cast(InstructionImpl!(Arch.ppc))instr, cast(CapstoneImpl!(Arch.ppc))cs);
+						break;
+					 case Arch.x86:
 						buf.writeDetail(cast(InstructionImpl!(Arch.x86))instr, cast(CapstoneImpl!(Arch.x86))cs);
 						break;
 					default:

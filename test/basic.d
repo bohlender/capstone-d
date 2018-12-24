@@ -68,6 +68,8 @@ enum platforms = [
 	Platform(Arch.mips, Mode.mips32r6 + Mode.mipsMicro + Mode.bigEndian, MIPS_32R6M, "MIPS-32R6 | Micro (Big-endian)"),
 	Platform(Arch.mips, Mode.mips32r6 + Mode.bigEndian, MIPS_32R6, "MIPS-32R6 (Big-endian)"),
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
+	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64"),
+	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64, print register with number only", Syntax.noregname),
 ];
 
 unittest{
