@@ -6,7 +6,7 @@
 ## What is this?
 This package implements idiomatic D bindings for version [3.0.5](https://github.com/aquynh/capstone/releases/tag/3.0.5) of [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
 
-*Note: The development is still in progress and not all architectures are supported yet. However, x86 and ARM work already.*
+*Note: Some architectures have no bindings yet, i.e. PowerPc, Sparc, System z and XCore*
 
 ## Examples
 ### Introductory Example
