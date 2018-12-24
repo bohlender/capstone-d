@@ -13,10 +13,6 @@ enum platforms = [
 ];
 
 void writeDetail(ref OutBuffer buf, in InstructionPpc instr, in CapstonePpc cs){
-	// detail can be NULL on "data" instruction if SKIPDATA option is turned ON
-	// if (ins->detail == NULL)
-	// 	return;
-
 	assert(!instr.detail.isNull);
 	auto ppc = instr.detail; // = instr.detail.archSpecific;
 	

@@ -22,6 +22,8 @@ alias CapstoneMips = CapstoneImpl!(Arch.mips);
 alias InstructionMips = InstructionImpl!(Arch.mips);
 alias CapstonePpc = CapstoneImpl!(Arch.ppc);
 alias InstructionPpc = InstructionImpl!(Arch.ppc);
+alias CapstoneSparc = CapstoneImpl!(Arch.sparc);
+alias InstructionSparc = InstructionImpl!(Arch.sparc);
 alias CapstoneX86 = CapstoneImpl!(Arch.x86);
 alias InstructionX86 = InstructionImpl!(Arch.x86);
 
@@ -94,6 +96,8 @@ private{
             alias ArchSpec = AliasSeq!(MipsInstructionId, MipsRegister, MipsInstructionGroup, MipsInstructionDetail);
         else static if(arch == Arch.ppc)
             alias ArchSpec = AliasSeq!(PpcInstructionId, PpcRegister, PpcInstructionGroup, PpcInstructionDetail);
+        else static if(arch == Arch.sparc)
+            alias ArchSpec = AliasSeq!(SparcInstructionId, SparcRegister, SparcInstructionGroup, SparcInstructionDetail);
         else static if(arch == Arch.x86)
             alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
         else static assert(false);

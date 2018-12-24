@@ -9,7 +9,7 @@ struct cs_mips_op {
 		MipsRegister reg;	// register value for REG operand
 		long imm;			// immediate value for IMM operand
 		MipsOpMem mem;		// base/index/scale/disp value for MEM operand
-	};
+	}
 }
 
 // Instruction structure

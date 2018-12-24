@@ -1,6 +1,7 @@
-- consistent naming for each ArchOpType
-
 - support all archs
+- consistent naming for each ArchOpType
+- dlang format & retab
+
 - const pure nogc safe
 
 - get rid of ModeFlags? Do not help with safety anyway

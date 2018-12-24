@@ -66,7 +66,7 @@ union cs_arch_detail{
 	cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
 	cs_mips mips;	// MIPS architecture
 	cs_ppc ppc;		// PowerPC architecture
-	// cs_sparc sparc;	// Sparc architecture
+	cs_sparc sparc;	// Sparc architecture
 	// cs_sysz sysz;	// SystemZ architecture
 	// cs_xcore xcore;	// XCore architecture
 }

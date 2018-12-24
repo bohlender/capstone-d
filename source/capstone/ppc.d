@@ -1,4 +1,4 @@
-/// Types and constants of MIPS architecture
+/// Types and constants of PowerPc architecture
 module capstone.ppc;
 
 import std.variant;
