@@ -28,13 +28,13 @@ void writeDetail(ref OutBuffer buf, in InstructionMips instr, in CapstoneMips cs
 		final switch(operand.type){
 			case MipsOpType.invalid:
 				break;
-			case MipsOpType.register:
+			case MipsOpType.reg:
 				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
 				break;
-			case MipsOpType.immediate:
+			case MipsOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
-			case MipsOpType.memory:
+			case MipsOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
 				if (operand.mem.base != MipsRegister.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));

@@ -49,7 +49,7 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 	if(x86.avxRM != X86AvxRoundingMode.invalid)
 		buf.writefln("\tavx_rm: %d", x86.avxRM);
 
-	auto imms = x86.operands.filter!(op => op.type == X86OpType.immediate).array;
+	auto imms = x86.operands.filter!(op => op.type == X86OpType.imm).array;
 	if(imms.length > 0){
 		buf.writefln("\timm_count: %d", imms.length);
 		foreach(i, op; imms){
@@ -60,13 +60,13 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 	buf.writefln("\top_count: %d", x86.operands.length);
 	foreach(i, operand; x86.operands){
 		final switch(operand.type){
-			case X86OpType.register:
+			case X86OpType.reg:
 				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
 				break;
-			case X86OpType.immediate:
+			case X86OpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
-			case X86OpType.memory:
+			case X86OpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
 				if(operand.mem.segment != X86Register.invalid)
 					buf.writefln("\t\t\toperands[%d].mem.segment: REG = %s", i, cs.regName(operand.mem.segment));
@@ -79,7 +79,7 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 				if(operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;
-			case X86OpType.floatingPoint, X86OpType.invalid:
+			case X86OpType.fp, X86OpType.invalid:
 				break;
 		}
 

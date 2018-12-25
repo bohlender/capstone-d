@@ -38,16 +38,16 @@ struct X86Op {
         final switch(internal.type) {
             case X86OpType.invalid:
                 break;
-            case X86OpType.register:
+            case X86OpType.reg:
                 value.reg = internal.reg;
                 break;
-            case X86OpType.immediate:
+            case X86OpType.imm:
                 value.imm = internal.imm;
                 break;
-            case X86OpType.memory:
+            case X86OpType.mem:
                 value.mem = internal.mem;
                 break;
-            case X86OpType.floatingPoint:
+            case X86OpType.fp:
                 value.fp = internal.fp;
                 break;
         }
@@ -123,11 +123,11 @@ struct X86InstructionDetail {
 
 /// Operand type for instruction's operands
 enum X86OpType {
-    invalid = 0,  /// Invalid
-    register,     /// Register operand (`X86Register`)
-    immediate,    /// Immediate operand (`long`)
-    memory,       /// Memory operand (`X86OpMem`)
-    floatingPoint /// Floating-Point operand (`double`)
+    invalid = 0, /// Invalid
+    reg,         /// Register operand (`X86Register`)
+    imm,         /// Immediate operand (`long`)
+    mem,         /// Memory operand (`X86OpMem`)
+    fp           /// Floating-Point operand (`double`)
 }
 
 /// AVX broadcast type

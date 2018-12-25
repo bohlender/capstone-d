@@ -30,13 +30,13 @@ struct MipsOp {
         final switch(internal.type) {
             case MipsOpType.invalid:
                 break;
-            case MipsOpType.register:
+            case MipsOpType.reg:
                 value.reg = internal.reg;
                 break;
-            case MipsOpType.immediate:
+            case MipsOpType.imm:
                 value.imm = internal.imm;
                 break;
-            case MipsOpType.memory:
+            case MipsOpType.mem:
                 value.mem = internal.mem;
                 break;
         }
@@ -63,9 +63,9 @@ struct MipsInstructionDetail {
 /// Operand type for instruction's operands
 enum MipsOpType {
     invalid = 0,  /// Invalid
-    register,     /// Register operand (`MipsRegister`)
-    immediate,    /// Immediate operand (`long`)
-    memory,       /// Memory operand (`MipsOpMem`)
+    reg,  		  /// Register operand (`MipsRegister`)
+    imm,    	  /// Immediate operand (`long`)
+    mem,       	  /// Memory operand (`MipsOpMem`)
 }
 
 /// MIPS registers
