@@ -225,3 +225,22 @@ Disasm:
 0x100c:	fnegq		%f0, %f4 // insn-ID: 127, insn-mnem: fnegq
 	This instruction belongs to groups: v9 
 
+****************
+Platform: SystemZ
+Code: 0xed 0x00 0x00 0x00 0x00 0x1a 0x5a 0x0f 0x1f 0xff 0xc2 0x09 0x80 0x00 0x00 0x00 0x07 0xf7 0xeb 0x2a 0xff 0xff 0x7f 0x57 0xe3 0x01 0xff 0xff 0x7f 0x57 0xeb 0x00 0xf0 0x00 0x00 0x24 0xb2 0x4f 0x00 0x78 
+Disasm:
+0x1000:	adb		%f0, 0 // insn-ID: 2, insn-mnem: adb
+	Implicit registers modified: cc 
+0x1006:	a		%r0, 0xfff(%r15, %r1) // insn-ID: 1, insn-mnem: a
+	Implicit registers modified: cc 
+0x100a:	afi		%r0, -0x80000000 // insn-ID: 6, insn-mnem: afi
+	Implicit registers modified: cc 
+0x1010:	br		%r7 // insn-ID: 283, insn-mnem: br
+	This instruction belongs to groups: jump 
+0x1012:	xiy		0x7ffff(%r15), 0x2a // insn-ID: 678, insn-mnem: xiy
+	Implicit registers modified: cc 
+0x1018:	xy		%r0, 0x7ffff(%r1, %r15) // insn-ID: 681, insn-mnem: xy
+	Implicit registers modified: cc 
+0x101e:	stmg		%r0, %r0, 0(%r15) // insn-ID: 657, insn-mnem: stmg
+0x1024:	ear		%r7, %a8 // insn-ID: 383, insn-mnem: ear
+

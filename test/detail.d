@@ -68,6 +68,7 @@ enum platforms = [
 	Platform(Arch.ppc, Mode.bigEndian, PPC_CODE, "PPC-64"),
 	Platform(Arch.sparc, Mode.bigEndian, SPARC_CODE, "Sparc"),
 	Platform(Arch.sparc, Mode.bigEndian + Mode.sparcV9, SPARCV9_CODE, "SparcV9"),
+	Platform(Arch.sysz, Mode.littleEndian, SYSZ_CODE, "SystemZ"),
 ];
 
 void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in CapstoneImpl!arch cs) {
@@ -124,6 +125,9 @@ unittest{
 						break;
 					case Arch.sparc:
 						buf.writeDetail(cast(InstructionImpl!(Arch.sparc))instr, cast(CapstoneImpl!(Arch.sparc))cs);
+						break;
+					case Arch.sysz:
+						buf.writeDetail(cast(InstructionImpl!(Arch.sysz))instr, cast(CapstoneImpl!(Arch.sysz))cs);
 						break;
 					 case Arch.x86:
 						buf.writeDetail(cast(InstructionImpl!(Arch.x86))instr, cast(CapstoneImpl!(Arch.x86))cs);
