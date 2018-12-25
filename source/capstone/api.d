@@ -24,6 +24,8 @@ alias CapstonePpc = CapstoneImpl!(Arch.ppc);
 alias InstructionPpc = InstructionImpl!(Arch.ppc);
 alias CapstoneSparc = CapstoneImpl!(Arch.sparc);
 alias InstructionSparc = InstructionImpl!(Arch.sparc);
+alias CapstoneSysz = CapstoneImpl!(Arch.sysz);
+alias InstructionSysz = InstructionImpl!(Arch.sysz);
 alias CapstoneX86 = CapstoneImpl!(Arch.x86);
 alias InstructionX86 = InstructionImpl!(Arch.x86);
 
@@ -35,7 +37,7 @@ enum Arch{
     x86,     /// X86 architecture (including x86 & x86-64)
     ppc,     /// Support for PowerPC architecture
     sparc,   /// Support for Sparc architecture
-    systemZ, /// Support for SystemZ architecture
+    sysz,    /// Support for SystemZ architecture
     xCore    /// Support for XCore architecture
 }
 
@@ -98,6 +100,8 @@ private{
             alias ArchSpec = AliasSeq!(PpcInstructionId, PpcRegister, PpcInstructionGroup, PpcInstructionDetail);
         else static if(arch == Arch.sparc)
             alias ArchSpec = AliasSeq!(SparcInstructionId, SparcRegister, SparcInstructionGroup, SparcInstructionDetail);
+        else static if(arch == Arch.sysz)
+            alias ArchSpec = AliasSeq!(SyszInstructionId, SyszRegister, SyszInstructionGroup, SyszInstructionDetail);
         else static if(arch == Arch.x86)
             alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
         else static assert(false);
@@ -349,6 +353,8 @@ abstract class Capstone{
                 return new CapstoneImpl!(Arch.ppc)(modeFlags);
             case Arch.sparc:
                 return new CapstoneImpl!(Arch.sparc)(modeFlags);
+            case Arch.sysz:
+                return new CapstoneImpl!(Arch.sysz)(modeFlags);
             case Arch.x86:
                 return new CapstoneImpl!(Arch.x86)(modeFlags);
             default:

@@ -6,4 +6,5 @@ public import capstone.internal.arm64;
 public import capstone.internal.mips;
 public import capstone.internal.ppc;
 public import capstone.internal.sparc;
+public import capstone.internal.sysz;
 public import capstone.internal.x86;
