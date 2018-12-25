@@ -68,7 +68,7 @@ union cs_arch_detail{
 	cs_ppc ppc;		// PowerPC architecture
 	cs_sparc sparc;	// Sparc architecture
 	cs_sysz sysz;	// SystemZ architecture
-	// cs_xcore xcore;	// XCore architecture
+	cs_xcore xcore;	// XCore architecture
 }
 
 struct cs_detail {

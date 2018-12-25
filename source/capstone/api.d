@@ -28,6 +28,8 @@ alias CapstoneSysz = CapstoneImpl!(Arch.sysz);
 alias InstructionSysz = InstructionImpl!(Arch.sysz);
 alias CapstoneX86 = CapstoneImpl!(Arch.x86);
 alias InstructionX86 = InstructionImpl!(Arch.x86);
+alias CapstoneXCore = CapstoneImpl!(Arch.xcore);
+alias InstructionXCore = InstructionImpl!(Arch.xcore);
 
 /// Architecture type
 enum Arch{
@@ -38,7 +40,7 @@ enum Arch{
     ppc,     /// Support for PowerPC architecture
     sparc,   /// Support for Sparc architecture
     sysz,    /// Support for SystemZ architecture
-    xCore    /// Support for XCore architecture
+    xcore    /// Support for XCore architecture
 }
 
 /// The support options that Capstone can be compiled with
@@ -104,6 +106,8 @@ private{
             alias ArchSpec = AliasSeq!(SyszInstructionId, SyszRegister, SyszInstructionGroup, SyszInstructionDetail);
         else static if(arch == Arch.x86)
             alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
+        else static if(arch == Arch.xcore)
+            alias ArchSpec = AliasSeq!(XCoreInstructionId, XCoreRegister, XCoreInstructionGroup, XCoreInstructionDetail);
         else static assert(false);
     }
     alias InstructionId(Arch arch) = ArchSpec!(arch)[0];

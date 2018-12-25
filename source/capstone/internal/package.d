@@ -8,3 +8,4 @@ public import capstone.internal.ppc;
 public import capstone.internal.sparc;
 public import capstone.internal.sysz;
 public import capstone.internal.x86;
+public import capstone.internal.xcore;

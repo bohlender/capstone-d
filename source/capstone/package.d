@@ -11,3 +11,4 @@ public import capstone.ppc;
 public import capstone.sparc;
 public import capstone.sysz;
 public import capstone.x86;
+public import capstone.xcore;
