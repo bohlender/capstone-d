@@ -21,26 +21,6 @@ enum SPARCV9_CODE = cast(ubyte[])"\x81\xa8\x0a\x24\x89\xa0\x10\x20\x89\xa0\x1a\x
 enum SYSZ_CODE = cast(ubyte[])"\xed\x00\x00\x00\x00\x1a\x5a\x0f\x1f\xff\xc2\x09\x80\x00\x00\x00\x07\xf7\xeb\x2a\xff\xff\x7f\x57\xe3\x01\xff\xff\x7f\x57\xeb\x00\xf0\x00\x00\x24\xb2\x4f\x00\x78";
 enum XCORE_CODE = cast(ubyte[])"\xfe\x0f\xfe\x17\x13\x17\xc6\xfe\xec\x17\x97\xf8\xec\x4f\x1f\xfd\xec\x37\x07\xf2\x45\x5b\xf9\xfa\x02\x06\x1b\x10";
 
-// TODO: Add missing tests when all archs are supported
-/*
-enum platforms = [
-	Platform(Arch.x86, Mode.bit16, X86_CODE16, "X86 16bit (Intel syntax)"),
-	Platform(Arch.x86, Mode.bit32, X86_CODE32, "X86 32bit (ATT syntax)", Syntax.att),
-	Platform(Arch.x86, Mode.bit32, X86_CODE32, "X86 32 (Intel syntax)"),
-	Platform(Arch.x86, Mode.bit64, X86_CODE64, "X86 64 (Intel syntax)"),
-	Platform(Arch.arm, Mode.arm, ARM_CODE, "ARM"),
-	Platform(Arch.arm, Mode.armThumb, THUMB_CODE2, "THUMB-2"),
-	Platform(Arch.arm, Mode.arm, ARM_CODE2, "ARM: Cortex-A15 + NEON"),
-	Platform(Arch.arm, Mode.armThumb, THUMB_CODE, "THUMB"),
-	Platform(Arch.mips, Mode.mips32 + Mode.bigEndian, MIPS_CODE, "MIPS-32 (Big-endian)"),
-	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_CODE2, "MIPS-64-EL (Little-endian)"),
-	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64"),
-	Platform(Arch.powerPc, Mode.bigEndian, PPC_CODE, "PPC-64"),
-	Platform(Arch.sparc, Mode.bigEndian, SPARC_CODE, "Sparc"),
-	Platform(Arch.sparc, Mode.bigEndian + Mode.sparcV9, SPARCV9_CODE, "SparcV9"),
-	Platform(Arch.systemZ, Mode.littleEndian, SYSZ_CODE, "SystemZ"),
-	Platform(Arch.xCore, Mode.littleEndian, XCORE_CODE, "XCore")
-]*/
 enum platforms = [
 	Platform(Arch.x86, Mode.bit16, X86_CODE16, "X86 16bit (Intel syntax)"),
 	Platform(Arch.x86, Mode.bit32, X86_CODE32, "X86 32bit (ATT syntax)", Syntax.att),
@@ -57,6 +37,7 @@ enum platforms = [
 	Platform(Arch.sparc, Mode.bigEndian, SPARC_CODE, "Sparc"),
 	Platform(Arch.sparc, Mode.bigEndian + Mode.sparcV9, SPARCV9_CODE, "SparcV9"),
 	Platform(Arch.sysz, Mode.littleEndian, SYSZ_CODE, "SystemZ"),
+	Platform(Arch.xcore, Mode.littleEndian, XCORE_CODE, "XCore")
 ];
 
 void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in CapstoneImpl!arch cs) {
@@ -116,6 +97,9 @@ unittest{
 					break;
 				case Arch.x86:
 					buf.writeDetail(cast(InstructionImpl!(Arch.x86))instr, cast(CapstoneImpl!(Arch.x86))cs);
+					break;
+				case Arch.xcore:
+					buf.writeDetail(cast(InstructionImpl!(Arch.xcore))instr, cast(CapstoneImpl!(Arch.xcore))cs);
 					break;
 				default:
 					assert(false);

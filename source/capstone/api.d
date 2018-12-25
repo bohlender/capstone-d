@@ -346,7 +346,7 @@ abstract class Capstone{
         modeFlags = The mode of interpretation
      */
     static Capstone create(Arch arch, ModeFlags modeFlags){
-        switch(arch){ // TODO: final switch
+        final switch(arch){
             case Arch.arm:
                 return new CapstoneImpl!(Arch.arm)(modeFlags);
             case Arch.arm64:
@@ -361,8 +361,8 @@ abstract class Capstone{
                 return new CapstoneImpl!(Arch.sysz)(modeFlags);
             case Arch.x86:
                 return new CapstoneImpl!(Arch.x86)(modeFlags);
-            default:
-                assert(false);
+            case Arch.xcore:
+                return new CapstoneImpl!(Arch.xcore)(modeFlags);
         }
     }
 
@@ -580,7 +580,7 @@ unittest{
     cs.disasm(code, 0x1000);
 }
 
-// TODO: Use InputRange!Instruction
+// TODO: Try switching to InputRange!Instruction (more restrictive than isInputRange, though)
 /// An input range that provides access to one disassembled `Instruction` at a time
 abstract class InstructionRange {
     @property Instruction front();
