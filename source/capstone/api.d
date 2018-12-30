@@ -735,7 +735,6 @@ unittest{ // disasmIter
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
     auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
     auto range = cs.disasmIter(CODE, 0x1000);         // Disassemble one instruction at a time, offsetting addresses by 0x1000
-    assert(range.array.length == 3);
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, [edx + esi + 8]");
     range.popFront;
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
