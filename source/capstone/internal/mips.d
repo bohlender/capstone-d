@@ -17,5 +17,5 @@ struct cs_mips {
 	// Number of operands of this instruction, 
 	// or 0 when instruction has no operand.
 	ubyte op_count;
-	cs_mips_op[8] operands; // operands for this instruction.
+	cs_mips_op[10] operands; // operands for this instruction.
 }

@@ -67,7 +67,8 @@ unittest{
 	auto buf = new OutBuffer;
 	foreach(i, platform; platforms) {
 		auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
-		cs.syntax = platform.syntax;
+		if(platform.syntax != Syntax.systemDefault)
+			cs.syntax = platform.syntax;
 		cs.detail = true;
 
 		buf.writefln("****************");

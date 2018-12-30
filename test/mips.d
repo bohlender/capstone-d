@@ -10,12 +10,15 @@ enum MIPS_CODE = cast(ubyte[])"\x0C\x10\x00\x97\x00\x00\x00\x00\x24\x02\x00\x0c\
 enum MIPS_CODE2 = cast(ubyte[])"\x56\x34\x21\x34\xc2\x17\x01\x00";
 enum MIPS_32R6M = cast(ubyte[])"\x00\x07\x00\x07\x00\x11\x93\x7c\x01\x8c\x8b\x7c\x00\xc7\x48\xd0";
 enum MIPS_32R6 = cast(ubyte[])"\xec\x80\x00\x19\x7c\x43\x22\xa0";
+enum MIPS_64SD = cast(ubyte[])"\x70\x00\xb2\xff";
 
 enum platforms = [
 	Platform(Arch.mips, Mode.mips32 + Mode.bigEndian, MIPS_CODE, "MIPS-32 (Big-endian)"),
 	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_CODE2, "MIPS-64-EL (Little-endian)"),
 	Platform(Arch.mips, Mode.mips32r6 + Mode.mipsMicro + Mode.bigEndian, MIPS_32R6M, "MIPS-32R6 | Micro (Big-endian)"),
 	Platform(Arch.mips, Mode.mips32r6 + Mode.bigEndian, MIPS_32R6, "MIPS-32R6 (Big-endian)"),
+	Platform(Arch.mips, Mode.mips64 + Mode.mips2 + Mode.littleEndian, MIPS_64SD, "MIPS-64-EL + Mips II (Little-endian)"),
+	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_64SD, "MIPS-64-EL (Little-endian)")
 ];
 
 void writeDetail(ref OutBuffer buf, in InstructionMips instr, in CapstoneMips cs){

@@ -13,7 +13,7 @@ struct cs_sparc_op {
 	SparcOpType type;	// operand type
 	union {
 		SparcRegister reg; // register value for REG operand
-		int imm;		   // immediate value for IMM operand
+		long imm;		   // immediate value for IMM operand
 		sparc_op_mem mem;  // base/disp value for MEM operand
 	}
 }

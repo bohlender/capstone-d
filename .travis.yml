@@ -7,9 +7,9 @@ matrix:
       env: CODECOV=1
 
 before_install:
-  - curl -sL https://github.com/aquynh/capstone/archive/3.0.5.tar.gz > capstone.tar.gz
+  - curl -sL https://github.com/aquynh/capstone/archive/4.0.tar.gz > capstone.tar.gz
   - tar xzf capstone.tar.gz
-  - cd capstone-3.0.5
+  - cd capstone-4.0
   - make clean
   - ./make.sh
   - sudo ./make.sh install

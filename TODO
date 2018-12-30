@@ -1,5 +1,10 @@
+- Add None to BitFlags that can be invalid
+- Avoid (re)allocation and reuse the pointers/locations given by libcapstone
+
 - dlang format & retab
 - const pure nogc safe
+
+- reduce size of binary
 
 - get rid of ModeFlags? Do not help with safety anyway
 - get rid of/wrap all the types where zeroes indicate invalid values ?

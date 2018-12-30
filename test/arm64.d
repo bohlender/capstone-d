@@ -2,6 +2,9 @@ module test.arm64;
 
 import std.outbuffer;
 import std.conv: to;
+import std.range: empty;
+import std.array: join;
+import std.algorithm: map;
 
 import capstone;
 import test.utils;
@@ -64,6 +67,8 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 				break;
 		}
 
+		if(op.access)
+			buf.writefln("\t\toperands[%u].access: %s", i, op.access.accessToString);
 		if(op.shift.type != Arm64ShiftType.invalid && op.shift.value)
 			buf.writefln("\t\t\tShift: type = %d, value = %d", op.shift.type, op.shift.value);
 		if(op.ext != Arm64Extender.invalid)
@@ -82,6 +87,12 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 		buf.writefln("\tWrite-back: True");
 	if (arm64.cc)
 		buf.writefln("\tCode-condition: %d", arm64.cc);
+
+	auto regsAccess = cs.regsAccess(instr);
+	if (!regsAccess.read.empty)
+		buf.writefln("\tRegisters read: %s", regsAccess.read.map!(reg => cs.regName(reg)).join(" "));
+	if (!regsAccess.write.empty)
+		buf.writefln("\tRegisters modified: %s", regsAccess.write.map!(reg => cs.regName(reg)).join(" "));
 	buf.writefln("");
 }
 

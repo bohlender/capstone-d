@@ -5,6 +5,9 @@ import std.array: join;
 import std.format: format;
 import std.string: splitLines;
 import std.range: zip, enumerate;
+import std.string: toUpper;
+import std.traits: EnumMembers;
+import std.conv: to;
 
 import capstone;
 
@@ -19,6 +22,7 @@ struct Platform{
 	string comment;
 	Syntax syntax;
 	string skipdataMnemonic;
+	Callback callback;
 }
 
 /// Pretty printing of bytes as in original regression tests
@@ -65,4 +69,19 @@ unittest{
 		auto res = expectationMismatch(expected, actual);
 		assert("Expected 3 lines (got 4)" == res);
 	}
+}
+
+string accessToString(AccessFlags access) {
+    string[] accessStrs;
+    foreach(accessType; EnumMembers!AccessType[1..$]) // Skip AccessType.invalid
+        if(access & accessType)
+            accessStrs ~= accessType.to!string.toUpper;
+    return accessStrs.join(" | ");
+}
+///
+unittest{
+	AccessFlags inv;
+	assert("", inv.accessToString);
+	auto rw = AccessFlags(AccessType.read | AccessType.write);
+	assert("READ | WRITE", rw.accessToString);
 }

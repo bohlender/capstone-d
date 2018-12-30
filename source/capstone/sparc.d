@@ -26,7 +26,7 @@ struct SparcOpMem {
 }
 
 /// Tagged union of possible operand types
-alias SparcOpValue = TaggedUnion!(SparcRegister, "reg", int, "imm", SparcOpMem, "mem");
+alias SparcOpValue = TaggedUnion!(SparcRegister, "reg", long, "imm", SparcOpMem, "mem");
 
 /// Instruction's operand
 struct SparcOp {

@@ -25,7 +25,8 @@ enum ErrorCode {
     IrrelevantDataAccessInDietEngine,       /// Accessing data that is unavailable/invalid in diet mode
     IrrelevantDataAccessInSkipdataMode,     /// Accessing data that is irrelevant for "data" instruction in SKIPDATA mode (cannot happen)
     UnsupportedATnTSyntax,                  /// Requesting unsupported AT&T syntax (opt-out at compile time)
-    UnsupportedIntelSyntax                  /// Requesting unsupported Intel syntax (opt-out at compile time)
+    UnsupportedIntelSyntax,                 /// Requesting unsupported Intel syntax (opt-out at compile time)
+	UnsupportedMasmSyntax,                  /// Requesting unsupported MASM syntax (opt-out at compile time)
 }
 
 /// Exception thrown on errors in the wrapped Capstone library

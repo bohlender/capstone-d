@@ -6,11 +6,13 @@ import capstone.arm64;
 struct cs_arm64_op {
 	int vector_index;	// Vector Index for some vector operands (or -1 if irrelevant)
 	Arm64Vas vas;		// Vector Arrangement Specifier
-	Arm64Vess vess;	// Vector Element Size Specifier
+	Arm64Vess vess;		// Vector Element Size Specifier
 	Arm64Shift shift;
-	Arm64Extender ext;		// extender type of this operand
+	Arm64Extender ext;	// extender type of this operand
 	Arm64OpType type;	// operand type
-	union {
+
+	// TODO: Remove padding workaround when compiler bug is sorted out (https://issues.dlang.org/show_bug.cgi?id=19516)
+	static union U {
 		Arm64Register reg;	// register value for REG operand
 		long imm;		// immediate value, or index for C-IMM or IMM operand
 		double fp;			// floating point value for FP operand
@@ -20,6 +22,13 @@ struct cs_arm64_op {
 		Arm64PrefetchOp prefetch;  // PRFM operation.
 		Arm64BarrierOp barrier;  // Memory barrier operation (ISB/DMB/DSB instructions).
 	};
+	U u;
+	alias u this;
+
+	// How is this operand accessed? (READ, WRITE or READ|WRITE)
+	// This field is combined of cs_ac_type.
+	// NOTE: this field is irrelevant if engine is compiled in DIET mode.
+	ubyte access;
 }
 
 // Instruction structure

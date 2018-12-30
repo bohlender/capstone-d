@@ -7,10 +7,10 @@ struct cs_ppc_op {
 	PpcOpType type;	// operand type
 	union {
 		PpcRegister reg; // register value for REG operand
-		uint imm;		 // immediate value for IMM operand
+		long imm;		 // immediate value for IMM operand
 		PpcOpMem mem;	 // base/disp value for MEM operand
 		PpcOpCrx crx;	 // operand with condition register
-	};
+	}
 }
 
 // Instruction structure

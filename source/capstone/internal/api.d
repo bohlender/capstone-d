@@ -3,17 +3,20 @@ module capstone.internal.api;
 import capstone.internal;
 
 // Capstone API version
-enum uint CS_API_MAJOR = 3;
+enum uint CS_API_MAJOR = 4;
 enum uint CS_API_MINOR = 0;
 
 // Runtime option for the disassembled engine
 enum cs_opt_type {
-	CS_OPT_SYNTAX = 1,	// Assembly output syntax
-	CS_OPT_DETAIL,	// Break down instruction structure into details
-	CS_OPT_MODE,	// Change engine's mode at run-time
-	CS_OPT_MEM,	// User-defined dynamic memory related functions
-	CS_OPT_SKIPDATA, // Skip data when disassembling. Then engine is in SKIPDATA mode.
-	CS_OPT_SKIPDATA_SETUP // Setup user-defined function for SKIPDATA option
+	CS_OPT_INVALID = 0,	   /// No option specified
+	CS_OPT_SYNTAX,		   /// Assembly output syntax
+	CS_OPT_DETAIL,		   /// Break down instruction structure into details
+	CS_OPT_MODE,		   /// Change engine's mode at run-time
+	CS_OPT_MEM,			   /// User-defined dynamic memory related functions
+	CS_OPT_SKIPDATA, 	   /// Skip data when disassembling. Then engine is in SKIPDATA mode.
+	CS_OPT_SKIPDATA_SETUP, /// Setup user-defined function for SKIPDATA option
+	CS_OPT_MNEMONIC,  	   /// Customize instruction mnemonic
+	CS_OPT_UNSIGNED, 	   /// Print immediate operands in unsigned form
 }
 
 // Runtime option value (associated with option type above)
@@ -23,7 +26,8 @@ enum cs_opt_value {
 	CS_OPT_SYNTAX_DEFAULT = 0, // Default asm syntax (CS_OPT_SYNTAX).
 	CS_OPT_SYNTAX_INTEL, // X86 Intel asm syntax - default on X86 (CS_OPT_SYNTAX).
 	CS_OPT_SYNTAX_ATT,   // X86 ATT asm syntax (CS_OPT_SYNTAX).
-	CS_OPT_SYNTAX_NOREGNAME // Prints register name with only number (CS_OPT_SYNTAX)
+	CS_OPT_SYNTAX_NOREGNAME, // Prints register name with only number (CS_OPT_SYNTAX)
+	CS_OPT_SYNTAX_MASM, ///< X86 Intel Masm syntax (CS_OPT_SYNTAX).
 }
 
 alias cs_skipdata_cb_t = extern(C) size_t function(const(ubyte)* code,
@@ -60,22 +64,25 @@ struct cs_opt_skipdata {
 }
 
 union cs_arch_detail{
-	cs_x86 x86;		// X86 architecture, including 16-bit, 32-bit & 64-bit mode
-
-	cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
-	cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
-	cs_mips mips;	// MIPS architecture
-	cs_ppc ppc;		// PowerPC architecture
-	cs_sparc sparc;	// Sparc architecture
-	cs_sysz sysz;	// SystemZ architecture
-	cs_xcore xcore;	// XCore architecture
+	cs_x86 x86;     		  /// X86 architecture, including 16-bit, 32-bit & 64-bit mode
+	cs_arm64 arm64; 		  /// ARM64 architecture (aka AArch64)
+	cs_arm arm;     		  /// ARM architecture (including Thumb/Thumb2)
+	// cs_m68k m68k;   		  /// M68K architecture
+	cs_mips mips;   		  /// MIPS architecture
+	cs_ppc ppc;	    		  /// PowerPC architecture
+	cs_sparc sparc; 		  /// Sparc architecture
+	cs_sysz sysz;   		  /// SystemZ architecture
+	cs_xcore xcore; 		  /// XCore architecture
+	// cs_tms320c64x tms320c64x; /// TMS320C64x architecture
+	// cs_m680x m680x; 		  /// M680X architecture
+	// cs_evm evm; 			  /// Ethereum architecture
 }
 
 struct cs_detail {
-	ubyte[12] regs_read; // list of implicit registers read by this insn
+	ushort[12] regs_read; // list of implicit registers read by this insn
 	ubyte regs_read_count; // number of implicit registers read by this insn
 
-	ubyte[20] regs_write; // list of implicit registers modified by this insn
+	ushort[20] regs_write; // list of implicit registers modified by this insn
 	ubyte regs_write_count; // number of implicit registers modified by this insn
 
 	ubyte[8] groups; // list of group this instruction belong to
@@ -136,7 +143,6 @@ extern (C){
     
     size_t cs_disasm(size_t handle, const(ubyte)* code, size_t code_size, ulong address, size_t count, cs_insn** insn);
 
-    
     void cs_free(cs_insn* insn, size_t count);
     cs_insn* cs_malloc(size_t handle);
     
@@ -148,4 +154,7 @@ extern (C){
     // bool cs_insn_group(csh handle, const cs_insn *insn, unsigned int group_id);
     // bool cs_reg_read(csh handle, const cs_insn *insn, unsigned int reg_id);
     // bool cs_reg_write(csh handle, const cs_insn *insn, unsigned int reg_id);
+
+	alias cs_regs = ushort[64]; // TODO: Continue intergrating it into API
+	int cs_regs_access(size_t handle, const(cs_insn)* insn, cs_regs* regs_read, ubyte* regs_read_count, cs_regs* regs_write, ubyte* regs_write_count);
 }

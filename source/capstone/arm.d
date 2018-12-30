@@ -3,9 +3,11 @@ module capstone.arm;
 
 import std.variant;
 import std.exception: enforce;
+import std.conv: to;
 
 import capstone.internal;
 import capstone.utils;
+import capstone.api: AccessType, AccessFlags;
 
 /** Instruction's operand referring to memory
 
@@ -16,6 +18,7 @@ struct ArmOpMem {
     ArmRegister index;  /// Index register
     int scale;          /// Scale for index register (can be 1, or -1)
     int disp;           /// Displacement value
+	int lshift;         /// Left-shift on index register, or 0 if irrelevant.
 }
 
 /// Optional shift
@@ -39,7 +42,16 @@ struct ArmOp {
 
     If TRUE, this operand is subtracted. Otherwise, it is added.
     */
-    bool subtracted; 
+    bool subtracted;
+
+	/** How is this operand accessed? (READ, WRITE or READ|WRITE)
+
+	NOTE: This field is irrelevant, i.e. equals 0, if engine is compiled in DIET mode.
+    */
+	AccessFlags access;
+
+	/// Neon lane index for NEON instructions (or -1 if irrelevant)
+    byte neonLane;
 
     package this(cs_arm_op internal){
         vectorIndex = internal.vector_index;
@@ -65,6 +77,8 @@ struct ArmOp {
                 break;
         }
         subtracted = internal.subtracted;
+        access = cast(AccessType)internal.access;
+        neonLane = internal.neon_lane;
     }
 }
 
@@ -185,6 +199,42 @@ enum ArmSysreg {
     basepri_max,
     faultmask,
     control,
+
+    // Banked Registers
+    r8_usr,
+    r9_usr,
+    r10_usr,
+    r11_usr,
+    r12_usr,
+    sp_usr,
+    lr_usr,
+    r8_fiq,
+    r9_fiq,
+    r10_fiq,
+    r11_fiq,
+    r12_fiq,
+    sp_fiq,
+    lr_fiq,
+    lr_irq,
+    sp_irq,
+    lr_svc,
+    sp_svc,
+    lr_abt,
+    sp_abt,
+    lr_und,
+    sp_und,
+    lr_mon,
+    sp_mon,
+    elr_hyp,
+    sp_hyp,
+    
+    spsr_fiq,
+    spsr_irq,
+    spsr_svc,
+    spsr_abt,
+    spsr_und,
+    spsr_mon,
+    spsr_hyp,
 }
 
 /// The memory barrier constants map directly to the 4-bit encoding of the option field for Memory Barrier operations
@@ -871,40 +921,45 @@ enum ArmInstructionId {
 enum ArmInstructionGroup {
     invalid = 0,
 
-    // Generic groups
-    // All jump instructions (conditional+direct+indirect jumps)
-    jump,
+	// Generic groups
+	// All jump instructions (conditional+direct+indirect jumps)
+	jump,
+	call,
+	int_ = 4,
+	privilege = 6,
+	branch_relative,
 
-    // Architecture-specific groups
-    crypto = 128,
-    databarrier,
-    divide,
-    fparmv8,
-    multpro,
-    neon,
-    t2extractpack,
-    thumb2dsp,
-    trustzone,
-    v4t,
-    v5t,
-    v5te,
-    v6,
-    v6t2,
-    v7,
-    v8,
-    vfp2,
-    vfp3,
-    vfp4,
-    arm,
-    mclass,
-    notmclass,
-    thumb,
-    thumb1only,
-    thumb2,
-    prev8,
-    fpvmlx,
-    mulops,
-    crc,
-    dpvfp,
-    v6m
+	// Architecture-specific groups
+	crypto = 128,
+	databarrier,
+	divide,
+	fparmv8,
+	multpro,
+	neon,
+	t2extractpack,
+	thumb2dsp,
+	trustzone,
+	v4t,
+	v5t,
+	v5te,
+	v6,
+	v6t2,
+	v7,
+	v8,
+	vfp2,
+	vfp3,
+	vfp4,
+	arm,
+	mclass,
+	notmclass,
+	thumb,
+	thumb1only,
+	thumb2,
+	prev8,
+	fpvmlx,
+	mulops,
+	crc,
+	dpvfp,
+	v6m,
+    virtualization,
 }

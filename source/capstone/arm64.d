@@ -6,6 +6,7 @@ import std.exception: enforce;
 
 import capstone.internal;
 import capstone.utils;
+import capstone.api: AccessType, AccessFlags;
 
 /** Instruction's operand referring to memory
 
@@ -37,6 +38,12 @@ struct Arm64Op {
 	Arm64OperandValue value; /// Operand value of type `type`
 	alias value this; 		 /// Conventient access to value (as in original bindings)
 
+	/** How is this operand accessed? (READ, WRITE or READ|WRITE)
+
+	NOTE: This field is irrelevant, i.e. equals 0, if engine is compiled in DIET mode.
+    */
+	AccessFlags access;
+
     package this(cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
 		vas = internal.vas;
@@ -44,6 +51,7 @@ struct Arm64Op {
 		shift = internal.shift;
 		ext = internal.ext;
 		type = internal.type;
+        access = cast(AccessType)internal.access;
 		
 		final switch(internal.type){
 			case Arm64OpType.invalid:
@@ -1124,7 +1132,7 @@ enum Arm64InstructionId {
 	zip1,
 	zip2,
 
-	// Alias instructions
+	// alias insn
 	mneg,
 	umnegl,
 	smnegl,
@@ -1159,7 +1167,10 @@ enum Arm64InstructionId {
 	ic,
 	dc,
 	at,
-	tlbi
+	tlbi,
+
+	negs,
+	ngcs,
 }
 
 /// Group of ARM64 instructions
@@ -1167,12 +1178,17 @@ enum Arm64InstructionGroup {
 	invalid = 0,
 
 	// Generic groups
-	// All jump instructions (conditional+direct+indirect jumps)
+	// all jump instructions (conditional+direct+indirect jumps)
 	jump,
+	call,
+	ret,
+	int_,
+	privilege = 6,
+	branch_relative,
 
 	// Architecture-specific groups
 	crypto = 128,
 	fparmv8,
 	neon,
-	crc
+	crc,
 }
