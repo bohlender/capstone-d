@@ -7,9 +7,9 @@ matrix:
       env: CODECOV=1
 
 before_install:
-  - curl -sL https://github.com/aquynh/capstone/archive/4.0.tar.gz > capstone.tar.gz
-  - tar xzf capstone.tar.gz
-  - cd capstone-4.0
+  - curl -sL https://github.com/aquynh/capstone/archive/8f4cc4e80d2c8635b06be9fe193eb6e3c6bd357f.zip > capstone.zip
+  - unzip capstone.zip
+  - cd capstone-8f4cc4e80d2c8635b06be9fe193eb6e3c6bd357f
   - make clean
   - ./make.sh
   - sudo ./make.sh install
@@ -17,9 +17,9 @@ before_install:
 
 script:
 - if [[ "$CODECOV" == "1" ]]; then
-    dub test -b unittest-cov --build-mode=singleFile;
+    dub test -b unittest-cov
   else
-    dub test --build-mode=singleFile;
+    dub test
   fi
 
 after_success:

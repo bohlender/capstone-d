@@ -701,17 +701,20 @@ class InstructionImplRange(Arch arch) : InstructionRange {
 }
 static assert(isInputRange!(InstructionRange));
 
-unittest{
+unittest{ // disasm
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
     auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    auto instrs = cs.disasm(CODE, 0x1000);
-    assert(instrs.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+    auto res = cs.disasm(CODE, 0x1000);
+    assert(res.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+    assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, [edx + esi + 8]");
+    assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
+    assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
     cs.skipData = true;
-    instrs = cs.disasm(CODE, 0x1000);
-    assert(instrs.length == 6);
+    res = cs.disasm(CODE, 0x1000);
+    assert(res.length == 6);
 }
 
-unittest{
+unittest{ // skipdata
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
     // Custom data that can be referred to in a callback delegate
     struct CallbackData{
@@ -728,66 +731,52 @@ unittest{
     assert(instrs.length == 6);
 }
 
-// unittest{
-//     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-//     auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-//     auto res = cs.disasm(CODE, 0x1000);                       // Disassemble, offsetting addresses by 0x1000
-//     assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, dword ptr [edx + esi + 8]");
-//     assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
-//     assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
-// }
-
-// unittest{
-//     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-//     auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
-//     auto range = cs.disasmIter(CODE, 0x1000);         // Disassemble one instruction at a time, offsetting addresses by 0x1000
-//     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, dword ptr [edx + esi + 8]");
-//     range.popFront;
-//     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
-//     range.popFront;
-//     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
-//     range.popFront;
-//     assert(range.empty);
-//     import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
-//     assertThrown!RangeError(range.front);
-//     assertThrown!RangeError(range.popFront);
-// }
-
-unittest{
+unittest{ // disasmIter
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.disasmIter(CODE, 0x1000).array.length == 3); // With skipdata disabled, disassembling will halt when encountering data
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto range = cs.disasmIter(CODE, 0x1000);         // Disassemble one instruction at a time, offsetting addresses by 0x1000
+    assert(range.array.length == 3);
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, [edx + esi + 8]");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add eax, ebx");
+    range.popFront;
+    assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
+    range.popFront;
+    assert(range.empty);
+    import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
+    assertThrown!RangeError(range.front);
+    assertThrown!RangeError(range.popFront);
+
     cs.skipData = true;
     assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
 }
 
 unittest{
     auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.regName(X86Register.eip) == X86Register.eip.to!string); // Mostly same output as `to!string`
-    assert(cs.regName(X86Register.st7) == "st(7)");                   // Differs sometimes though
+    assert(cs.regName(X86Register.eip) == "eip"); // Mostly same output as `to!string`
+    assert(cs.regName(X86Register.st7) == "st(7)"); // Differs sometimes though
 }
 
 unittest{
     auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.instrName(X86InstructionId.add) == X86InstructionId.add.to!string); // Mostly same as `to!string`
+    assert(cs.instrName(X86InstructionId.add) == "add"); // Mostly same as `to!string`
 }
 
 unittest{
     auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.groupName(X86InstructionGroup.sse1) == X86InstructionGroup.sse1.to!string); // Mostly same as `to!string`
+    assert(cs.groupName(X86InstructionGroup.sse1) == "sse1"); // Mostly same as `to!string`
 }
 
-// unittest{
-//     enum code = cast(ubyte[])"\x55";
-//     auto cs = new CapstoneX86(ModeFlags(Mode.bit64));
-//     cs.detail = true;
+unittest{
+    enum code = cast(ubyte[])"\x55";
+    auto cs = new CapstoneX86(ModeFlags(Mode.bit64));
+    cs.detail = true;
 
-//     // auto range = cs.disasmIter(code, 0x1000);
-//     auto range = cs.disasm(code, 0x1000);
-//     auto pushInstr = range.front;                            // 0x55 disassembles to "push"
-//     assert(pushInstr.mnemonic == "push");
-//     assert(pushInstr.isInGroup(X86InstructionGroup.mode64), pushInstr.detail.groups.to!string); // "push" is part of the mode64 instructions
-//     assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
-//     assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
-// }
+    // auto range = cs.disasmIter(code, 0x1000);
+    auto range = cs.disasm(code, 0x1000);
+    auto pushInstr = range.front;                            // 0x55 disassembles to "push"
+    assert(pushInstr.mnemonic == "push");
+    assert(pushInstr.isInGroup(X86InstructionGroup.mode64), pushInstr.detail.groups.to!string); // "push" is part of the mode64 instructions
+    assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
+    assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
+}
