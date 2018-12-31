@@ -1,13 +1,19 @@
 /// Types and constants of SPARC architecturem
 module capstone.sparc;
 
-import std.variant;
 import std.exception: enforce;
 import std.conv: to;
 import std.typecons: BitFlags;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstoneSparc = CapstoneImpl!(Arch.sparc);
+/// Architecture-specific instruction variant
+alias InstructionSparc = InstructionImpl!(Arch.sparc);
 
 /** Instruction's operand referring to memory
 

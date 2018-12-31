@@ -49,7 +49,6 @@ template TaggedUnion(Specs...) if (distinctFieldNames!Specs && distinctTypeNames
 		}else{
 			static assert(0, "Attempted to instantiate TaggedUnion with an invalid argument: " ~ Specs[0].stringof);
 		}
-		
 	}
 
 	alias fieldSpecs = parseSpecs!Specs;

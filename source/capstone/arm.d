@@ -1,13 +1,19 @@
 /// Types and constants of ARM architecture
 module capstone.arm;
 
-import std.variant;
 import std.exception: enforce;
 import std.conv: to;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
 import capstone.api: AccessType, AccessFlags;
+
+/// Architecture-specific Capstone variant
+alias CapstoneArm = CapstoneImpl!(Arch.arm);
+/// Architecture-specific instruction variant
+alias InstructionArm = InstructionImpl!(Arch.arm);
 
 /** Instruction's operand referring to memory
 

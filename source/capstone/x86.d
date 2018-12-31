@@ -1,13 +1,19 @@
 /// Types and constants of x86 architecture (both 32bit and 64bit)
 module capstone.x86;
 
-import std.variant;
 import std.exception: enforce;
 import std.typecons: BitFlags;
 import capstone.api: AccessType, AccessFlags;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstoneX86 = CapstoneImpl!(Arch.x86);
+/// Architecture-specific instruction variant
+alias InstructionX86 = InstructionImpl!(Arch.x86);
 
 struct X86Encoding {
 	/// ModR/M offset, or 0 when irrelevant

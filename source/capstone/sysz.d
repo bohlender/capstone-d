@@ -1,12 +1,18 @@
 /// Types and constants of System z architecture
 module capstone.sysz;
 
-import std.variant;
 import std.exception: enforce;
 import std.conv: to;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstoneSysz = CapstoneImpl!(Arch.sysz);
+/// Architecture-specific instruction variant
+alias InstructionSysz = InstructionImpl!(Arch.sysz);
 
 /** Instruction's operand referring to memory
 

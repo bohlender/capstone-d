@@ -1,12 +1,18 @@
 /// Types and constants of ARM64 architecture
 module capstone.arm64;
 
-import std.variant;
 import std.exception: enforce;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
 import capstone.api: AccessType, AccessFlags;
+
+/// Architecture-specific Capstone variant
+alias CapstoneArm64 = CapstoneImpl!(Arch.arm64);
+/// Architecture-specific instruction variant
+alias InstructionArm64 = InstructionImpl!(Arch.arm64);
 
 /** Instruction's operand referring to memory
 

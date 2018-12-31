@@ -1,12 +1,18 @@
 /// Types and constants of XCore architecture
 module capstone.xcore;
 
-import std.variant;
 import std.exception: enforce;
 import std.conv: to;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstoneXCore = CapstoneImpl!(Arch.xcore);
+/// Architecture-specific instruction variant
+alias InstructionXCore = InstructionImpl!(Arch.xcore);
 
 /** Instruction's operand referring to memory
 

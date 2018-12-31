@@ -1,11 +1,17 @@
 /// Types and constants of MIPS architecture
 module capstone.mips;
 
-import std.variant;
 import std.exception: enforce;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstoneMips = CapstoneImpl!(Arch.mips);
+/// Architecture-specific instruction variant
+alias InstructionMips = InstructionImpl!(Arch.mips);
 
 /** Instruction's operand referring to memory
 

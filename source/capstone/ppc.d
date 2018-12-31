@@ -1,11 +1,17 @@
 /// Types and constants of PowerPc architecture
 module capstone.ppc;
 
-import std.variant;
 import std.exception: enforce;
 
 import capstone.internal;
+import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api: Arch;
 import capstone.utils;
+
+/// Architecture-specific Capstone variant
+alias CapstonePpc = CapstoneImpl!(Arch.ppc);
+/// Architecture-specific instruction variant
+alias InstructionPpc = InstructionImpl!(Arch.ppc);
 
 /** Instruction's operand referring to memory
 

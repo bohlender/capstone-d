@@ -2,34 +2,16 @@
 module capstone.api;
 
 import std.typecons: Tuple, BitFlags, Yes, Nullable;
-import std.exception: enforce, assertThrown;
-import std.format;
-import std.conv;
-import std.string;
-import std.array;
-import std.range: isInputRange, enumerate;
+import std.format: format;
+import std.conv: to;
+import std.array: array, appender;
+import std.range: isInputRange, enumerate, front;
 import std.algorithm: canFind;
 import std.traits: EnumMembers;
 
-import capstone;
-
-// Aliases
-alias CapstoneArm = CapstoneImpl!(Arch.arm);
-alias InstructionArm = InstructionImpl!(Arch.arm);
-alias CapstoneArm64 = CapstoneImpl!(Arch.arm64);
-alias InstructionArm64 = InstructionImpl!(Arch.arm64);
-alias CapstoneMips = CapstoneImpl!(Arch.mips);
-alias InstructionMips = InstructionImpl!(Arch.mips);
-alias CapstonePpc = CapstoneImpl!(Arch.ppc);
-alias InstructionPpc = InstructionImpl!(Arch.ppc);
-alias CapstoneSparc = CapstoneImpl!(Arch.sparc);
-alias InstructionSparc = InstructionImpl!(Arch.sparc);
-alias CapstoneSysz = CapstoneImpl!(Arch.sysz);
-alias InstructionSysz = InstructionImpl!(Arch.sysz);
-alias CapstoneX86 = CapstoneImpl!(Arch.x86);
-alias InstructionX86 = InstructionImpl!(Arch.x86);
-alias CapstoneXCore = CapstoneImpl!(Arch.xcore);
-alias InstructionXCore = InstructionImpl!(Arch.xcore);
+import capstone.internal;
+import capstone.error;
+import capstone.impl: CapstoneImpl;
 
 /// Architecture type
 enum Arch{
@@ -125,57 +107,10 @@ enum AccessType {
 }
 alias AccessFlags = BitFlags!AccessType;
 
-// Auxiliary templates to derive the types to use as InstructionId, Register, InstructionGroup and InstructionDetail for a given architecture
-private{
-    import std.meta: AliasSeq;
-    template ArchSpec(Arch arch){
-        static if(arch == Arch.arm)
-            alias ArchSpec = AliasSeq!(ArmInstructionId, ArmRegister, ArmInstructionGroup, ArmInstructionDetail);
-        else static if(arch == Arch.arm64)
-            alias ArchSpec = AliasSeq!(Arm64InstructionId, Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail);
-        else static if(arch == Arch.mips)
-            alias ArchSpec = AliasSeq!(MipsInstructionId, MipsRegister, MipsInstructionGroup, MipsInstructionDetail);
-        else static if(arch == Arch.ppc)
-            alias ArchSpec = AliasSeq!(PpcInstructionId, PpcRegister, PpcInstructionGroup, PpcInstructionDetail);
-        else static if(arch == Arch.sparc)
-            alias ArchSpec = AliasSeq!(SparcInstructionId, SparcRegister, SparcInstructionGroup, SparcInstructionDetail);
-        else static if(arch == Arch.sysz)
-            alias ArchSpec = AliasSeq!(SyszInstructionId, SyszRegister, SyszInstructionGroup, SyszInstructionDetail);
-        else static if(arch == Arch.x86)
-            alias ArchSpec = AliasSeq!(X86InstructionId, X86Register, X86InstructionGroup, X86InstructionDetail);
-        else static if(arch == Arch.xcore)
-            alias ArchSpec = AliasSeq!(XCoreInstructionId, XCoreRegister, XCoreInstructionGroup, XCoreInstructionDetail);
-        else static assert(false);
-    }
-    alias InstructionId(Arch arch) = ArchSpec!(arch)[0];
-    alias Register(Arch arch) = ArchSpec!(arch)[1];
-    alias InstructionGroup(Arch arch) = ArchSpec!(arch)[2];
-    alias InstructionDetail(Arch arch) = ArchSpec!(arch)[3];
-}
-
-/// Instruction detail 
-struct Detail(Arch arch) {
-	Register!arch[] regsRead;       /// Registers implicitly read by this instruction
-	Register!arch[] regsWrite;      /// Registers implicitly modified by this instruction
-	InstructionGroup!arch[] groups; /// The groups this instruction belongs to
-
-	/// Architecture-specific instruction detail
-    InstructionDetail!arch archSpecific;
-    /// Convenience-alias making `archSpecific`'s members directly accessible from this
-    alias archSpecific this;
-
-    private this(cs_detail internal){
-        regsRead = internal.regs_read[0..internal.regs_read_count].to!(Register!arch[]);
-        regsWrite = internal.regs_write[0..internal.regs_write_count].to!(Register!arch[]);
-        groups = internal.groups[0..internal.groups_count].to!(InstructionGroup!arch[]);
-        archSpecific = InstructionDetail!arch(internal.arch_detail);
-    }
-}
-
 /// Architecture-independent instruction
 abstract class Instruction {
     // TODO: Make const & uniqueptr?
-    private cs_insn* internal; // Have to keep it around for cs_regs_access
+    package cs_insn* internal; // Have to keep it around for cs_regs_access
 
 	/// Address (EIP) of this instruction
     @property address() const {return internal.address;}
@@ -186,63 +121,13 @@ abstract class Instruction {
 	/// Ascii text of instruction operands
     @property opStr() const {return internal.op_str.ptr.to!string;}
 	
-    private this(cs_insn* internal){
+    protected this(cs_insn* internal){
         this.internal = internal;
     }
 
     ~this(){
         assert(internal);
         cs_free(internal, 1);
-    }
-}
-
-/// Architecture-specific instruction
-class InstructionImpl(Arch arch) : Instruction {
-	/// Instruction ID (basically a numeric ID for the instruction mnemonic)
-    @property id() const {return internal.id.to!(InstructionId!arch);}
-
-    private Nullable!(Detail!arch) _detail;
-
-    private this(cs_insn* internal, bool detail, bool skipData){
-        super(internal);
-        if(detail && !skipData)
-            _detail = Detail!arch(*internal.detail);
-    }
-    /** More details about the instruction
-    
-    Note that this is only available if both requirements are met: 
-    $(OL
-        $(LI details are enabled)
-        $(LI the engine is not in Skipdata mode))
-    */ 
-    @property detail() const {
-        if(_detail.isNull)
-            throw new CapstoneException("Trying to access unavailable instruction detail", ErrorCode.UnavailableInstructionDetail);
-        return _detail;
-    }
-
-    /** Checks whether the instruction belongs to the instruction group `group`
-
-    Convenience method for searching through `detail.groups`.
-    */
-    bool isInGroup(InstructionGroup!arch group) const {
-        return detail.groups.canFind(group);
-    }
-
-    /** Checks if the instruction IMPLICITLY uses a particular register
-
-    Convenience method for searching through `detail.readRegs`.
-    */
-    bool readsReg(Register!arch reg) const {
-        return detail.regsRead.canFind(reg);
-    }
-
-    /** Checks if the instruction IMPLICITLY modifies a particular register
-
-    Convenience method for searching through `detail.writeRegs`.
-    */
-    bool writesReg(Register!arch reg) const {
-        return detail.regsWrite.canFind(reg);
     }
 }
 
@@ -343,7 +228,7 @@ Note that, since the architecture is chosen at runtime, this base class only giv
 but can be cast to the `CapstoneImpl` of corresponding architecture.
 */
 abstract class Capstone{
-    private{
+    package{
         alias Handle = size_t;
         Handle handle;    
         
@@ -362,7 +247,7 @@ abstract class Capstone{
     Params:
         modeFlags = A combination of flags to further specify how bytes will be interpreted, e.g. in little-endian.
     */
-    private this(in Arch arch, in ModeFlags modeFlags){
+    package this(in Arch arch, in ModeFlags modeFlags){
         const libVer = versionOfLibrary;
         const bindVer = versionOfBindings;
         if(libVer != bindVer)
@@ -404,7 +289,7 @@ abstract class Capstone{
             case Arch.xcore:
                 return new CapstoneImpl!(Arch.xcore)(modeFlags);
             default:
-                assert(false);
+                throw new CapstoneException("%s architecture not supported yet".format(arch), ErrorCode.UnsupportedArchitecture);
         }
     }
 
@@ -535,106 +420,6 @@ abstract class Capstone{
     abstract InstructionRange disasmIter(in ubyte[] code, in ulong address);
 }
 
-/** Encapsulates an architecture-specific instance of the Capstone dissassembly engine
-
-Note that, in contrast to the base class, the architecture is chosen at compile-time.
-
-Params:
-    archParam = The architecture this Capstone instance is tailored for
-*/
-class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Registers, InstructionId, InstructionDetail and InstructionGroup but those are uniquely implied by the architecture
-    /** Creates an architecture-specific instance with a given mode of interpretation
-    
-    Params:
-        modeFlags = The (initial) mode of interpretation, which can still be changed later on
-    */
-    this(in ModeFlags modeFlags){
-        super(archParam, modeFlags);
-    }
-
-    override InstructionImpl!archParam[] disasm(in ubyte[] code, in ulong address, in size_t count = 0){
-        auto instrAppnd = appender!(InstructionImpl!archParam[]);
-        foreach(i, instr; disasmIter(code, address).enumerate){
-            instrAppnd.put(instr);
-            if(i+1==count) // TODO: Test if off by one
-                break;
-        }
-        return instrAppnd.data;
-    }
-
-    override InstructionImplRange!archParam disasmIter(in ubyte[] code, in ulong address){
-        return new InstructionImplRange!archParam(this, code, address);
-    }
-
-    // TODO: Really needed? Almost identical to regular `toString`
-    /** Determines friendly name of a register
-    
-    When in diet mode, this API is irrelevant because engine does not store register names
-    Param:
-        regId = Register id
-    Returns: Friendly string representation of the register's name
-    */
-    string regName(Register!archParam regId) const {
-        if(diet)
-            throw new CapstoneException("Register names are not stored when running Capstone in diet mode",
-                ErrorCode.IrrelevantDataAccessInDietEngine);
-        return cs_reg_name(handle, regId).to!string;
-    }
-
-    // TODO: Really needed? Almost identical to regular `toString`
-    /** Determines friendly name of an instruction
-    
-    When in diet mode, this API is irrelevant because engine does not store instruction names
-    Param:
-        instrId = Instruction id
-    Returns: Friendly string representation of the instruction's name
-    */
-    string instrName(InstructionId!archParam instrId) const {
-        if(diet)
-            throw new CapstoneException("Instruction names are not stored when running Capstone in diet mode",
-                ErrorCode.IrrelevantDataAccessInDietEngine);
-        return cs_insn_name(handle, instrId).to!string;
-    }
-
-    // TODO: Really needed? Almost identical to regular `toString`
-    /** Determines friendly name of a group id (that an instruction can belong to)
-    
-    When in diet mode, this API is irrelevant because engine does not store group names
-    Param:
-        groupId = Group id
-    Returns: Friendly string representation of the group's name, or null if `groupId` is invalid
-    */
-    string groupName(InstructionGroup!archParam groupId) const {
-        if(diet)
-            throw new CapstoneException("Group names are not stored when running Capstone in diet mode",
-                ErrorCode.IrrelevantDataAccessInDietEngine);
-        return cs_group_name(handle, groupId).to!string;
-    }
-
-    auto regsAccess(in Instruction instr) const {
-        static struct RegsAccess {
-            Register!archParam[] read;
-            Register!archParam[] write;
-        }
-
-        if(diet)
-            throw new CapstoneException("Registers accessed by an instruction are not stored when running Capstone in diet mode",
-                ErrorCode.IrrelevantDataAccessInDietEngine);
-        cs_regs read, write;
-        ubyte numRead, numWrite;
-        cs_regs_access(handle, instr.internal, &read, &numRead, &write, &numWrite).checkErrno;
-        return RegsAccess(read[0..numRead].to!(Register!archParam[]), write[0..numWrite].to!(Register!archParam[]));
-    }
-}
-
-unittest{
-    const code = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit16));
-    cs.disasm(code, 0x1000);
-    cs.mode = ModeFlags(Mode.bit32);
-    cs.disasm(code, 0x1000);
-}
-
 // TODO: Try switching to InputRange!Instruction (more restrictive than isInputRange, though)
 /// An input range that provides access to one disassembled `Instruction` at a time
 abstract class InstructionRange {
@@ -644,74 +429,19 @@ abstract class InstructionRange {
 }
 static assert(isInputRange!InstructionRange);
 
-/// An extended `InstructionRange` that provides architecture-specific instructions
-class InstructionImplRange(Arch arch) : InstructionRange {
-    import core.exception: RangeError;
-    private{
-        CapstoneImpl!arch cs;
-        const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
-        const(ubyte)* pCode;
-        ulong codeLength;
-        ulong address;
-
-        InstructionImpl!arch instr;
-        cs_insn* pInsn;
-
-        bool hasFront;
-    }
-
-    private this(CapstoneImpl!arch cs, in ubyte[] code, in ulong address){
-        this.cs = cs;
-        this.code = code;
-        this.pCode = code.ptr;
-        this.codeLength = code.length;
-        this.address = address;
-        this.hasFront = true;
-
-        popFront;
-    }
-
-    /// True if no disassemblable instructions remain
-    @property override bool empty() const {return !hasFront;}
-
-    /** The latest disassembled instruction
-
-    Throws if called on an `empty` range.
-    */
-    @property override InstructionImpl!arch front() {
-        enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
-        return instr;
-    }
-
-    /** Advances the range, disassembling the next instruction
-
-    Throws if called on an `empty` range.
-    */
-    override void popFront(){
-        enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
-        pInsn = cs_malloc(cs.handle); // Is freed by Instruction
-        if(!pInsn)
-            throw new CapstoneException("Insufficient memory to allocate an instruction", ErrorCode.OutOfMemory);
-        hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, pInsn);
-        if(hasFront)
-            instr = new InstructionImpl!arch(pInsn, cs.detail, cs.skipData); // Instruction takes ownership of pointer
-        else
-            cs_errno(cs.handle).checkErrno;
-    }
-}
-static assert(isInputRange!(InstructionRange));
-
 unittest{ // disasm
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
+    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit16));
+    cs.mode = ModeFlags(Mode.bit32);
+
     auto res = cs.disasm(CODE, 0x1000);
     assert(res.length == 3); // With skipdata disabled, disassembling will halt when encountering data
     assert("%s %s".format(res[0].mnemonic, res[0].opStr) == "lea ecx, [edx + esi + 8]");
     assert("%s %s".format(res[1].mnemonic, res[1].opStr) == "add eax, ebx");
     assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
     cs.skipData = true;
-    res = cs.disasm(CODE, 0x1000);
-    assert(res.length == 6);
+    res = cs.disasm(CODE, 0x1000, 5);
+    assert(res.length == 5);
 }
 
 unittest{ // skipdata
@@ -724,7 +454,7 @@ unittest{ // skipdata
     size_t myCallback(in ubyte[] code, size_t offset) {
         return myData.bytesToSkip++; // Always skip one more byte when encountering data
     }
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
+    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit32));
     cs.skipData = true;                     // Enable skipdata mode
     cs.setupSkipdata("db", &myCallback);    // Use custom callback, and "db" as custom mnemonic for data
     const instrs = cs.disasm(CODE, 0x1000); // Disassemble (offsetting addresses by 0x1000)
@@ -733,7 +463,7 @@ unittest{ // skipdata
 
 unittest{ // disasmIter
     auto CODE = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x00\x91\x92";
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
+    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit32)); // Initialise x86 32bit engine
     auto range = cs.disasmIter(CODE, 0x1000);         // Disassemble one instruction at a time, offsetting addresses by 0x1000
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "lea ecx, [edx + esi + 8]");
     range.popFront;
@@ -742,40 +472,13 @@ unittest{ // disasmIter
     assert("%s %s".format(range.front.mnemonic, range.front.opStr) == "add esi, 0x1234");
     range.popFront;
     assert(range.empty);
-    import core.exception: RangeError;       // Once empty, both `front` and `popFront` cannot be accessed
+
+    // Once empty, both `front` and `popFront` cannot be accessed
+    import std.exception: assertThrown;
+    import core.exception: RangeError;
     assertThrown!RangeError(range.front);
     assertThrown!RangeError(range.popFront);
 
     cs.skipData = true;
     assert(cs.disasmIter(CODE, 0x1000).array.length == 6);
-}
-
-unittest{
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.regName(X86Register.eip) == "eip"); // Mostly same output as `to!string`
-    assert(cs.regName(X86Register.st7) == "st(7)"); // Differs sometimes though
-}
-
-unittest{
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.instrName(X86InstructionId.add) == "add"); // Mostly same as `to!string`
-}
-
-unittest{
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
-    assert(cs.groupName(X86InstructionGroup.sse1) == "sse1"); // Mostly same as `to!string`
-}
-
-unittest{
-    enum code = cast(ubyte[])"\x55";
-    auto cs = new CapstoneX86(ModeFlags(Mode.bit64));
-    cs.detail = true;
-
-    // auto range = cs.disasmIter(code, 0x1000);
-    auto range = cs.disasm(code, 0x1000);
-    auto pushInstr = range.front;                            // 0x55 disassembles to "push"
-    assert(pushInstr.mnemonic == "push");
-    assert(pushInstr.isInGroup(X86InstructionGroup.mode64), pushInstr.detail.groups.to!string); // "push" is part of the mode64 instructions
-    assert(pushInstr.readsReg(X86Register.rsp));             // "push" accesses rsp
-    assert(pushInstr.writesReg(X86Register.rsp));            // "push" modifies rsp
 }
