@@ -4,7 +4,9 @@
 # capstone-d
 
 ## What is this?
-This package implements idiomatic D bindings for version [3.0.5](https://github.com/aquynh/capstone/releases/tag/3.0.5) of [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
+This package implements idiomatic D bindings for version [4.0 (8f4cc4e)](https://github.com/aquynh/capstone/tree/8f4cc4e80d2c8635b06be9fe193eb6e3c6bd357f) of [Capstone](http://www.capstone-engine.org) - the disassembly framework powering many reverse engineering tools. If you do not need the expressivity and safety of D but just the plain C API in D, [non-idiomatic bindings](https://github.com/theoldmoon0602/capstone-d) might be just what you're looking for.
+
+*Note that the bindings for the following architectures have not been ported yet: EVM, M68K, M68K, M680X, TMS320C64x*
 
 ## Examples
 ### Introductory Example
@@ -46,21 +48,25 @@ void main(){
         writefln!"%-10s: %s"(query, supports(query));
 }
 ```
-In my case, using the precompiled version 3.0.5 for Arch Linux, this will output
+In my case, after compiling version [4.0 (8f4cc4e)](https://github.com/aquynh/capstone/tree/8f4cc4e80d2c8635b06be9fe193eb6e3c6bd357f) for Arch Linux, this will output
 ```
-Version: 3.0 (lib), 3.0 (bindings)
+Version: 4.0 (lib), 4.0 (bindings)
 Querying Support:
 arm       : true
 arm64     : true
 mips      : true
 x86       : true
-powerPc   : true
+ppc       : true
 sparc     : true
-systemZ   : true
-xCore     : true
+sysz      : true
+xcore     : true
+m68k      : true
+tms320c64x: true
+m680x     : true
+evm       : true
 all       : true
 diet      : false
-x86Reduce : false
+x86reduce : false
 ```
 
 ## How to include this in your project
