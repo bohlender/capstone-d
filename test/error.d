@@ -21,7 +21,7 @@ unittest{
         assert(x.errCode == ErrorCode.InvalidOption);
     }
     {// UnavailableInstructionDetail
-        auto cs = new CapstoneX86(ModeFlags(Mode.bit32));
+        auto cs = new CapstoneImpl!(Arch.x86)(ModeFlags(Mode.bit32)); // DMD v2.083.1 segfaults in build-mode=singleFile if using CapstoneX86 instead
         auto instrs = cs.disasm(X86_CODE32, 0x1000);
         const x = collectException!CapstoneException(instrs[0].detail);
         assert(x);

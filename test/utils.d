@@ -9,7 +9,7 @@ import std.string: toUpper;
 import std.traits: EnumMembers;
 import std.conv: to;
 
-import capstone;
+import capstone.api;
 
 /** Most relevant disassembly options
 

@@ -1,13 +1,14 @@
 module test.x86;
 
+import std.outbuffer;
+import std.conv: to;
 import std.array: array;
 import std.algorithm: filter;
-import std.string: representation, toUpper;
-import std.outbuffer: OutBuffer;
+import std.string: toUpper;
 import std.range: empty;
 import std.array: join;
-import std.algorithm: map;
-import std.conv: to;
+import std.algorithm: map, joiner;
+import std.format: format;
 
 import capstone;
 import test.utils;
@@ -27,8 +28,20 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 	assert(!instr.detail.isNull);
 	auto x86 = instr.detail; //auto x86 = instr.detail.archSpecific;
 
-	buf.writefln("\tPrefix:%s", x86.prefix.bytesToHex);
-	buf.writefln("\tOpcode:%s", x86.opcode.bytesToHex);
+	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
+	// buf.writefln("\tPrefix:%s", x86.prefix.bytesToHex);
+	buf.write("\tPrefix:");
+	foreach(b; x86.prefix)
+		buf.write("0x%.2x ".format(b));
+	buf.writefln("");
+
+	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
+	// buf.writefln("\tOpcode:%s", x86.opcode.bytesToHex);
+	buf.write("\tOpcode:");
+	foreach(b; x86.opcode)
+		buf.write("0x%.2x ".format(b));
+	buf.writefln("");
+
 	buf.writefln("\trex: 0x%x", x86.rex);
 	buf.writefln("\taddr_size: %d", x86.addrSize);
 	buf.writefln("\tmodrm: 0x%x", x86.modRM);

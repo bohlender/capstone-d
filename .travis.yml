@@ -2,8 +2,8 @@ language: d
 
 matrix:
   include:
-    - d: dmd-nightly
-    - d: dmd-nightly
+    - d: dmd
+    - d: dmd
       env: CODECOV=1
 
 before_install:

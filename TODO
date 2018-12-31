@@ -1,3 +1,4 @@
+- Report DMD & LDC segfaults when building in build-mode=singleFile
 - Add None to BitFlags that can be invalid
 - Avoid (re)allocation and reuse the pointers/locations given by libcapstone
 
