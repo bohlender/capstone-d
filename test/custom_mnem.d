@@ -15,7 +15,7 @@ void writeDisasmOne(ref OutBuffer buf, in CapstoneX86 cs){
 	// auto codeHex = X86_CODE32.bytesToHex(false);
 	// buf.writefln("%s\t\t%s\t%s", codeHex, instrs[0].mnemonic, instrs[0].opStr);
 	foreach(b; X86_CODE32)
-		buf.write("x02 ".format(b));
+		buf.write("%02x ".format(b));
 	buf.writefln("\t\t%s\t%s", instrs[0].mnemonic, instrs[0].opStr);
 }
 
