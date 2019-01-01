@@ -1,0 +1,8 @@
+Disassemble X86 code with default instruction mnemonic
+75 01 		jne	0x1003
+
+Now customize engine to change mnemonic from 'JNE' to 'JNZ'
+75 01 		jnz	0x1003
+
+Reset engine to use the default mnemonic
+75 01 		jne	0x1003

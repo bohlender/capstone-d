@@ -78,6 +78,11 @@ union cs_arch_detail{
 	// cs_evm evm; 			  /// Ethereum architecture
 }
 
+struct cs_opt_mnem {
+    uint id;
+    const(char)* mnemonic;
+}
+
 struct cs_detail {
 	ushort[12] regs_read; // list of implicit registers read by this insn
 	ubyte regs_read_count; // number of implicit registers read by this insn
@@ -141,7 +146,7 @@ extern (C){
     int cs_errno(size_t handle);
     const(char)* cs_strerror(int code);
     
-    size_t cs_disasm(size_t handle, const(ubyte)* code, size_t code_size, ulong address, size_t count, cs_insn** insn);
+    //size_t cs_disasm(size_t handle, const(ubyte)* code, size_t code_size, ulong address, size_t count, cs_insn** insn);
 
     void cs_free(cs_insn* insn, size_t count);
     cs_insn* cs_malloc(size_t handle);
@@ -154,6 +159,8 @@ extern (C){
     // bool cs_insn_group(csh handle, const cs_insn *insn, unsigned int group_id);
     // bool cs_reg_read(csh handle, const cs_insn *insn, unsigned int reg_id);
     // bool cs_reg_write(csh handle, const cs_insn *insn, unsigned int reg_id);
+	// int CAPSTONE_API cs_op_count(csh handle, const cs_insn *insn, unsigned int op_type);
+	// int CAPSTONE_API cs_op_index(csh handle, const cs_insn *insn, unsigned int op_type, unsigned int position);
 
 	alias cs_regs = ushort[64]; // TODO: Continue intergrating it into API
 	int cs_regs_access(size_t handle, const(cs_insn)* insn, cs_regs* regs_read, ubyte* regs_read_count, cs_regs* regs_write, ubyte* regs_write_count);

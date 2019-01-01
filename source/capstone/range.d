@@ -14,7 +14,7 @@ import capstone.error;
 class InstructionImplRange(Arch arch) : InstructionRange {
     import core.exception: RangeError;
     private{
-        CapstoneImpl!arch cs;
+        const CapstoneImpl!arch cs;
         const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
         const(ubyte)* pCode;
         ulong codeLength;
@@ -26,7 +26,7 @@ class InstructionImplRange(Arch arch) : InstructionRange {
         bool hasFront;
     }
 
-    package this(CapstoneImpl!arch cs, in ubyte[] code, in ulong address){
+    package this(in CapstoneImpl!arch cs, in ubyte[] code, in ulong address){
         this.cs = cs;
         this.code = code;
         this.pCode = code.ptr;

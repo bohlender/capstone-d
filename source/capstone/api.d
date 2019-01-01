@@ -391,7 +391,7 @@ abstract class Capstone{
     assert("%s %s".format(res[2].mnemonic, res[2].opStr) == "add esi, 0x1234");
     ---
     */
-    abstract const(Instruction)[] disasm(in ubyte[] code, in ulong address, in size_t count = 0);
+    abstract const(Instruction)[] disasm(in ubyte[] code, in ulong address, in size_t count = 0) const;
 
     /** Provides a range to iteratively disassemble binary code - one instruction at a time
 
@@ -417,7 +417,7 @@ abstract class Capstone{
     assert(range.empty);
     ---
     */
-    abstract InstructionRange disasmIter(in ubyte[] code, in ulong address);
+    abstract InstructionRange disasmIter(in ubyte[] code, in ulong address) const;
 }
 
 // TODO: Try switching to InputRange!Instruction (more restrictive than isInputRange, though)

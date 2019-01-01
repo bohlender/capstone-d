@@ -129,6 +129,8 @@ Params:
     archParam = The architecture this Capstone instance is tailored for
 */
 class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Registers, InstructionId, InstructionDetail and InstructionGroup but those are uniquely implied by the architecture
+    private string[InstructionId!archParam] customMnemonics;
+
     /** Creates an architecture-specific instance with a given mode of interpretation
     
     Params:
@@ -138,7 +140,7 @@ class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Regi
         super(archParam, modeFlags);
     }
 
-    override InstructionImpl!archParam[] disasm(in ubyte[] code, in ulong address, in size_t count = 0){
+    override InstructionImpl!archParam[] disasm(in ubyte[] code, in ulong address, in size_t count = 0) const {
         auto instrAppnd = appender!(InstructionImpl!archParam[]);
         foreach(i, instr; disasmIter(code, address).enumerate){
             instrAppnd.put(instr);
@@ -148,7 +150,7 @@ class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Regi
         return instrAppnd.data;
     }
 
-    override InstructionImplRange!archParam disasmIter(in ubyte[] code, in ulong address){
+    override InstructionImplRange!archParam disasmIter(in ubyte[] code, in ulong address) const {
         return new InstructionImplRange!archParam(this, code, address);
     }
 
@@ -212,6 +214,20 @@ class CapstoneImpl(Arch archParam) : Capstone { // Actually parametrised by Regi
         ubyte numRead, numWrite;
         cs_regs_access(handle, instr.internal, &read, &numRead, &write, &numWrite).checkErrno;
         return RegsAccess(read[0..numRead].to!(Register!archParam[]), write[0..numWrite].to!(Register!archParam[]));
+    }
+
+    /** Defines a custom mnemonic for a specified instruction id
+
+    */
+    void customMnemonic(in InstructionId!archParam id, in string mnem = null) {
+        auto optMnem = cs_opt_mnem(id, null);
+        if(mnem != null){
+            auto v = (customMnemonics[id] = mnem);
+            optMnem.mnemonic = v.ptr;
+        }else{
+            customMnemonics.remove(id);
+        }
+        cs_option(handle, cs_opt_type.CS_OPT_MNEMONIC, cast(size_t)&optMnem).checkErrno;
     }
 }
 

@@ -26,8 +26,9 @@ struct Platform{
 }
 
 /// Pretty printing of bytes as in original regression tests
-auto bytesToHex(in ubyte[] code){
-	return code.map!(i => "0x%.2x".format(i)).join(" ") ~ " "; // ugly terminal space needed to match original
+auto bytesToHex(in ubyte[] code, bool xPrefix = true){
+	auto fmt = xPrefix ? "0x%02x " : "%02x "; // ugly terminal space needed to match original
+	return code.map!(i => fmt.format(i)).join;
 }
 ///
 unittest{
