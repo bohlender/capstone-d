@@ -2,8 +2,7 @@ module test.custom_mnem;
 
 import std.outbuffer;
 import std.conv: to;
-import std.algorithm: map, joiner;
-import std.array: array;
+import std.format: format;
 
 import capstone;
 import test.utils;
@@ -12,8 +11,12 @@ enum X86_CODE32 = cast(ubyte[])"\x75\x01";
 
 void writeDisasmOne(ref OutBuffer buf, in CapstoneX86 cs){
 	auto instrs = cs.disasm(X86_CODE32, 0x1000);
-	auto codeHex = X86_CODE32.bytesToHex(false);
-	buf.writefln("%s\t\t%s\t%s", codeHex, instrs[0].mnemonic, instrs[0].opStr);
+	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
+	// auto codeHex = X86_CODE32.bytesToHex(false);
+	// buf.writefln("%s\t\t%s\t%s", codeHex, instrs[0].mnemonic, instrs[0].opStr);
+	foreach(b; X86_CODE32)
+		buf.write("x02 ".format(b));
+	buf.writefln("\t\t%s\t%s", instrs[0].mnemonic, instrs[0].opStr);
 }
 
 unittest{
