@@ -1,17 +1,51 @@
 /// Types and constants of MIPS architecture
 module capstone.mips;
 
-import std.exception: enforce;
+import std.conv: to;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstoneMips = CapstoneImpl!(Arch.mips);
+/// Architecture-specific Register variant
+class MipsRegister : RegisterImpl!MipsRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class MipsInstructionGroup : InstructionGroupImpl!MipsInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class MipsDetail : DetailImpl!(MipsRegister, MipsInstructionGroup, MipsInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionMips = InstructionImpl!(Arch.mips);
+class MipsInstruction : InstructionImpl!(MipsInstructionId, MipsRegister, MipsDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstoneMips : CapstoneImpl!(MipsInstructionId, MipsInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.mips, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -20,30 +54,39 @@ This is associated with the `MipsOpType.mem` operand type
 struct MipsOpMem {
     MipsRegister base;   /// Base register (or `MipsRegister.invalid` if irrelevant)
     long disp;           /// Displacement value
+
+	this(in Capstone cs, mips_op_mem internal) {
+		base = new MipsRegister(cs, internal.base);
+		disp = internal.disp;
+	}
 }
 
-/// Tagged union of possible operand types
-alias MipsOpValue = TaggedUnion!(MipsRegister, "reg", long, "imm", MipsOpMem, "mem");
+/// Union of possible operand types
+union MipsOpValue{
+    MipsRegister reg;	/// Register
+    long imm;			/// Immediate
+    MipsOpMem mem;		/// Memory
+}
 
 /// Instruction's operand
 struct MipsOp {
     MipsOpType type;   /// Operand type
-    MipsOpValue value; /// Operand value of type `type`
+    SafeUnion!MipsOpValue value; /// Operand value of type `type`
     alias value this;  /// Convenient access to value (as in original bindings)
 
-    package this(cs_mips_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_mips_op internal){
+        type = internal.type.to!MipsOpType;
         final switch(internal.type) {
             case MipsOpType.invalid:
                 break;
             case MipsOpType.reg:
-                value.reg = internal.reg;
+                value.reg = new MipsRegister(cs, internal.reg);
                 break;
             case MipsOpType.imm:
                 value.imm = internal.imm;
                 break;
             case MipsOpType.mem:
-                value.mem = internal.mem;
+                value.mem = MipsOpMem(cs, internal.mem);
                 break;
         }
     }
@@ -53,12 +96,10 @@ struct MipsOp {
 struct MipsInstructionDetail {
     MipsOp[] operands;          /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.mips);
-	}
-    package this(cs_mips internal){
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+        auto internal = arch_detail.mips;
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= MipsOp(op);
+            operands ~= MipsOp(cs, op);
     }
 }
 
@@ -75,7 +116,7 @@ enum MipsOpType {
 }
 
 /// MIPS registers
-enum MipsRegister {
+enum MipsRegisterId {
 	invalid = 0,
 	// General purpose registers
 	pc,
@@ -912,7 +953,7 @@ enum MipsInstructionId {
 }
 
 /// Group of Mips instructions
-enum MipsInstructionGroup {
+enum MipsInstructionGroupId {
 	invalid = 0,
 
 	// Generic groups

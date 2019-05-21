@@ -7,8 +7,7 @@
 	"libs": ["capstone"],
 	"configurations": [
 		{
-			"name": "bindings",
-			"targetType": "sourceLibrary"
+			"name": "bindings"
 		},
 		{
 			"name": "unittest",

@@ -1,19 +1,52 @@
-/// Types and constants of x86 architecture (both 32bit and 64bit)
+/// Types and constants of X86 architecture
 module capstone.x86;
 
-import std.exception: enforce;
+import std.conv: to;
 import std.typecons: BitFlags;
-import capstone.api: AccessType, AccessFlags;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstoneX86 = CapstoneImpl!(Arch.x86);
+/// Architecture-specific Register variant
+class X86Register : RegisterImpl!X86RegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class X86InstructionGroup : InstructionGroupImpl!X86InstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class X86Detail : DetailImpl!(X86Register, X86InstructionGroup, X86InstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionX86 = InstructionImpl!(Arch.x86);
+class X86Instruction : InstructionImpl!(X86InstructionId, X86Register, X86Detail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstoneX86 : CapstoneImpl!(X86InstructionId, X86Instruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.x86, modeFlags);
+    }
+}
 
 struct X86Encoding {
 	/// ModR/M offset, or 0 when irrelevant
@@ -26,6 +59,14 @@ struct X86Encoding {
 	/// Immediate offset, or 0 when irrelevant.
 	ubyte immOffset;
 	ubyte immSize;
+
+	this(cs_x86_encoding internal){
+		modrmOffset = internal.modrm_offset;
+		dispOffset = internal.disp_offset;
+		dispSize = internal.disp_size;
+		immOffset = internal.imm_offset;
+		immSize = internal.imm_size;
+	}
 }
 
 /** Instruction's operand referring to memory
@@ -38,15 +79,27 @@ struct X86OpMem {
     X86Register index;   /// Index register (or `X86Register.invalid` if irrelevant)
     int scale;           /// Scale for index register
     long disp;           /// Displacement value
+
+	this(in Capstone cs, x86_op_mem internal){
+		segment = new X86Register(cs, internal.segment);
+		base = new X86Register(cs, internal.base);
+		index = new X86Register(cs, internal.index);
+		scale = internal.scale;
+		disp = internal.disp;
+	}
 }
 
-/// Tagged union of possible operand types
-alias X86OpValue = TaggedUnion!(X86Register, "reg", long, "imm", X86OpMem, "mem");
+/// Union of possible operand types
+union X86OpValue {
+	X86Register reg; /// Register value for REG operand
+	long imm;		 /// Immediate value for IMM operand
+	X86OpMem mem;	 /// Base/index/scale/disp value for MEM operand
+}
 
 /// Instruction's operand
 struct X86Op {
     X86OpType type;   /// Operand type
-    X86OpValue value; /// Operand value of type `type`
+    SafeUnion!X86OpValue value; /// Operand value of type `type`
     alias value this; /// Convenient access to value (as in original bindings)
 
     ubyte size; /// Size of this operand (in bytes)
@@ -60,24 +113,24 @@ struct X86Op {
     X86AvxBroadcast avxBcast; /// AVX broadcast type, or `X86AvxBroadcast.invalid`
     bool avxZeroOpmask;       /// AVX zero opmask {z}
 
-    package this(cs_x86_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_x86_op internal){
+        type = internal.type.to!X86OpType;
         final switch(internal.type) {
             case X86OpType.invalid:
                 break;
             case X86OpType.reg:
-                value.reg = internal.reg;
+                value.reg = new X86Register(cs, internal.reg);
                 break;
             case X86OpType.imm:
                 value.imm = internal.imm;
                 break;
             case X86OpType.mem:
-                value.mem = internal.mem;
+                value.mem = X86OpMem(cs, internal.mem);
                 break;
         }
         size = internal.size;
         access = cast(AccessType)internal.access;
-        avxBcast = internal.avx_bcast;
+        avxBcast = internal.avx_bcast.to!X86AvxBroadcast;
         avxZeroOpmask = internal.avx_zero_opmask;
     }
 }
@@ -127,7 +180,7 @@ struct X86InstructionDetail {
     X86Op[] operands;          /// Operands for this instruction.
 	X86Encoding encoding;	   /// Encoding information
 
-    package this(cs_arch_detail arch_detail){
+    package this(in Capstone cs, cs_arch_detail arch_detail){
         auto internal = arch_detail.x86;
         prefix = internal.prefix.dup;
         opcode = internal.opcode.dup;
@@ -136,24 +189,20 @@ struct X86InstructionDetail {
         modRM = internal.modrm;
         sib = internal.sib;
         disp = internal.disp;
-        sibIndex = internal.sib_index;
+        sibIndex = new X86Register(cs, internal.sib_index);
         sibScale = internal.sib_scale;
-        sibBase = internal.sib_base;
-		xopCc = internal.xop_cc;
-        sseCc = internal.sse_cc;
-        avxCc = internal.avx_cc;
+        sibBase = new X86Register(cs, internal.sib_base);
+		xopCc = internal.xop_cc.to!X86XopCc;
+        sseCc = internal.sse_cc.to!X86SseCodeCondition;
+        avxCc = internal.avx_cc.to!X86AvxCodeCondition;
 		eflags = cast(EFlag)internal.eflags; // covers fpuFlags too
-        avxRM = internal.avx_rm;
-		encoding = internal.encoding;
+        avxRM = internal.avx_rm.to!X86AvxRoundingMode;
+		encoding = internal.encoding.to!X86Encoding;
 
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= X86Op(op);
+            operands ~= X86Op(cs, op);
     }
 }
-
-//=============================================================================
-// Constants
-//=============================================================================
 
 /// Operand type for instruction's operands
 enum X86OpType {
@@ -357,7 +406,7 @@ enum FpuFlag : ulong {
 alias FpuFlags = BitFlags!FpuFlag;
 
 /// X86 registers
-enum X86Register {
+enum X86RegisterId {
     invalid = 0,
 	ah, al, ax, bh, bl,
 	bp, bpl, bx, ch, cl,
@@ -1927,7 +1976,7 @@ enum X86InstructionId {
 }
 
 /// Group of X86 instructions
-enum  X86InstructionGroup {
+enum  X86InstructionGroupId {
     invalid = 0,
 
 	// Generic groups

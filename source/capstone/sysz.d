@@ -4,15 +4,49 @@ module capstone.sysz;
 import std.exception: enforce;
 import std.conv: to;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstoneSysz = CapstoneImpl!(Arch.sysz);
+/// Architecture-specific Register variant
+class SyszRegister : RegisterImpl!SyszRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class SyszInstructionGroup : InstructionGroupImpl!SyszInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class SyszDetail : DetailImpl!(SyszRegister, SyszInstructionGroup, SyszInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionSysz = InstructionImpl!(Arch.sysz);
+class SyszInstruction : InstructionImpl!(SyszInstructionId, SyszRegister, SyszDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstoneSysz : CapstoneImpl!(SyszInstructionId, SyszInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.sysz, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -24,36 +58,40 @@ struct SyszOpMem {
 	ulong length; 		/// BDLAddr operand
 	long disp;	  		/// Displacement/offset value
 
-	this(sysz_op_mem internal){
-		base = internal.base.to!SyszRegister;
-		index = internal.index.to!SyszRegister;
+	this(in Capstone cs, sysz_op_mem internal){
+		base = new SyszRegister(cs, internal.base);
+		index = new SyszRegister(cs, internal.index);
 		length = internal.length;
 		disp = internal.disp;
 	}
 }
 
-/// Tagged union of possible operand types
-alias SyszOpValue = TaggedUnion!(SyszRegister, "reg", long, "imm", SyszOpMem, "mem");
+/// Union of possible operand types
+union SyszOpValue {
+	SyszRegister reg;	/// Register
+	long imm;			/// Immediate
+	SyszOpMem mem;		/// Memory
+}
 
 /// Instruction's operand
 struct SyszOp {
     SyszOpType type;   /// Operand type
-    SyszOpValue value; /// Operand value of type `type`
+    SafeUnion!SyszOpValue value; /// Operand value of type `type`
     alias value this;  /// Convenient access to value (as in original bindings)
 
-    package this(cs_sysz_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_sysz_op internal){
+        type = internal.type.to!SyszOpType;
         final switch(internal.type) {
             case SyszOpType.invalid:
                 break;
             case SyszOpType.reg, SyszOpType.acreg:
-                value.reg = internal.reg;
+                value.reg = new SyszRegister(cs, internal.reg);
                 break;
             case SyszOpType.imm:
                 value.imm = internal.imm;
                 break;
             case SyszOpType.mem:
-                value.mem = SyszOpMem(internal.mem);
+                value.mem = SyszOpMem(cs, internal.mem);
                 break;
         }
     }
@@ -64,13 +102,11 @@ struct SyszInstructionDetail {
 	SyszCc cc;		   /// Code condition
     SyszOp[] operands; /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.sysz);
-	}
-    package this(cs_sysz internal){
-		cc = internal.cc;
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+		auto internal = arch_detail.sysz;
+		cc = internal.cc.to!SyszCc;
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= SyszOp(op);
+            operands ~= SyszOp(cs, op);
     }
 }
 
@@ -111,7 +147,7 @@ enum SyszCc {
 
 Note that the registers 0..15 are prefixed by r, i.e. the are named r0..r15
 */
-enum SyszRegister {
+enum SyszRegisterId {
 	invalid = 0,
 
 	r0, 
@@ -839,7 +875,7 @@ enum SyszInstructionId {
 }
 
 /// Group of SystemZ instructions
-enum SyszInstructionGroup {
+enum SyszInstructionGroupId {
 	invalid = 0,
 
 	// Generic groups

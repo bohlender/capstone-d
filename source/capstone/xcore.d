@@ -1,18 +1,51 @@
 /// Types and constants of XCore architecture
 module capstone.xcore;
 
-import std.exception: enforce;
 import std.conv: to;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstoneXCore = CapstoneImpl!(Arch.xcore);
+/// Architecture-specific Register variant
+class XCoreRegister : RegisterImpl!XCoreRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class XCoreInstructionGroup : InstructionGroupImpl!XCoreInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class XCoreDetail : DetailImpl!(XCoreRegister, XCoreInstructionGroup, XCoreInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionXCore = InstructionImpl!(Arch.xcore);
+class XCoreInstruction : InstructionImpl!(XCoreInstructionId, XCoreRegister, XCoreDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstoneXCore : CapstoneImpl!(XCoreInstructionId, XCoreInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.xcore, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -23,36 +56,41 @@ struct XCoreOpMem {
 	XCoreRegister index; /// Index register
 	int disp;			 /// Displacement/offset value
 	int direct;			 /// +1: forward, -1: backward
-	this(xcore_op_mem internal){
-		base = internal.base.to!XCoreRegister;
-		index = internal.index.to!XCoreRegister;
+
+	this(in Capstone cs, xcore_op_mem internal){
+		base = new XCoreRegister(cs, internal.base);
+		index = new XCoreRegister(cs, internal.index);
 		disp = internal.disp;
 		direct = internal.direct;
 	}
 }
 
-/// Tagged union of possible operand types
-alias XCoreOpValue = TaggedUnion!(XCoreRegister, "reg", long, "imm", XCoreOpMem, "mem");
+/// Union of possible operand types
+union XCoreOpValue {
+	XCoreRegister reg;	/// Register
+	long imm;			/// Immediate
+	XCoreOpMem mem;		/// Memory
+}
 
 /// Instruction's operand
 struct XCoreOp {
     XCoreOpType type;   /// Operand type
-    XCoreOpValue value; /// Operand value of type `type`
-    alias value this;  /// Convenient access to value (as in original bindings)
+    SafeUnion!XCoreOpValue value; /// Operand value of type `type`
+    alias value this;   /// Convenient access to value (as in original bindings)
 
-    package this(cs_xcore_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_xcore_op internal){
+        type = internal.type.to!XCoreOpType;
         final switch(internal.type) {
             case XCoreOpType.invalid:
                 break;
             case XCoreOpType.reg:
-                value.reg = internal.reg;
+                value.reg = new XCoreRegister(cs, internal.reg);
                 break;
             case XCoreOpType.imm:
                 value.imm = internal.imm;
                 break;
             case XCoreOpType.mem:
-                value.mem = XCoreOpMem(internal.mem);
+                value.mem = XCoreOpMem(cs, internal.mem);
                 break;
         }
     }
@@ -62,12 +100,10 @@ struct XCoreOp {
 struct XCoreInstructionDetail {
     XCoreOp[] operands;          /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.xcore);
-	}
-    package this(cs_xcore internal){
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+		auto internal = arch_detail.xcore;
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= XCoreOp(op);
+            operands ~= XCoreOp(cs, op);
     }
 }
 
@@ -84,7 +120,7 @@ enum XCoreOpType {
 }
 
 /// XCore registers
-enum XCoreRegister {
+enum XCoreRegisterId {
 	invalid = 0,
 
 	cp,
@@ -246,7 +282,7 @@ enum XCoreInstructionId {
 }
 
 /// Group of XCore instructions
-enum XCoreInstructionGroup {
+enum XCoreInstructionGroupId {
 	invalid = 0,
 
 	// Generic groups

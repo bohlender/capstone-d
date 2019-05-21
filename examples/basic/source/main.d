@@ -17,7 +17,7 @@ void main(){
     foreach(query; EnumMembers!SupportQuery)
         writefln!"%-10s: %s"(query, supports(query));
 
-    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit32));
+    auto cs = create(Arch.x86, ModeFlags(Mode.bit32));
     cs.skipData = true;
     
     writefln!"\nDisassembling (%s): %s"(cs.arch, CODE.bytesToHex);

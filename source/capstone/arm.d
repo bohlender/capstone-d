@@ -1,19 +1,51 @@
-/// Types and constants of ARM architecture
 module capstone.arm;
 
-import std.exception: enforce;
 import std.conv: to;
+import std.typecons: BitFlags;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
-import capstone.api: AccessType, AccessFlags;
+
+/// Architecture-specific Register variant
+class ArmRegister : RegisterImpl!ArmRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class ArmInstructionGroup : InstructionGroupImpl!ArmInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class ArmDetail : DetailImpl!(ArmRegister, ArmInstructionGroup, ArmInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific instruction variant
+class ArmInstruction : InstructionImpl!(ArmInstructionId, ArmRegister, ArmDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
 
 /// Architecture-specific Capstone variant
-alias CapstoneArm = CapstoneImpl!(Arch.arm);
-/// Architecture-specific instruction variant
-alias InstructionArm = InstructionImpl!(Arch.arm);
+class CapstoneArm : CapstoneImpl!(ArmInstructionId, ArmInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.arm, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -25,23 +57,46 @@ struct ArmOpMem {
     int scale;          /// Scale for index register (can be 1, or -1)
     int disp;           /// Displacement value
 	int lshift;         /// Left-shift on index register, or 0 if irrelevant.
+
+    this(in Capstone cs, arm_op_mem internal){
+        base = new ArmRegister(cs, internal.base);
+        index = new ArmRegister(cs, internal.index);
+        scale = internal.scale;
+        disp = internal.disp;
+        lshift = internal.lshift;
+    }
 }
 
 /// Optional shift
 struct ArmShift{
     ArmShiftType type;  /// Type of shift
     uint value;         /// value (constant or register) to shift by
+
+    this(cs_arm_op.Shift internal){
+        type = internal.type.to!ArmShiftType;
+        value = internal.value;
+    }
 }
 
-/// Tagged union of possible operand values
-alias ArmOpValue = TaggedUnion!(ArmRegister, "reg", int, "imm", double, "fp", ArmOpMem, "mem", ArmSetendType, "setend");
+/** Union of possible operand values
+ *
+ * Note: In contrast to the C API, this union distinguishes registers and system registers
+ */
+union ArmOpValue{
+    ArmRegister reg;        /// Register
+    ArmSysreg sysreg;       /// MSR/MRS special register
+    int imm;                /// Immediate
+    double fp;              /// Floating-point
+    ArmOpMem mem;           /// Memory
+    ArmSetendType setend;   /// Setend
+}
 
 /// Instruction's operand
 struct ArmOp {
     int vectorIndex;  /// Vector index for some vector operands (or -1 if irrelevant)
     ArmShift shift;   /// Potential shifting of operand
     ArmOpType type;   /// Operand type
-    ArmOpValue value; /// Operand value of type `type`
+    SafeUnion!ArmOpValue value; /// Operand value of type `type`
     alias value this; /// Convenient access to value (as in original bindings)
 
     /** In some instructions, an operand can be subtracted or added to the base register.
@@ -59,27 +114,30 @@ struct ArmOp {
 	/// Neon lane index for NEON instructions (or -1 if irrelevant)
     byte neonLane;
 
-    package this(cs_arm_op internal){
+    package this(in Capstone cs, cs_arm_op internal){
         vectorIndex = internal.vector_index;
-        shift = internal.shift;
-        type = internal.type;
+        shift = internal.shift.to!ArmShift;
+        type = internal.type.to!ArmOpType;
         final switch(internal.type){
             case ArmOpType.invalid:
                 break;
-            case ArmOpType.reg, ArmOpType.sysreg:
-                value.reg = internal.reg;
+            case ArmOpType.reg:
+                value.reg = new ArmRegister(cs, internal.reg);
+                break;
+            case ArmOpType.sysreg:
+                value.sysreg = internal.reg.to!ArmSysreg;
                 break;
             case ArmOpType.imm, ArmOpType.cimm, ArmOpType.pimm:
                 value.imm = internal.imm;
                 break;
             case ArmOpType.mem:
-                value.mem = internal.mem;
+                value.mem = ArmOpMem(cs, internal.mem);
                 break;
             case ArmOpType.fp:
                 value.fp = internal.fp;
                 break;
             case ArmOpType.setend:
-                value.setend = internal.setend;
+                value.setend = internal.setend.to!ArmSetendType;
                 break;
         }
         subtracted = internal.subtracted;
@@ -102,22 +160,20 @@ struct ArmInstructionDetail {
 
     ArmOp[] operands;             /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-        this(arch_detail.arm);
-    }
-    package this(cs_arm internal) {
+    package this(in Capstone cs, cs_arch_detail arch_detail) {
+        auto internal = arch_detail.arm;
         usermode = internal.usermode;
         vectorSize = internal.vector_size;
-        vectorData = internal.vector_data;
-        cpsMode = internal.cps_mode;
-        cpsFlag = internal.cps_flag;
-        cc = internal.cc;
+        vectorData = internal.vector_data.to!ArmVectordataType;
+        cpsMode = internal.cps_mode.to!ArmCpsmodeType;
+        cpsFlag = internal.cps_flag.to!ArmCpsflagType;
+        cc = internal.cc.to!ArmCc;
         updateFlags = internal.update_flags;
         writeback = internal.writeback;
-        memBarrier = internal.mem_barrier;
+        memBarrier = internal.mem_barrier.to!ArmMemBarrier;
 
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= ArmOp(op);
+            operands ~= ArmOp(cs, op);
     }
 }
 
@@ -167,14 +223,36 @@ enum ArmSysreg {
     // SPSR* registers can be OR combined
     spsr_c = 1,
     spsr_x = 2,
+    spsr_xc = 3,
     spsr_s = 4,
+    spsr_sc = 5,
+    spsr_sx = 6,
+    spsr_sxc = 7,
     spsr_f = 8,
+    spsr_fc = 9,
+    spsr_fx = 10,
+    spsr_fxc = 11,
+    spsr_fs = 12,
+    spsr_fsc = 13,
+    spsr_fsx = 14,
+    spsr_fsxc = 15,
 
     // CPSR* registers can be OR combined
     cpsr_c = 16,
     cpsr_x = 32,
+    cpsr_xc = 48,
     cpsr_s = 64,
+    cpsr_sc = 80,
+    cpsr_sx = 96,
+    cpsr_sxc = 112,
     cpsr_f = 128,
+    cpsr_fc = 144,
+    cpsr_fx = 160,
+    cpsr_fxc = 176,
+    cpsr_fs = 192,
+    cpsr_fsc = 208,
+    cpsr_fsx = 224,
+    cpsr_fsxc = 240,
 
     // Independent registers
     apsr = 256,
@@ -357,7 +435,7 @@ enum ArmVectordataType {
 }
 
 /// ARM registers
-enum ArmRegister {
+enum ArmRegisterId {
     invalid = 0,
     apsr,
     apsr_nzcv,
@@ -924,7 +1002,7 @@ enum ArmInstructionId {
 }
 
 /// Group of ARM instructions
-enum ArmInstructionGroup {
+enum ArmInstructionGroupId {
     invalid = 0,
 
 	// Generic groups

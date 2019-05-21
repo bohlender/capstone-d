@@ -1,14 +1,28 @@
 module capstone.internal.x86;
 
-import capstone.x86;
+alias x86_reg = int;
+alias x86_op_type = int;
+alias x86_avx_bcast = int;
+alias x86_xop_cc = int;
+alias x86_sse_cc = int;
+alias x86_avx_cc = int;
+alias x86_avx_rm = int;
+
+struct x86_op_mem {
+	x86_reg segment; // segment register (or X86_REG_INVALID if irrelevant)
+	x86_reg base;	 // base register (or X86_REG_INVALID if irrelevant)
+	x86_reg index;	 // index register (or X86_REG_INVALID if irrelevant)
+	int scale;		 // scale for index register
+	long disp;	 // displacement value
+}
 
 // Instruction operand
 struct cs_x86_op {
-		X86OpType type;	// operand type
+		x86_op_type type;	// operand type
 		union {
-			X86Register reg;	// register value for REG operand
+			x86_reg reg;	// register value for REG operand
 			long imm;		// immediate value for IMM operand
-			X86OpMem mem;		// base/index/scale/disp value for MEM operand
+			x86_op_mem mem;		// base/index/scale/disp value for MEM operand
 		};
 
 		// size of this operand (in bytes).
@@ -20,10 +34,23 @@ struct cs_x86_op {
 		ubyte access;
 
 		// AVX broadcast type, or 0 if irrelevant
-		X86AvxBroadcast avx_bcast;
+		x86_avx_bcast avx_bcast;
 
 		// AVX zero opmask {z}
 		bool avx_zero_opmask;
+}
+
+struct cs_x86_encoding {
+	/// ModR/M offset, or 0 when irrelevant
+	ubyte modrm_offset;
+
+	/// Displacement offset, or 0 when irrelevant.
+	ubyte disp_offset;
+	ubyte disp_size;
+
+	/// Immediate offset, or 0 when irrelevant.
+	ubyte imm_offset;
+	ubyte imm_size;
 }
 
 // Instruction structure
@@ -36,15 +63,15 @@ struct cs_x86 {
 	ubyte sib;
 	long disp;
 
-	X86Register sib_index;
+	x86_reg sib_index;
 	byte sib_scale;
-	X86Register sib_base;
+	x86_reg sib_base;
 
-	X86XopCc xop_cc;
-	X86SseCodeCondition sse_cc;
-	X86AvxCodeCondition avx_cc;
+	x86_xop_cc xop_cc;
+	x86_sse_cc sse_cc;
+	x86_avx_cc avx_cc;
 	bool avx_sae;
-	X86AvxRoundingMode avx_rm;
+	x86_avx_rm avx_rm;
 
 	// TODO: Remove padding workaround when compiler bug is sorted out (https://issues.dlang.org/show_bug.cgi?id=19516)
 	static union U {
@@ -61,5 +88,5 @@ struct cs_x86 {
 	ubyte op_count;
 	cs_x86_op[8] operands;
 
-	X86Encoding encoding; ///< encoding information
+	cs_x86_encoding encoding; ///< encoding information
 }

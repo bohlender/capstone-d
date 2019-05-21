@@ -21,7 +21,7 @@ import capstone;
 auto CODE = cast(ubyte[])"\x55\x48\x8b\x05\xb8\x13\x00\x00";
 
 void main(){
-    auto cs = Capstone.create(Arch.x86, ModeFlags(Mode.bit64));
+    auto cs = create(Arch.x86, ModeFlags(Mode.bit64));
     auto res = cs.disasm(CODE, 0x1000);
     foreach(instr; res)
         writefln!"0x%x:\t%s\t\t%s"(instr.address, instr.mnemonic, instr.opStr);
@@ -93,5 +93,5 @@ auto opsOfGivenType = operands.filter!(op => op.type == givenType)
 Unlike in the C API, an instruction `instr` does indeed not have a `size` member. In D, arrays & slices have `length`, so you can simpliy use `instr.bytes.length`.
 
 ## Contribute
-Keep in mind that the bindings are still under development, but you can always create an issue if you find bugs or think that something could be improved.
+If you find bugs or think that something could be improved, simply create an according issue.
 If you want to tackle an issue or contribute to the plugin feel free to create a pull request.

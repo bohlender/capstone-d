@@ -12,8 +12,7 @@ enum platforms = [
 	Platform(Arch.sysz, Mode.bigEndian, SYSZ_CODE, "SystemZ"),
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionSysz instr, in CapstoneSysz cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in SyszInstruction instr){
 	auto sysz = instr.detail; // = instr.detail.archSpecific;
 	
 	if(sysz.operands.length > 0)
@@ -23,20 +22,20 @@ void writeDetail(ref OutBuffer buf, in InstructionSysz instr, in CapstoneSysz cs
 			case SyszOpType.invalid:
 				break;
 			case SyszOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case SyszOpType.acreg:
-				buf.writefln("\t\toperands[%u].type: ACREG = %u", i, operand.reg);
+				buf.writefln("\t\toperands[%u].type: ACREG = %u", i, operand.reg.id);
 				break;
 			case SyszOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case SyszOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != SyszRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if (operand.mem.index != SyszRegister.invalid)
-					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if (operand.mem.base.id != SyszRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
+				if (operand.mem.index.id != SyszRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, operand.mem.index.name);
 				if (operand.mem.length != 0)
 					buf.writefln("\t\t\toperands[%u].mem.length: 0x%x", i, operand.mem.length);
 				if (operand.mem.disp != 0)
@@ -65,7 +64,7 @@ unittest{
 			buf.writefln("Disasm:");
 			foreach(instr; res){
 				buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-				buf.writeDetail(instr, cs);
+				buf.writeDetail(instr);
 			}
 			buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		}else{

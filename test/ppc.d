@@ -14,8 +14,7 @@ enum platforms = [
 	Platform(Arch.ppc, Mode.bigEndian + Mode.qpx, PPC_CODE2, "PPC-64 + QPX"),
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionPpc instr, in CapstonePpc cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in PpcInstruction instr){
 	auto ppc = instr.detail; // = instr.detail.archSpecific;
 	
 	if(ppc.operands.length > 0)
@@ -26,22 +25,22 @@ void writeDetail(ref OutBuffer buf, in InstructionPpc instr, in CapstonePpc cs){
 			case PpcOpType.invalid:
 				break;
 			case PpcOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case PpcOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case PpcOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != PpcRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
+				if (operand.mem.base.id != PpcRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
 				if (operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;
 			case PpcOpType.crx:
 				buf.writefln("\t\toperands[%u].type: CRX", i);
 				buf.writefln("\t\t\toperands[%u].crx.scale: %d", i, operand.crx.scale);
-				buf.writefln("\t\t\toperands[%u].crx.reg: %s", i, cs.regName(operand.crx.reg));
+				buf.writefln("\t\t\toperands[%u].crx.reg: %s", i, operand.crx.reg.name);
 				buf.writefln("\t\t\toperands[%u].crx.cond: %s", i, operand.crx.cond);
 				break;
 		}
@@ -72,7 +71,7 @@ unittest{
 			buf.writefln("Disasm:");
 			foreach(instr; res){
 				buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-				buf.writeDetail(instr, cs);
+				buf.writeDetail(instr);
 			}
 			buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		}else{

@@ -27,7 +27,7 @@ unittest{
 	buf.writefln("Disassemble X86 code with default instruction mnemonic");
 	buf.writeDisasmOne(cs);
 
-	// Customized mnemonic JNE to JNZ using CS_OPT_MNEMONIC option
+	// Customize mnemonic JNE to JNZ
 	buf.writefln("\nNow customize engine to change mnemonic from 'JNE' to 'JNZ'");
 	cs.customMnemonic(X86InstructionId.jne, "jnz");
 

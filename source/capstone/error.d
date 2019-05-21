@@ -40,7 +40,7 @@ class CapstoneException : Exception {
     }
 
     package this(in ErrorCode errno, string file = __FILE__, size_t line = __LINE__, Throwable next = null){
-        const msg = "Capstone Error %d: %s".format(errno, cs_strerror(errno.to!int).fromStringz);
+        const msg = format!"Capstone Error %d: %s"(errno, cs_strerror(errno.to!int).fromStringz);
         super(msg, file, line, next);
         this.errCode = errno;
     }

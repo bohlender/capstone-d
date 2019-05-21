@@ -40,25 +40,25 @@ enum platforms = [
 	Platform(Arch.xcore, Mode.littleEndian, XCORE_CODE, "XCore")
 ];
 
-void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in CapstoneImpl!arch cs) {
-	buf.writefln("0x%x:\t%s\t\t%s // insn-ID: %d, insn-mnem: %s", instr.address, instr.mnemonic, instr.opStr, instr.id, cs.instrName(instr.id));
+void writeDetail(ref OutBuffer buf, in Instruction instr) {
+	buf.writefln("0x%x:\t%s\t\t%s // insn-ID: %d, insn-mnem: %s", instr.address, instr.mnemonic, instr.opStr, instr.idAsInt, instr.name);
 	auto detail = instr.detail;
 	if(detail.regsRead.length > 0) {
 		buf.writef("\tImplicit registers read: ");
 		foreach(reg; detail.regsRead)
-			buf.writef("%s ", cs.regName(reg));
+			buf.writef("%s ", reg.name);
 		buf.writefln("");
 	}
 	if(detail.regsWrite.length > 0) {
 		buf.writef("\tImplicit registers modified: ");
 		foreach(reg; detail.regsWrite)
-			buf.writef("%s ", cs.regName(reg));
+			buf.writef("%s ", reg.name);
 		buf.writefln("");
 	}
 	if(detail.groups.length > 0) {
 		buf.writef("\tThis instruction belongs to groups: ");
 		foreach(group; detail.groups)
-			buf.writef("%s ", cs.groupName(group));
+			buf.writef("%s ", group.name);
 		buf.writefln("");
 	}
 }
@@ -66,7 +66,7 @@ void writeDetail(Arch arch)(ref OutBuffer buf, in InstructionImpl!arch instr, in
 unittest{
 	auto buf = new OutBuffer;
 	foreach(i, platform; platforms) {
-		auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
+		auto cs = create(platform.arch, ModeFlags(platform.mode));
 		if(platform.syntax != Syntax.systemDefault)
 			cs.syntax = platform.syntax;
 		cs.detail = true;
@@ -76,36 +76,8 @@ unittest{
 		buf.writefln("Code: %s", platform.code.bytesToHex);
 		buf.writefln("Disasm:");
 
-		foreach(instr; cs.disasmIter(platform.code, 0x1000)){ 
-			switch(platform.arch){
-				case Arch.arm:
-					buf.writeDetail(cast(InstructionImpl!(Arch.arm))instr, cast(CapstoneImpl!(Arch.arm))cs);
-					break;
-				case Arch.arm64:
-					buf.writeDetail(cast(InstructionImpl!(Arch.arm64))instr, cast(CapstoneImpl!(Arch.arm64))cs);
-					break;
-				case Arch.mips:
-					buf.writeDetail(cast(InstructionImpl!(Arch.mips))instr, cast(CapstoneImpl!(Arch.mips))cs);
-					break;
-				case Arch.ppc:
-					buf.writeDetail(cast(InstructionImpl!(Arch.ppc))instr, cast(CapstoneImpl!(Arch.ppc))cs);
-					break;
-				case Arch.sparc:
-					buf.writeDetail(cast(InstructionImpl!(Arch.sparc))instr, cast(CapstoneImpl!(Arch.sparc))cs);
-					break;
-				case Arch.sysz:
-					buf.writeDetail(cast(InstructionImpl!(Arch.sysz))instr, cast(CapstoneImpl!(Arch.sysz))cs);
-					break;
-				case Arch.x86:
-					buf.writeDetail(cast(InstructionImpl!(Arch.x86))instr, cast(CapstoneImpl!(Arch.x86))cs);
-					break;
-				case Arch.xcore:
-					buf.writeDetail(cast(InstructionImpl!(Arch.xcore))instr, cast(CapstoneImpl!(Arch.xcore))cs);
-					break;
-				default:
-					assert(false);
-			}
-		}
+		foreach(instr; cs.disasmIter(platform.code, 0x1000))
+			buf.writeDetail(instr);
 		buf.writefln("");
 	}
 

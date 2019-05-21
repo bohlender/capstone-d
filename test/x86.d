@@ -9,8 +9,10 @@ import std.range: empty;
 import std.array: join;
 import std.algorithm: map, joiner;
 import std.format: format;
+import std.typecons: BitFlags;
 
 import capstone;
+import capstone.x86;
 import test.utils;
 
 enum X86_CODE16 = cast(ubyte[])"\x8d\x4c\x32\x08\x01\xd8\x81\xc6\x34\x12\x00\x00\x05\x23\x01\x00\x00\x36\x8b\x84\x91\x23\x01\x00\x00\x41\x8d\x84\x39\x89\x67\x00\x00\x8d\x87\x89\x67\x00\x00\xb4\xc6\x66\xe9\xb8\x00\x00\x00\x67\xff\xa0\x23\x01\x00\x00\x66\xe8\xcb\x00\x00\x00\x74\xfc";
@@ -24,8 +26,7 @@ enum platforms = [
 	Platform(Arch.x86, Mode.bit64, X86_CODE64, "X86 64 (Intel syntax)")		
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in X86Instruction instr, in CapstoneX86 cs){
 	auto x86 = instr.detail; //auto x86 = instr.detail.archSpecific;
 
 	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
@@ -55,10 +56,10 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 
 	if(!(cs.mode & Mode.bit16)){
 		buf.writefln("\tsib: 0x%x", x86.sib);
-		if(x86.sibBase != X86Register.invalid)
-			buf.writefln("\t\tsib_base: %s", cs.regName(x86.sibBase));
-		if(x86.sibIndex != X86Register.invalid)
-			buf.writefln("\t\tsib_index: %s", cs.regName(x86.sibIndex));
+		if(x86.sibBase.id != X86RegisterId.invalid)
+			buf.writefln("\t\tsib_base: %s", x86.sibBase.name);
+		if(x86.sibIndex.id != X86RegisterId.invalid)
+			buf.writefln("\t\tsib_index: %s", x86.sibIndex.name);
 		if(x86.sibScale != 0)
 			buf.writefln("\t\tsib_scale: %d", x86.sibScale);
 	}
@@ -90,19 +91,19 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 	foreach(i, operand; x86.operands){
 		final switch(operand.type){
 			case X86OpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case X86OpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case X86OpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if(operand.mem.segment != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.segment: REG = %s", i, cs.regName(operand.mem.segment));
-				if(operand.mem.base != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if(operand.mem.index != X86Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if(operand.mem.segment.id != X86RegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.segment: REG = %s", i, operand.mem.segment.name);
+				if(operand.mem.base.id != X86RegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
+				if(operand.mem.index.id != X86RegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, operand.mem.index.name);
 				if(operand.mem.scale != 1)
 					buf.writefln("\t\t\toperands[%d].mem.scale: %d", i, operand.mem.scale);
 				if(operand.mem.disp != 0)
@@ -120,11 +121,11 @@ void writeDetail(ref OutBuffer buf, in InstructionX86 instr, in CapstoneX86 cs){
 		if(operand.access)
 			buf.writefln("\t\toperands[%u].access: %s", i, operand.access.accessToString);
 	}
-	auto regsAccess = cs.regsAccess(instr);
-	if (!regsAccess.read.empty)
-		buf.writefln("\tRegisters read: %s", regsAccess.read.map!(reg => cs.regName(reg)).join(" "));
-	if (!regsAccess.write.empty)
-		buf.writefln("\tRegisters modified: %s", regsAccess.write.map!(reg => cs.regName(reg)).join(" "));
+
+	if (!instr.reads.empty)
+		buf.writefln("\tRegisters read: %s", instr.reads.map!(reg => reg.name).join(" "));
+	if (!instr.writes.empty)
+		buf.writefln("\tRegisters modified: %s", instr.writes.map!(reg => reg.name).join(" "));
 
 	if (x86.eflags) {
 		buf.writef("\tEFLAGS:");

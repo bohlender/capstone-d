@@ -26,8 +26,7 @@ enum platforms = [
 	Platform(Arch.arm, Mode.arm + Mode.armV8, ARMV8, "Arm-V8")
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in ArmInstruction instr, in CapstoneArm cs){
 	auto arm = instr.detail; // = instr.detail.archSpecific;
 	
 	if(arm.operands.length > 0)
@@ -37,7 +36,7 @@ void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 			case ArmOpType.invalid:
 				break;
 			case ArmOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case ArmOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
@@ -47,10 +46,10 @@ void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 				break;
 			case ArmOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != ArmRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if (operand.mem.index != ArmRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if (operand.mem.base.id != ArmRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
+				if (operand.mem.index.id != ArmRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, operand.mem.index.name);
 				if (operand.mem.scale != 1)
 					buf.writefln("\t\t\toperands[%d].mem.scale: %d", i, operand.mem.scale);
 				if (operand.mem.disp != 0)
@@ -66,7 +65,7 @@ void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 				buf.writefln("\t\toperands[%d].type: SETEND = %s", i, operand.setend == ArmSetendType.be? "be" : "le");
 				break;
 			case ArmOpType.sysreg:
-				buf.writefln("\t\toperands[%d].type: SYSREG = %d", i, operand.reg);
+				buf.writefln("\t\toperands[%d].type: SYSREG = %d", i, operand.sysreg);
 				break;
 		}
 
@@ -80,7 +79,7 @@ void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 			if (operand.shift.type < ArmShiftType.asr_reg) // shift with constant value
 				buf.writefln("\t\t\tShift: %d = %d", operand.shift.type, operand.shift.value);
 			else // shift with register
-				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, cs.regName(operand.shift.value.to!ArmRegister));
+				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, new ArmRegister(cs, operand.shift.value).name);
 		}
 
 		if (operand.vectorIndex != -1)
@@ -108,11 +107,11 @@ void writeDetail(ref OutBuffer buf, in InstructionArm instr, in CapstoneArm cs){
 	if (arm.memBarrier)
 		buf.writefln("\tMemory-barrier: %d", arm.memBarrier);
 
-	auto regsAccess = cs.regsAccess(instr);
-	if (!regsAccess.read.empty)
-		buf.writefln("\tRegisters read: %s", regsAccess.read.map!(reg => cs.regName(reg)).join(" "));
-	if (!regsAccess.write.empty)
-		buf.writefln("\tRegisters modified: %s", regsAccess.write.map!(reg => cs.regName(reg)).join(" "));
+	if (!instr.reads.empty)
+		buf.writefln("\tRegisters read: %s", instr.reads.map!(reg => reg.name).join(" "));
+	if (!instr.writes.empty)
+		buf.writefln("\tRegisters modified: %s", instr.writes.map!(reg => reg.name).join(" "));
+
 	buf.writefln("");
 }
 

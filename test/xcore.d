@@ -12,8 +12,7 @@ enum platforms = [
 	Platform(Arch.xcore, Mode.bigEndian, XCORE_CODE, "XCore"),
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionXCore instr, in CapstoneXCore cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in XCoreInstruction instr){
 	auto xcore = instr.detail; // = instr.detail.archSpecific;
 	
 	if(xcore.operands.length > 0)
@@ -23,17 +22,17 @@ void writeDetail(ref OutBuffer buf, in InstructionXCore instr, in CapstoneXCore 
 			case XCoreOpType.invalid:
 				break;
 			case XCoreOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case XCoreOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case XCoreOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != XCoreRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if (operand.mem.index != XCoreRegister.invalid)
-					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if (operand.mem.base.id != XCoreRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
+				if (operand.mem.index.id != XCoreRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, operand.mem.index.name);
 				if (operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				if (operand.mem.direct != 1)
@@ -60,7 +59,7 @@ unittest{
 			buf.writefln("Disasm:");
 			foreach(instr; res){
 				buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-				buf.writeDetail(instr, cs);
+				buf.writeDetail(instr);
 			}
 			buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		}else{

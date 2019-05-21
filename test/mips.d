@@ -21,8 +21,7 @@ enum platforms = [
 	Platform(Arch.mips, Mode.mips64 + Mode.littleEndian, MIPS_64SD, "MIPS-64-EL (Little-endian)")
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionMips instr, in CapstoneMips cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in MipsInstruction instr, in CapstoneMips cs){
 	auto mips = instr.detail; // = instr.detail.archSpecific;
 	
 	if(mips.operands.length > 0)
@@ -32,15 +31,15 @@ void writeDetail(ref OutBuffer buf, in InstructionMips instr, in CapstoneMips cs
 			case MipsOpType.invalid:
 				break;
 			case MipsOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case MipsOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case MipsOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != MipsRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
+				if (operand.mem.base.id != MipsRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
 				if (operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;

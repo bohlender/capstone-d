@@ -1,17 +1,51 @@
 /// Types and constants of PowerPc architecture
 module capstone.ppc;
 
-import std.exception: enforce;
+import std.conv: to;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstonePpc = CapstoneImpl!(Arch.ppc);
+/// Architecture-specific Register variant
+class PpcRegister : RegisterImpl!PpcRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class PpcInstructionGroup : InstructionGroupImpl!PpcInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class PpcDetail : DetailImpl!(PpcRegister, PpcInstructionGroup, PpcInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionPpc = InstructionImpl!(Arch.ppc);
+class PpcInstruction : InstructionImpl!(PpcInstructionId, PpcRegister, PpcDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstonePpc : CapstoneImpl!(PpcInstructionId, PpcInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.ppc, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -20,6 +54,11 @@ This is associated with the `PpcOpType.mem` operand type
 struct PpcOpMem {
 	PpcRegister base; // base register
 	int disp;		  // displacement/offset value
+
+	this(in Capstone cs, ppc_op_mem internal){
+		base = new PpcRegister(cs, internal.base);
+		disp = internal.disp;
+	}
 }
 
 /** Instruction's operand referring to a conditional register
@@ -30,33 +69,44 @@ struct PpcOpCrx {
 	uint scale;
 	PpcRegister reg;
 	PpcBc cond;
+
+	this(in Capstone cs, ppc_op_crx internal){
+		scale = internal.scale;
+		reg = new PpcRegister(cs, internal.reg);
+		cond = internal.cond.to!PpcBc;
+	}
 }
 
-/// Tagged union of possible operand types
-alias PpcOpValue = TaggedUnion!(PpcRegister, "reg", long, "imm", PpcOpMem, "mem", PpcOpCrx, "crx");
+/// Union of possible operand types
+union PpcOpValue {
+	PpcRegister reg;	/// Register
+	long imm;			/// Immediate
+	PpcOpMem mem;		/// Memory
+	PpcOpCrx crx;		/// Condition register field
+}
 
 /// Instruction's operand
 struct PpcOp {
     PpcOpType type;   /// Operand type
-    PpcOpValue value; /// Operand value of type `type`
+    SafeUnion!PpcOpValue value; /// Operand value of type `type`
     alias value this; /// Convenient access to value (as in original bindings)
 
-    package this(cs_ppc_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_ppc_op internal){
+        type = internal.type.to!PpcOpType;
         final switch(internal.type) {
             case PpcOpType.invalid:
                 break;
             case PpcOpType.reg:
-                value.reg = internal.reg;
+                value.reg = new PpcRegister(cs, internal.reg);
                 break;
             case PpcOpType.imm:
                 value.imm = internal.imm;
                 break;
             case PpcOpType.mem:
-                value.mem = internal.mem;
+                value.mem = PpcOpMem(cs, internal.mem);
                 break;
             case PpcOpType.crx:
-                value.crx = internal.crx;
+                value.crx = PpcOpCrx(cs, internal.crx);
                 break;
         }
     }
@@ -69,15 +119,13 @@ struct PpcInstructionDetail {
 	bool updateCr0;	  /// If true, then this 'dot' instruction updates CR0
     PpcOp[] operands; /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.ppc);
-	}
-    package this(cs_ppc internal){
-		bc = internal.bc;
-		bh = internal.bh;
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+		auto internal = arch_detail.ppc;
+		bc = internal.bc.to!PpcBc;
+		bh = internal.bh.to!PpcBh;
 		updateCr0 = internal.update_cr0;
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= PpcOp(op);
+            operands ~= PpcOp(cs, op);
     }
 }
 
@@ -119,7 +167,7 @@ enum PpcBh {
 }
 
 /// PPC registers
-enum PpcRegister {
+enum PpcRegisterId {
 	invalid = 0,
 
 	carry,
@@ -1456,12 +1504,12 @@ enum PpcInstructionId {
 }
 
 /// Group of PPC instructions
-enum PpcInstructionGroup {
+enum PpcInstructionGroupId {
 	invalid = 0,
 
 	// Generic groups
 	// all jump instructions (conditional+direct+indirect jumps)
-	JUMP,
+	jump,
 
 	// Architecture-specific groups
 	altivec = 128,

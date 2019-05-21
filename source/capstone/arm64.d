@@ -1,18 +1,51 @@
 /// Types and constants of ARM64 architecture
 module capstone.arm64;
 
-import std.exception: enforce;
+import std.conv: to;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
-import capstone.api: AccessType, AccessFlags;
+
+/// Architecture-specific Register variant
+class Arm64Register : RegisterImpl!Arm64RegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class Arm64InstructionGroup : InstructionGroupImpl!Arm64InstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class Arm64Detail : DetailImpl!(Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific instruction variant
+class Arm64Instruction : InstructionImpl!(Arm64InstructionId, Arm64Register, Arm64Detail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
 
 /// Architecture-specific Capstone variant
-alias CapstoneArm64 = CapstoneImpl!(Arch.arm64);
-/// Architecture-specific instruction variant
-alias InstructionArm64 = InstructionImpl!(Arch.arm64);
+class CapstoneArm64 : CapstoneImpl!(Arm64InstructionId, Arm64Instruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.arm64, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -22,16 +55,38 @@ struct Arm64OpMem {
 	Arm64Register base;	 /// Base register
 	Arm64Register index; /// Index register
 	int disp;			 /// displacement/offset value
+
+	this(in Capstone cs, arm64_op_mem internal){
+        base = new Arm64Register(cs, internal.base);
+        index = new Arm64Register(cs, internal.index);
+        disp = internal.disp;
+    }
 }
 
 /// Optional shift
 struct Arm64Shift{
 	Arm64ShiftType type; /// Type of shift
 	uint value;			 /// value (constant or register) to shift by
+
+	this(cs_arm64_op.Shift internal){
+        type = internal.type.to!Arm64ShiftType;
+        value = internal.value;
+    }
 }
 
-/// Tagged union of possible operand values
-alias Arm64OperandValue = TaggedUnion!(Arm64Register, "reg", long, "imm", double, "fp", Arm64OpMem, "mem", Arm64PState, "pstate", uint, "sys", Arm64PrefetchOp, "prefetch", Arm64BarrierOp, "barrier");
+/// Union of possible operand values
+union Arm64OperandValue {
+	Arm64Register reg;			/// Register
+	Arm64MrsReg reg_mrs;		/// MRS register
+	Arm64MsrReg reg_msr;		/// MSR register
+	long imm;					/// Immediate
+	double fp;					/// Floating-point
+	Arm64OpMem mem;				/// Memory
+	Arm64PState pstate;			/// P-State
+	uint sys;					/// SYS
+	Arm64PrefetchOp prefetch;	/// Prefetch (PRFM)
+	Arm64BarrierOp barrier;		/// Memory barrier
+}
 
 /// Instruction operand
 struct Arm64Op {
@@ -41,7 +96,7 @@ struct Arm64Op {
 	Arm64Shift shift; 		 /// Potential shifting of operand
 	Arm64Extender ext;		 /// Extender type of this operand
 	Arm64OpType type; 		 /// Operand type
-	Arm64OperandValue value; /// Operand value of type `type`
+	SafeUnion!Arm64OperandValue value; /// Operand value of type `type`
 	alias value this; 		 /// Conventient access to value (as in original bindings)
 
 	/** How is this operand accessed? (READ, WRITE or READ|WRITE)
@@ -50,41 +105,47 @@ struct Arm64Op {
     */
 	AccessFlags access;
 
-    package this(cs_arm64_op internal){
+    package this(in Capstone cs, cs_arm64_op internal){
 		vectorIndex = internal.vector_index;
-		vas = internal.vas;
-		vess = internal.vess;
-		shift = internal.shift;
-		ext = internal.ext;
-		type = internal.type;
+		vas = internal.vas.to!Arm64Vas;
+		vess = internal.vess.to!Arm64Vess;
+		shift = internal.shift.to!Arm64Shift;
+		ext = internal.ext.to!Arm64Extender;
+		type = internal.type.to!Arm64OpType;
         access = cast(AccessType)internal.access;
 		
 		final switch(internal.type){
 			case Arm64OpType.invalid:
 				break;
-			case Arm64OpType.reg, Arm64OpType.reg_mrs, Arm64OpType.reg_msr:
-				value.reg = internal.reg;
+			case Arm64OpType.reg:
+				value.reg = new Arm64Register(cs, internal.reg);
+				break;
+			case Arm64OpType.reg_mrs:
+				value.reg_mrs = internal.reg.to!Arm64MrsReg;
+				break;
+			case Arm64OpType.reg_msr:
+				value.reg_msr = internal.reg.to!Arm64MsrReg;
 				break;
 			case Arm64OpType.imm, Arm64OpType.cimm:
 				value.imm = internal.imm;
 				break;
 			case Arm64OpType.mem:
-				value.mem = internal.mem;
+				value.mem = Arm64OpMem(cs, internal.mem);
 				break;
 			case Arm64OpType.fp:
 				value.fp = internal.fp;
 				break;
 			case Arm64OpType.pstate:
-				value.pstate = internal.pstate;
+				value.pstate = internal.pstate.to!Arm64PState;
 				break;
 			case Arm64OpType.sys:
 				value.sys = internal.sys;
 				break;
 			case Arm64OpType.prefetch:
-				value.prefetch = internal.prefetch;
+				value.prefetch = internal.prefetch.to!Arm64PrefetchOp;
 				break;
 			case Arm64OpType.barrier:
-				value.barrier = internal.barrier;
+				value.barrier = internal.barrier.to!Arm64BarrierOp;
 				break;
 		}
 	}
@@ -98,16 +159,14 @@ struct Arm64InstructionDetail {
 
 	Arm64Op[] operands; /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.arm64);
-	}
-    package this(cs_arm64 internal){
-		cc = internal.cc;
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+		auto internal = arch_detail.arm64;
+		cc = internal.cc.to!Arm64Cc;
 		updateFlags = internal.update_flags;
 		writeback = internal.writeback;
 
 		foreach(op; internal.operands[0..internal.op_count])
-			operands ~= Arm64Op(op);
+			operands ~= Arm64Op(cs, op);
 	}
 }
 
@@ -442,7 +501,7 @@ enum Arm64PrefetchOp {
 }
 
 /// ARM64 registers
-enum Arm64Register {
+enum Arm64RegisterId {
 	invalid = 0,
 
 	x29,
@@ -1180,7 +1239,7 @@ enum Arm64InstructionId {
 }
 
 /// Group of ARM64 instructions
-enum Arm64InstructionGroup {
+enum Arm64InstructionGroupId {
 	invalid = 0,
 
 	// Generic groups

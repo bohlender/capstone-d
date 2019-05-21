@@ -1,6 +1,13 @@
 module capstone.internal.api;
 
-import capstone.internal;
+import capstone.internal.arm;
+import capstone.internal.arm64;
+import capstone.internal.mips;
+import capstone.internal.ppc;
+import capstone.internal.sparc;
+import capstone.internal.sysz;
+import capstone.internal.x86;
+import capstone.internal.xcore;
 
 // Capstone API version
 enum uint CS_API_MAJOR = 4;
@@ -156,9 +163,9 @@ extern (C){
     const(char)* cs_reg_name(size_t handle, uint reg_id);
     const(char)* cs_insn_name(size_t handle, uint insn_id);
     const(char)* cs_group_name(size_t handle, uint group_id);
-    // bool cs_insn_group(csh handle, const cs_insn *insn, unsigned int group_id);
-    // bool cs_reg_read(csh handle, const cs_insn *insn, unsigned int reg_id);
-    // bool cs_reg_write(csh handle, const cs_insn *insn, unsigned int reg_id);
+    bool cs_insn_group(size_t handle, const(cs_insn) *insn, uint group_id);
+    bool cs_reg_read(size_t handle, const(cs_insn) *insn, uint reg_id);
+    bool cs_reg_write(size_t handle, const(cs_insn) *insn, uint reg_id);
 	// int CAPSTONE_API cs_op_count(csh handle, const cs_insn *insn, unsigned int op_type);
 	// int CAPSTONE_API cs_op_index(csh handle, const cs_insn *insn, unsigned int op_type, unsigned int position);
 

@@ -14,8 +14,7 @@ enum platforms = [
 	Platform(Arch.sparc, Mode.bigEndian + Mode.sparcV9, SPARCV9_CODE, "SparcV9"),
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionSparc instr, in CapstoneSparc cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in SparcInstruction instr){
 	auto sparc = instr.detail; // = instr.detail.archSpecific;
 	
 	if(sparc.operands.length > 0)
@@ -26,17 +25,17 @@ void writeDetail(ref OutBuffer buf, in InstructionSparc instr, in CapstoneSparc 
 			case SparcOpType.invalid:
 				break;
 			case SparcOpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(operand.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, operand.reg.name);
 				break;
 			case SparcOpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, operand.imm);
 				break;
 			case SparcOpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (operand.mem.base != SparcRegister.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(operand.mem.base));
-				if (operand.mem.index != SparcRegister.invalid)
-					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, cs.regName(operand.mem.index));
+				if (operand.mem.base.id != SparcRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, operand.mem.base.name);
+				if (operand.mem.index.id != SparcRegisterId.invalid)
+					buf.writefln("\t\t\toperands[%u].mem.index: REG = %s", i, operand.mem.index.name);
 				if (operand.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, operand.mem.disp);
 				break;
@@ -66,7 +65,7 @@ unittest{
 			buf.writefln("Disasm:");
 			foreach(instr; res){
 				buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-				buf.writeDetail(instr, cs);
+				buf.writeDetail(instr);
 			}
 			buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		}else{

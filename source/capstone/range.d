@@ -5,28 +5,29 @@ import std.exception: enforce, assertThrown;
 import std.range: isInputRange;
 import std.format: format;
 
-import capstone.api: Arch, InstructionRange;
-import capstone.impl: CapstoneImpl, InstructionImpl;
+import capstone.api;
+import capstone.capstone;
 import capstone.internal;
+import capstone.instruction;
 import capstone.error;
 
 /// An extended `InstructionRange` that provides architecture-specific instructions
-class InstructionImplRange(Arch arch) : InstructionRange {
+class InstructionImplRange(TInstruction) : InstructionRange {
     import core.exception: RangeError;
     private{
-        const CapstoneImpl!arch cs;
+        const Capstone cs;
         const ubyte[] code; // Keep ref, s.t. it cannot be deallocated externally
         const(ubyte)* pCode;
         ulong codeLength;
         ulong address;
 
-        InstructionImpl!arch instr;
+        TInstruction instr;
         cs_insn* pInsn;
 
         bool hasFront;
     }
 
-    package this(in CapstoneImpl!arch cs, in ubyte[] code, in ulong address){
+    package this(in Capstone cs, in ubyte[] code, in ulong address){
         this.cs = cs;
         this.code = code;
         this.pCode = code.ptr;
@@ -44,7 +45,7 @@ class InstructionImplRange(Arch arch) : InstructionRange {
 
     Throws if called on an `empty` range.
     */
-    @property override InstructionImpl!arch front() {
+    @property override TInstruction front() {
         enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
         return instr;
     }
@@ -60,7 +61,7 @@ class InstructionImplRange(Arch arch) : InstructionRange {
             throw new CapstoneException("Insufficient memory to allocate an instruction", ErrorCode.OutOfMemory);
         hasFront = cs_disasm_iter(cs.handle, &pCode, &codeLength, &address, pInsn);
         if(hasFront)
-            instr = new InstructionImpl!arch(pInsn, cs.detail, cs.skipData); // Instruction takes ownership of pointer
+            instr = new TInstruction(cs, pInsn); // Instruction takes ownership of pointer
         else
             cs_errno(cs.handle).checkErrno;
     }

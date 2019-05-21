@@ -1,6 +1,9 @@
 module capstone.internal.xcore;
 
-import capstone.xcore;
+alias xcore_op_type = int;
+alias xcore_reg = int;
+alias xcore_insn = int;
+alias xcore_insn_group = int;
 
 // Instruction's operand referring to memory
 // This is associated with XCORE_OP_MEM operand type above
@@ -13,9 +16,9 @@ struct xcore_op_mem {
 
 // Instruction operand
 struct cs_xcore_op {
-	XCoreOpType type;	   // operand type
+	xcore_op_type type;	   // operand type
 	union {
-		XCoreRegister reg; // register value for REG operand
+		xcore_reg reg; // register value for REG operand
 		int imm;		   // immediate value for IMM operand
 		xcore_op_mem mem;  // base/disp value for MEM operand
 	}

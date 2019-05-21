@@ -1,19 +1,18 @@
-- Move more functionality into Capstone (from CapstoneImpl)
+- docstrings for overriding methods necessary or redundant?
+- Consistent use of @property
+- Make all the struct constructors package visible
+- Check public/visible API (make sure internals do not leak)
 - Report DMD & LDC segfaults when building in build-mode=singleFile
 - Add None to BitFlags that can be invalid
-- Avoid (re)allocation and reuse the pointers/locations given by libcapstone
 
 - dlang format & retab
 - const pure nogc safe
 
-- reduce size of binary
-
 - get rid of ModeFlags? Do not help with safety anyway
 - get rid of/wrap all the types where zeroes indicate invalid values ?
 
-- make sure everything works as expected in diet mode
+- make sure everything work as expected in diet mode
 - fuzz api
 
-- example-cstool
-
+- example-cstool ?
 - support manual memory management ?

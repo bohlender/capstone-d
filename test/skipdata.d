@@ -27,7 +27,7 @@ unittest{
 
     auto buf = new OutBuffer;
     foreach(i, platform; platforms) {
-        auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
+        auto cs = create(platform.arch, ModeFlags(platform.mode));
         if(platform.syntax)
             cs.syntax = platform.syntax;
         cs.detail = true;

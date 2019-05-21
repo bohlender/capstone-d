@@ -58,7 +58,7 @@ unittest{
 		// Weird code structure to be consistent with original tests in C
 		buf.writefln("****************");
 		buf.writefln("Platform: %s", platform.comment);
-		auto cs = Capstone.create(platform.arch, ModeFlags(platform.mode));
+		auto cs = create(platform.arch, ModeFlags(platform.mode));
 		if(platform.syntax != Syntax.systemDefault)
 			cs.syntax = platform.syntax;
 

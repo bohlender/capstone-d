@@ -1,19 +1,52 @@
 /// Types and constants of SPARC architecturem
 module capstone.sparc;
 
-import std.exception: enforce;
 import std.conv: to;
 import std.typecons: BitFlags;
 
+import capstone.api;
+import capstone.capstone;
+import capstone.detail;
+import capstone.instruction;
+import capstone.instructiongroup;
 import capstone.internal;
-import capstone.impl: CapstoneImpl, InstructionImpl;
-import capstone.api: Arch;
+import capstone.register;
 import capstone.utils;
 
-/// Architecture-specific Capstone variant
-alias CapstoneSparc = CapstoneImpl!(Arch.sparc);
+/// Architecture-specific Register variant
+class SparcRegister : RegisterImpl!SparcRegisterId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific InstructionGroup variant
+class SparcInstructionGroup : InstructionGroupImpl!SparcInstructionGroupId {
+    this(in Capstone cs, in int id) {
+        super(cs, id);
+    }
+}
+
+/// Architecture-specific Detail variant
+class SparcDetail : DetailImpl!(SparcRegister, SparcInstructionGroup, SparcInstructionDetail) {
+    this(in Capstone cs, cs_detail* internal) {
+		super(cs, internal);
+	}
+}
+
 /// Architecture-specific instruction variant
-alias InstructionSparc = InstructionImpl!(Arch.sparc);
+class SparcInstruction : InstructionImpl!(SparcInstructionId, SparcRegister, SparcDetail) {
+    this(in Capstone cs, cs_insn* internal) {
+		super(cs, internal);
+	}
+}
+
+/// Architecture-specific Capstone variant
+class CapstoneSparc : CapstoneImpl!(SparcInstructionId, SparcInstruction) {
+    this(in ModeFlags modeFlags){
+        super(Arch.sparc, modeFlags);
+    }
+}
 
 /** Instruction's operand referring to memory
 
@@ -24,35 +57,39 @@ struct SparcOpMem {
 	SparcRegister index; /// Index register
 	int disp;    		 /// Displacement/offset value
 
-	this(sparc_op_mem internal){
-		base = internal.base.to!SparcRegister;
-		index = internal.index.to!SparcRegister;
+	this(in Capstone cs, sparc_op_mem internal){
+		base = new SparcRegister(cs, internal.base);
+		index = new SparcRegister(cs, internal.index);
 		disp = internal.disp;
 	}
 }
 
-/// Tagged union of possible operand types
-alias SparcOpValue = TaggedUnion!(SparcRegister, "reg", long, "imm", SparcOpMem, "mem");
+/// Union of possible operand types
+union SparcOpValue {
+	SparcRegister reg;	/// Register
+	long imm;			/// Immediate
+	SparcOpMem mem;		/// Memory
+}
 
 /// Instruction's operand
 struct SparcOp {
     SparcOpType type;   /// Operand type
-    SparcOpValue value; /// Operand value of type `type`
+    SafeUnion!SparcOpValue value; /// Operand value of type `type`
     alias value this; 	/// Convenient access to value (as in original bindings)
 
-    package this(cs_sparc_op internal){
-        type = internal.type;
+    package this(in Capstone cs, cs_sparc_op internal){
+        type = internal.type.to!SparcOpType;
         final switch(internal.type) {
             case SparcOpType.invalid:
                 break;
             case SparcOpType.reg:
-                value.reg = internal.reg;
+                value.reg = new SparcRegister(cs, internal.reg);
                 break;
             case SparcOpType.imm:
                 value.imm = internal.imm;
                 break;
             case SparcOpType.mem:
-                value.mem = SparcOpMem(internal.mem);
+                value.mem = SparcOpMem(cs, internal.mem);
                 break;
         }
     }
@@ -64,14 +101,12 @@ struct SparcInstructionDetail {
 	BitFlags!SparcHint hint; /// Branch hint: encoding as bitwise OR of `SparcHint`, invalid if = 0
     SparcOp[] operands; 	 /// Operands for this instruction.
 
-    package this(cs_arch_detail arch_detail){
-		this(arch_detail.sparc);
-	}
-    package this(cs_sparc internal){
-		cc = internal.cc;
-		hint = internal.hint;
+    package this(in Capstone cs, cs_arch_detail arch_detail){
+		auto internal = arch_detail.sparc;
+		cc = internal.cc.to!SparcCc;
+		hint = cast(SparcHint)internal.hint;
         foreach(op; internal.operands[0..internal.op_count])
-            operands ~= SparcOp(op);
+            operands ~= SparcOp(cs, op);
     }
 }
 
@@ -137,7 +172,7 @@ enum SparcHint {
 }
 
 /// SPARC registers
-enum SparcRegister {
+enum SparcRegisterId {
 	invalid = 0,
 
 	f0,
@@ -522,7 +557,7 @@ enum SparcInstructionId {
 }
 
 /// Group of SPARC instructions
-enum SparcInstructionGroup {
+enum SparcInstructionGroupId {
 	invalid = 0,
 
 	// Generic groups

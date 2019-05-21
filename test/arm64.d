@@ -15,8 +15,7 @@ enum platforms = [
 	Platform(Arch.arm64, Mode.arm, ARM64_CODE, "ARM-64")
 ];
 
-void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 cs){
-	assert(!instr.detail.isNull);
+void writeDetail(ref OutBuffer buf, in Arm64Instruction instr){
 	auto arm64 = instr.detail; //auto arm64 = instr.detail.archSpecific;
 
 	if (arm64.operands.length > 0)
@@ -27,7 +26,7 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 			case Arm64OpType.invalid:
 				break;
 			case Arm64OpType.reg:
-				buf.writefln("\t\toperands[%d].type: REG = %s", i, cs.regName(op.reg));
+				buf.writefln("\t\toperands[%d].type: REG = %s", i, op.reg.name);
 				break;
 			case Arm64OpType.imm:
 				buf.writefln("\t\toperands[%d].type: IMM = 0x%x", i, op.imm);
@@ -37,10 +36,10 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 				break;
 			case Arm64OpType.mem:
 				buf.writefln("\t\toperands[%d].type: MEM", i);
-				if (op.mem.base != Arm64Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, cs.regName(op.mem.base));
-				if (op.mem.index != Arm64Register.invalid)
-					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, cs.regName(op.mem.index));
+				if (op.mem.base.id != Arm64RegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.base: REG = %s", i, op.mem.base.name);
+				if (op.mem.index.id != Arm64RegisterId.invalid)
+					buf.writefln("\t\t\toperands[%d].mem.index: REG = %s", i, op.mem.index.name);
 				if (op.mem.disp != 0)
 					buf.writefln("\t\t\toperands[%d].mem.disp: 0x%x", i, op.mem.disp);
 				break;
@@ -48,10 +47,11 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, op.imm);
 				break;
 			case Arm64OpType.reg_mrs:
-				buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg);
+				// buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg.id); // TODO: Should not crash -> use tagged union
+				buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg_mrs);
 				break;
 			case Arm64OpType.reg_msr:
-				buf.writefln("\t\toperands[%d].type: REG_MSR = 0x%x", i, op.reg);
+				buf.writefln("\t\toperands[%d].type: REG_MSR = 0x%x", i, op.reg_msr);
 				break;
 			case Arm64OpType.pstate:
 				buf.writefln("\t\toperands[%d].type: PSTATE = 0x%x", i, op.pstate);
@@ -88,11 +88,10 @@ void writeDetail(ref OutBuffer buf, in InstructionArm64 instr, in CapstoneArm64 
 	if (arm64.cc)
 		buf.writefln("\tCode-condition: %d", arm64.cc);
 
-	auto regsAccess = cs.regsAccess(instr);
-	if (!regsAccess.read.empty)
-		buf.writefln("\tRegisters read: %s", regsAccess.read.map!(reg => cs.regName(reg)).join(" "));
-	if (!regsAccess.write.empty)
-		buf.writefln("\tRegisters modified: %s", regsAccess.write.map!(reg => cs.regName(reg)).join(" "));
+	if (!instr.reads.empty)
+		buf.writefln("\tRegisters read: %s", instr.reads.map!(reg => reg.name).join(" "));
+	if (!instr.writes.empty)
+		buf.writefln("\tRegisters modified: %s", instr.writes.map!(reg => reg.name).join(" "));
 	buf.writefln("");
 }
 
@@ -114,7 +113,7 @@ unittest{
 
 		foreach(instr; res){
 			buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
-			buf.writeDetail(instr, cs);
+			buf.writeDetail(instr);
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
 		buf.writefln("");
