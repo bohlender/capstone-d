@@ -7,6 +7,7 @@ public import capstone.error;
 public import capstone.instruction;
 public import capstone.instructiongroup;
 public import capstone.register;
+public import capstone.utils;
 
 public import capstone.arm;
 public import capstone.arm64;

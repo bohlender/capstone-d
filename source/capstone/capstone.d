@@ -209,9 +209,9 @@ abstract class Capstone{
 /// An input range that provides access to one disassembled `Instruction` at a time
 abstract class InstructionRange {
     /// Retrieves element of the range
-    @property Instruction front();
+    Instruction front();
     /// True if range has no instructions, i.e. cannot be advanced anymore
-    @property bool empty();
+    bool empty();
     /// Drops the front instruction and advances the range
     void popFront();
 }

@@ -39,13 +39,13 @@ class InstructionImplRange(TInstruction) : InstructionRange {
     }
 
     /// True if no disassemblable instructions remain
-    @property override bool empty() const {return !hasFront;}
+    override bool empty() const {return !hasFront;}
 
     /** The latest disassembled instruction
 
     Throws if called on an `empty` range.
     */
-    @property override TInstruction front() {
+    override TInstruction front() {
         enforce!RangeError(!empty, "Trying to access an empty range (%s)".format(typeof(this).stringof));
         return instr;
     }

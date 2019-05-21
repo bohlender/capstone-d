@@ -1,5 +1,4 @@
 - docstrings for overriding methods necessary or redundant?
-- Consistent use of @property
 - Make all the struct constructors package visible
 - Check public/visible API (make sure internals do not leak)
 - Report DMD & LDC segfaults when building in build-mode=singleFile
