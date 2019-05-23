@@ -4,7 +4,7 @@
 - Report DMD & LDC segfaults when building in build-mode=singleFile
 - Add None to BitFlags that can be invalid
 
-- dlang format & retab
+- dlang format & retab, tabs to spaces
 - const pure nogc safe
 
 - get rid of ModeFlags? Do not help with safety anyway

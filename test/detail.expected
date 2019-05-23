@@ -342,3 +342,29 @@ Disasm:
 0x101a:	add		r1, r2, r3 // insn-ID: 1, insn-mnem: add
 0x101c:
 
+****************
+Platform: M68K
+Code: 0xd4 0x40 0x87 0x5a 0x4e 0x71 0x02 0xb4 0xc0 0xde 0xc0 0xde 0x5c 0x00 0x1d 0x80 0x71 0x12 0x01 0x23 0xf2 0x3c 0x44 0x22 0x40 0x49 0x0e 0x56 0x54 0xc5 0xf2 0x3c 0x44 0x00 0x44 0x7a 0x00 0x00 0xf2 0x00 0x0a 0x28 
+Disasm:
+0x1000:	add.w		d0, d2 // insn-ID: 2, insn-mnem: add
+	Implicit registers read: d0 
+	Implicit registers modified: d2 
+0x1002:	or.w		d3, (a2)+ // insn-ID: 296, insn-mnem: or
+	Implicit registers read: d3 
+	Implicit registers modified: a2 
+0x1004:	nop		 // insn-ID: 294, insn-mnem: nop
+0x1006:	andi.l		#$c0dec0de, (a4, d5.l * 4) // insn-ID: 8, insn-mnem: andi
+	Implicit registers read: d5 a4 
+0x100e:	move.b		d0, ([a6, d7.w], $123) // insn-ID: 281, insn-mnem: move
+	Implicit registers read: d0 d7 a6 
+0x1014:	fadd.s		#3.141500, fp0 // insn-ID: 89, insn-mnem: fadd
+	Implicit registers modified: fp0 
+0x101c:	scc.b		d5 // insn-ID: 330, insn-mnem: scc
+	Implicit registers modified: d5 
+0x101e:	fmove.s		#1000.000000, fp0 // insn-ID: 176, insn-mnem: fmove
+	Implicit registers modified: fp0 
+0x1026:	fsub		fp2, fp4 // insn-ID: 232, insn-mnem: fsub
+	Implicit registers read: fp2 
+	Implicit registers modified: fp4 
+0x102a:
+

@@ -228,10 +228,10 @@ enum X86XopCc {
 /// AVX broadcast type
 enum X86AvxBroadcast {
     invalid = 0, /// Invalid
-    bcast_2,     /// avx512 broadcast type {1to2}
-    bcast_4,     /// avx512 broadcast type {1to4}
-    bcast_8,     /// avx512 broadcast type {1to8}
-    bcast_16     /// avx512 broadcast type {1to16}
+    bcast_2,     /// Avx512 broadcast type {1to2}
+    bcast_4,     /// Avx512 broadcast type {1to4}
+    bcast_8,     /// Avx512 broadcast type {1to8}
+    bcast_16     /// Avx512 broadcast type {1to16}
 }
 
 /// SSE code condition type
@@ -303,19 +303,19 @@ enum X86AvxRoundingMode {
 
 /// Instruction prefixes - used in `X86InstructionDetail.prefix[]`
 enum X86Prefix {
-    lock        =   0xf0,   // lock (cs_x86.prefix[0]
-    rep         =   0xf3,   // rep (cs_x86.prefix[0]
-    repne       =   0xf2,   // repne (cs_x86.prefix[0]
+    lock        =   0xf0,   /// Rock (cs_x86.prefix[0]
+    rep         =   0xf3,   /// Rep (cs_x86.prefix[0]
+    repne       =   0xf2,   /// Repne (cs_x86.prefix[0]
 
-    cs          =   0x2e,   // segment override cs (cs_x86.prefix[1]
-    ss          =   0x36,   // segment override ss (cs_x86.prefix[1]
-    ds          =   0x3e,   // segment override ds (cs_x86.prefix[1]
-    es          =   0x26,   // segment override es (cs_x86.prefix[1]
-    fs          =   0x64,   // segment override fs (cs_x86.prefix[1]
-    gs          =   0x65,   // segment override gs (cs_x86.prefix[1]
+    cs          =   0x2e,   /// Segment override cs (cs_x86.prefix[1]
+    ss          =   0x36,   /// Segment override ss (cs_x86.prefix[1]
+    ds          =   0x3e,   /// Segment override ds (cs_x86.prefix[1]
+    es          =   0x26,   /// Segment override es (cs_x86.prefix[1]
+    fs          =   0x64,   /// Segment override fs (cs_x86.prefix[1]
+    gs          =   0x65,   /// Segment override gs (cs_x86.prefix[1]
 
-    opsize      =   0x66,   // operand-size override (cs_x86.prefix[2]
-    addrsize    =   0x67    // address-size override (cs_x86.prefix[3]
+    opsize      =   0x66,   /// Operand-size override (cs_x86.prefix[2]
+    addrsize    =   0x67    /// Address-size override (cs_x86.prefix[3]
 }
 
 enum EFlag : ulong {

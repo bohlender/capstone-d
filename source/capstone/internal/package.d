@@ -4,6 +4,7 @@ public import capstone.internal.api;
 public import capstone.internal.arm;
 public import capstone.internal.arm64;
 public import capstone.internal.evm;
+public import capstone.internal.m68k;
 public import capstone.internal.mips;
 public import capstone.internal.ppc;
 public import capstone.internal.sparc;

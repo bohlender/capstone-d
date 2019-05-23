@@ -3,6 +3,7 @@ module capstone.internal.api;
 import capstone.internal.arm;
 import capstone.internal.arm64;
 import capstone.internal.evm;
+import capstone.internal.m68k;
 import capstone.internal.mips;
 import capstone.internal.ppc;
 import capstone.internal.sparc;
@@ -75,7 +76,7 @@ union cs_arch_detail{
 	cs_x86 x86;     		  /// X86 architecture, including 16-bit, 32-bit & 64-bit mode
 	cs_arm64 arm64; 		  /// ARM64 architecture (aka AArch64)
 	cs_arm arm;     		  /// ARM architecture (including Thumb/Thumb2)
-	// cs_m68k m68k;   		  /// M68K architecture
+	cs_m68k m68k;   		  /// M68K architecture
 	cs_mips mips;   		  /// MIPS architecture
 	cs_ppc ppc;	    		  /// PowerPC architecture
 	cs_sparc sparc; 		  /// Sparc architecture
