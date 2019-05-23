@@ -2,6 +2,7 @@ module capstone.internal.api;
 
 import capstone.internal.arm;
 import capstone.internal.arm64;
+import capstone.internal.evm;
 import capstone.internal.mips;
 import capstone.internal.ppc;
 import capstone.internal.sparc;
@@ -82,7 +83,7 @@ union cs_arch_detail{
 	cs_xcore xcore; 		  /// XCore architecture
 	// cs_tms320c64x tms320c64x; /// TMS320C64x architecture
 	// cs_m680x m680x; 		  /// M680X architecture
-	// cs_evm evm; 			  /// Ethereum architecture
+	cs_evm evm; 			  /// Ethereum architecture
 }
 
 struct cs_opt_mnem {

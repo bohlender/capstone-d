@@ -11,6 +11,7 @@ public import capstone.utils;
 
 public import capstone.arm;
 public import capstone.arm64;
+public import capstone.evm;
 public import capstone.mips;
 public import capstone.ppc;
 public import capstone.sparc;

@@ -254,3 +254,10 @@ Disasm:
 0x101a:	add		r1, r2, r3
 0x101c:
 
+****************
+Platform: EVM
+Code: 0x60 0x61 
+Disasm:
+0x1000:	push1		61
+0x1002:
+

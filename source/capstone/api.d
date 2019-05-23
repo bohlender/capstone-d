@@ -210,6 +210,7 @@ static Capstone create(Arch arch, ModeFlags modeFlags){
     import std.format: format;
     import capstone.arm: CapstoneArm;
     import capstone.arm64: CapstoneArm64;
+    import capstone.evm: CapstoneEvm;
     import capstone.mips: CapstoneMips;
     import capstone.ppc: CapstonePpc;
     import capstone.sparc: CapstoneSparc;
@@ -221,6 +222,7 @@ static Capstone create(Arch arch, ModeFlags modeFlags){
     switch(arch){
         case Arch.arm: return new CapstoneArm(modeFlags);
         case Arch.arm64: return new CapstoneArm64(modeFlags);
+        case Arch.evm: return new CapstoneEvm(modeFlags);
         case Arch.mips: return new CapstoneMips(modeFlags);
         case Arch.ppc: return new CapstonePpc(modeFlags);
         case Arch.sparc: return new CapstoneSparc(modeFlags);
