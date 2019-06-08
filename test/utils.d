@@ -26,8 +26,10 @@ struct Platform{
 }
 
 /// Pretty printing of bytes as in original regression tests
-auto bytesToHex(in ubyte[] code, bool xPrefix = true){
-	auto fmt = xPrefix ? "0x%02x " : "%02x "; // ugly terminal space needed to match original
+auto bytesToHex(in ubyte[] code, bool xPrefix = true, bool upperCase = false, bool spaced = true){
+	auto fmt = (xPrefix ? "0x" : "") 		   // Hex prefix
+			 ~ "%02" ~ (upperCase ? "X" : "x") // Hex formatting (with chosen case)
+			 ~ (spaced ? " " : ""); 		   // Terminal space needed to match original
 	return code.map!(i => fmt.format(i)).join;
 }
 ///

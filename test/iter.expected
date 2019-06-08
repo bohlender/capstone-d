@@ -267,3 +267,51 @@ Disasm:
 0x1016:	lmul		r11, r0, r2, r5, r8, r10 // insn-ID: 68, insn-mnem: lmul
 0x101a:	add		r1, r2, r3 // insn-ID: 1, insn-mnem: add
 
+****************
+Platform: M680X_6809
+Code: 0x06 0x10 0x19 0x1a 0x55 0x1e 0x01 0x23 0xe9 0x31 0x06 0x34 0x55 0xa6 0x81 0xa7 0x89 0x7f 0xff 0xa6 0x9d 0x10 0x00 0xa7 0x91 0xa6 0x9f 0x10 0x00 0x11 0xac 0x99 0x10 0x00 0x39 
+Disasm:
+0x1000:	ror		$10 // insn-ID: 276, insn-mnem: ror
+	Implicit registers read: cc 
+	Implicit registers modified: cc 
+0x1002:	daa		 // insn-ID: 117, insn-mnem: daa
+	Implicit registers read: cc a 
+	Implicit registers modified: cc a 
+0x1003:	orcc		#85 // insn-ID: 243, insn-mnem: orcc
+	Implicit registers read: cc 
+	Implicit registers modified: cc 
+0x1005:	exg		d,x // insn-ID: 153, insn-mnem: exg
+	Implicit registers read: d x 
+	Implicit registers modified: d x 
+0x1007:	bls		$0FF2 // insn-ID: 58, insn-mnem: bls
+	Implicit registers read: cc 
+	This instruction belongs to groups: branch_relative jump 
+0x1009:	leay		6,x // insn-ID: 209, insn-mnem: leay
+	Implicit registers read: cc x 
+	Implicit registers modified: cc y 
+0x100b:	pshs		cc,b,x,u // insn-ID: 251, insn-mnem: pshs
+	Implicit registers read: s cc b x u 
+	Implicit registers modified: s 
+0x100d:	lda		,x++ // insn-ID: 190, insn-mnem: lda
+	Implicit registers read: cc x 
+	Implicit registers modified: cc a x 
+0x100f:	sta		32767,x // insn-ID: 298, insn-mnem: sta
+	Implicit registers read: cc a x 
+	Implicit registers modified: cc 
+0x1013:	lda		[$2017,pcR] // insn-ID: 190, insn-mnem: lda
+	Implicit registers read: cc pc 
+	Implicit registers modified: cc a 
+0x1017:	sta		[,x++] // insn-ID: 298, insn-mnem: sta
+	Implicit registers read: cc a x 
+	Implicit registers modified: cc x 
+0x1019:	lda		[$1000] // insn-ID: 190, insn-mnem: lda
+	Implicit registers read: cc 
+	Implicit registers modified: cc a 
+0x101d:	cmps		[4096,x] // insn-ID: 98, insn-mnem: cmps
+	Implicit registers read: cc s x 
+	Implicit registers modified: cc 
+0x1022:	rts		 // insn-ID: 285, insn-mnem: rts
+	Implicit registers read: s 
+	Implicit registers modified: s pc 
+	This instruction belongs to groups: return 
+
