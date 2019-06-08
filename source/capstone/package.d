@@ -18,5 +18,6 @@ public import capstone.mips;
 public import capstone.ppc;
 public import capstone.sparc;
 public import capstone.sysz;
+public import capstone.tms320c64x;
 public import capstone.x86;
 public import capstone.xcore;

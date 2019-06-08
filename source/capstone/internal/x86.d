@@ -23,7 +23,7 @@ struct cs_x86_op {
 			x86_reg reg;	// register value for REG operand
 			long imm;		// immediate value for IMM operand
 			x86_op_mem mem;		// base/index/scale/disp value for MEM operand
-		};
+		}
 
 		// size of this operand (in bytes).
 		ubyte size;

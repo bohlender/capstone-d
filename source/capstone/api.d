@@ -217,6 +217,7 @@ static Capstone create(Arch arch, ModeFlags modeFlags){
     import capstone.ppc: CapstonePpc;
     import capstone.sparc: CapstoneSparc;
     import capstone.sysz: CapstoneSysz;
+    import capstone.tms320c64x: CapstoneTms320c64x;
     import capstone.x86: CapstoneX86;
     import capstone.xcore: CapstoneXCore;
     import capstone.error: CapstoneException, ErrorCode;
@@ -231,6 +232,7 @@ static Capstone create(Arch arch, ModeFlags modeFlags){
         case Arch.ppc: return new CapstonePpc(modeFlags);
         case Arch.sparc: return new CapstoneSparc(modeFlags);
         case Arch.sysz: return new CapstoneSysz(modeFlags);
+        case Arch.tms320c64x: return new CapstoneTms320c64x(modeFlags);
         case Arch.x86: return new CapstoneX86(modeFlags);
         case Arch.xcore: return new CapstoneXCore(modeFlags);
         default:

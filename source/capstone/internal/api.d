@@ -9,6 +9,7 @@ import capstone.internal.mips;
 import capstone.internal.ppc;
 import capstone.internal.sparc;
 import capstone.internal.sysz;
+import capstone.internal.tms320c64x;
 import capstone.internal.x86;
 import capstone.internal.xcore;
 
@@ -83,7 +84,7 @@ union cs_arch_detail{
 	cs_sparc sparc; 		  /// Sparc architecture
 	cs_sysz sysz;   		  /// SystemZ architecture
 	cs_xcore xcore; 		  /// XCore architecture
-	// cs_tms320c64x tms320c64x; /// TMS320C64x architecture
+	cs_tms320c64x tms320c64x; /// TMS320C64x architecture
 	cs_m680x m680x; 		  /// M680X architecture
 	cs_evm evm; 			  /// Ethereum architecture
 }
