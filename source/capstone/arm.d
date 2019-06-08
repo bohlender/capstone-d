@@ -14,34 +14,39 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class ArmRegister : RegisterImpl!ArmRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class ArmInstructionGroup : InstructionGroupImpl!ArmInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class ArmDetail : DetailImpl!(ArmRegister, ArmInstructionGroup, ArmInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class ArmInstruction : InstructionImpl!(ArmInstructionId, ArmRegister, ArmDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneArm : CapstoneImpl!(ArmInstructionId, ArmInstruction) {
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
     this(in ModeFlags modeFlags){
         super(Arch.arm, modeFlags);
     }
@@ -58,7 +63,7 @@ struct ArmOpMem {
     int disp;           /// Displacement value
 	int lshift;         /// Left-shift on index register, or 0 if irrelevant.
 
-    this(in Capstone cs, arm_op_mem internal){
+    package this(in Capstone cs, arm_op_mem internal){
         base = new ArmRegister(cs, internal.base);
         index = new ArmRegister(cs, internal.index);
         scale = internal.scale;
@@ -67,14 +72,23 @@ struct ArmOpMem {
     }
 }
 
+/// Union of possible shift values
+union ArmShiftValue {
+	uint constant;		  /// Constant to shift by
+	ArmRegister register; /// Register to shift by
+}
+
 /// Optional shift
 struct ArmShift{
-    ArmShiftType type;  /// Type of shift
-    uint value;         /// value (constant or register) to shift by
+    ArmShiftType type;             /// Type of shift
+    SafeUnion!ArmShiftValue value; /// value (constant or register) to shift by
 
-    this(cs_arm_op.Shift internal){
+    package this(in Capstone cs, cs_arm_op.Shift internal){
         type = internal.type.to!ArmShiftType;
-        value = internal.value;
+		if(type < ArmShiftType.asr_reg) // shift with constant value
+            value.constant = internal.value;
+        else
+            value.register = new ArmRegister(cs, internal.value);
     }
 }
 
@@ -116,7 +130,7 @@ struct ArmOp {
 
     package this(in Capstone cs, cs_arm_op internal){
         vectorIndex = internal.vector_index;
-        shift = internal.shift.to!ArmShift;
+        shift = ArmShift(cs, internal.shift);
         type = internal.type.to!ArmOpType;
         final switch(internal.type){
             case ArmOpType.invalid:

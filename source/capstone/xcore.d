@@ -14,35 +14,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class XCoreRegister : RegisterImpl!XCoreRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class XCoreInstructionGroup : InstructionGroupImpl!XCoreInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class XCoreDetail : DetailImpl!(XCoreRegister, XCoreInstructionGroup, XCoreInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class XCoreInstruction : InstructionImpl!(XCoreInstructionId, XCoreRegister, XCoreDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneXCore : CapstoneImpl!(XCoreInstructionId, XCoreInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.xcore, modeFlags);
     }
 }
@@ -57,7 +62,7 @@ struct XCoreOpMem {
 	int disp;			 /// Displacement/offset value
 	int direct;			 /// +1: forward, -1: backward
 
-	this(in Capstone cs, xcore_op_mem internal){
+	package this(in Capstone cs, xcore_op_mem internal){
 		base = new XCoreRegister(cs, internal.base);
 		index = new XCoreRegister(cs, internal.index);
 		disp = internal.disp;

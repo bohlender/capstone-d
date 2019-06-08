@@ -75,11 +75,11 @@ void writeDetail(ref OutBuffer buf, in ArmInstruction instr, in CapstoneArm cs){
 		if(operand.access)
 			buf.writefln("\t\toperands[%u].access: %s", i, operand.access.accessToString);
 
-		if (operand.shift.type != ArmShiftType.invalid && operand.shift.value) {
+		if (operand.shift.type != ArmShiftType.invalid) {
 			if (operand.shift.type < ArmShiftType.asr_reg) // shift with constant value
-				buf.writefln("\t\t\tShift: %d = %d", operand.shift.type, operand.shift.value);
+				buf.writefln("\t\t\tShift: %d = %d", operand.shift.type, operand.shift.value.constant);
 			else // shift with register
-				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, new ArmRegister(cs, operand.shift.value).name);
+				buf.writefln("\t\t\tShift: %d = %s", operand.shift.type, operand.shift.value.register.name);
 		}
 
 		if (operand.vectorIndex != -1)

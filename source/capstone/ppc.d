@@ -14,35 +14,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class PpcRegister : RegisterImpl!PpcRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class PpcInstructionGroup : InstructionGroupImpl!PpcInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class PpcDetail : DetailImpl!(PpcRegister, PpcInstructionGroup, PpcInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class PpcInstruction : InstructionImpl!(PpcInstructionId, PpcRegister, PpcDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstonePpc : CapstoneImpl!(PpcInstructionId, PpcInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.ppc, modeFlags);
     }
 }
@@ -52,10 +57,10 @@ class CapstonePpc : CapstoneImpl!(PpcInstructionId, PpcInstruction) {
 This is associated with the `PpcOpType.mem` operand type
 */
 struct PpcOpMem {
-	PpcRegister base; // base register
-	int disp;		  // displacement/offset value
+	PpcRegister base; /// Base register
+	int disp;		  /// Displacement/offset value
 
-	this(in Capstone cs, ppc_op_mem internal){
+	package this(in Capstone cs, ppc_op_mem internal){
 		base = new PpcRegister(cs, internal.base);
 		disp = internal.disp;
 	}
@@ -66,11 +71,11 @@ struct PpcOpMem {
 This is associated with the `PpcOpType.crx` operand type
 */
 struct PpcOpCrx {
-	uint scale;
-	PpcRegister reg;
-	PpcBc cond;
+	uint scale;		 /// Scaling factor
+	PpcRegister reg; /// Conditional register
+	PpcBc cond;		 /// Kind of condition
 
-	this(in Capstone cs, ppc_op_crx internal){
+	package this(in Capstone cs, ppc_op_crx internal){
 		scale = internal.scale;
 		reg = new PpcRegister(cs, internal.reg);
 		cond = internal.cond.to!PpcBc;

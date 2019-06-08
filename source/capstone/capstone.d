@@ -153,7 +153,7 @@ abstract class Capstone{
     private void customMnemonic(in int id, in string mnem = null) {
         auto optMnem = cs_opt_mnem(id, null);
         if(mnem != null){
-            auto v = (customMnemonics[id] = mnem);
+            const v = (customMnemonics[id] = mnem);
             optMnem.mnemonic = v.ptr;
         }else
             customMnemonics.remove(id);

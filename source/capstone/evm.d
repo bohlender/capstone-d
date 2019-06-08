@@ -17,35 +17,40 @@ import capstone.utils;
 Note that this is a dummy enum as there are no valid registers
 */
 class EvmRegister : RegisterImpl!EvmRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class EvmInstructionGroup : InstructionGroupImpl!EvmInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class EvmDetail : DetailImpl!(EvmRegister, EvmInstructionGroup, EvmInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class EvmInstruction : InstructionImpl!(EvmInstructionId, EvmRegister, EvmDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneEvm : CapstoneImpl!(EvmInstructionId, EvmInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.evm, modeFlags);
     }
 }
@@ -57,7 +62,7 @@ struct EvmInstructionDetail {
     uint fee;   /// Gas fee for the instruction
 
     package this(in Capstone cs, cs_arch_detail arch_detail){
-        auto internal = arch_detail.evm;
+        const internal = arch_detail.evm;
 		pop = internal.pop;
 		push = internal.push;
 		fee = internal.fee;

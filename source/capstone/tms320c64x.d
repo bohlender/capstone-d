@@ -14,43 +14,48 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class Tms320c64xRegister : RegisterImpl!Tms320c64xRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class Tms320c64xInstructionGroup : InstructionGroupImpl!Tms320c64xInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class Tms320c64xDetail : DetailImpl!(Tms320c64xRegister, Tms320c64xInstructionGroup, Tms320c64xInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class Tms320c64xInstruction : InstructionImpl!(Tms320c64xInstructionId, Tms320c64xRegister, Tms320c64xDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneTms320c64x : CapstoneImpl!(Tms320c64xInstructionId, Tms320c64xInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.tms320c64x, modeFlags);
     }
 }
 
 /// Union of possible displacement values
 union Tms320c64xDispValue {
-	uint constant;				 // Constant displacement/offset
-	Tms320c64xRegister register; // Register stating displacement/offset
+	uint constant;				 /// Constant displacement/offset
+	Tms320c64xRegister register; /// Register stating displacement/offset
 }
 
 /** Instruction's operand referring to memory
@@ -66,7 +71,7 @@ struct Tms320c64xOpMem {
 	Tms320c64xMemDir direction;	/// Direction
 	Tms320c64xMemMod modify; 	/// Modification
 
-	this(in Capstone cs, tms320c64x_op_mem internal) {
+	package this(in Capstone cs, tms320c64x_op_mem internal) {
 		base = new Tms320c64xRegister(cs, internal.base);
 		unit = internal.unit;
 		scaled = internal.scaled;
@@ -115,42 +120,44 @@ struct Tms320c64xOp {
     }
 }
 
+/// Condition of instruction
 struct Tms320c64xCondition {
-	Tms320c64xRegister reg;
-	uint zero;
+	Tms320c64xRegister reg; /// Condition register tested
+	bool zero;				/// True iff testing for zero
 
-	this(in Capstone cs, cs_tms320c64x_condition internal) {
+	package this(in Capstone cs, cs_tms320c64x_condition internal) {
 		reg = new Tms320c64xRegister(cs, internal.reg);
-		zero = internal.zero;
+		zero = internal.zero == 1;
 	}
 }
 
+/// Funcional unit associated with an instruction
 struct Tms320c64xFunit {
-	Tms320c64xFunitType unit;
-	uint side;
-	uint crosspath;
+	Tms320c64xFunitType unit; /// Functional unit identifier
+	uint side; /// The side/data path the unit is on
+	bool crosspath; /// True iff using crosspath
 
-	this(cs_tms320c64x_funit internal) {
+	package this(cs_tms320c64x_funit internal) {
 		unit = internal.unit.to!Tms320c64xFunitType;
 		side = internal.side;
-		crosspath = internal.crosspath;
+		crosspath = internal.crosspath==1;
 	}
 }
 
 /// TMS320C64x-specific information about an instruction
 struct Tms320c64xInstructionDetail {
     Tms320c64xOp[] operands; /// Operands for this instruction.
-	Tms320c64xCondition condition;
-	Tms320c64xFunit funit;
-	uint parallel;
+	Tms320c64xCondition condition; /// Condition of instruction (irrelevant if invalid conditional register)
+	Tms320c64xFunit funit; /// Associated functional unit
+	bool parallel; /// True iff executed in parallel with previous instruction
 
     package this(in Capstone cs, cs_arch_detail arch_detail){
         auto internal = arch_detail.tms320c64x;
         foreach(op; internal.operands[0..internal.op_count])
             operands ~= Tms320c64xOp(cs, op);
 		condition = Tms320c64xCondition(cs, internal.condition);
-		funit = internal.funit.to!Tms320c64xFunit;
-		parallel = internal.parallel;
+		funit = Tms320c64xFunit(internal.funit);
+		parallel = internal.parallel.to!bool;
     }
 }
 
@@ -167,18 +174,21 @@ enum Tms320c64xOpType {
 	regpair = 64, /// Register pair for double word ops
 }
 
+/// Memory operand displacement kind
 enum Tms320c64xMemDisp {
 	invalid = 0,
 	constant,
 	register,
 }
 
+/// Memory operand direction
 enum Tms320c64xMemDir {
 	invalid = 0,
 	fw,
 	bw,
 }
 
+/// Memory operand modification type
 enum Tms320c64xMemMod {
 	invalid = 0,
 	no,
@@ -186,12 +196,13 @@ enum Tms320c64xMemMod {
 	post,
 }
 
+/// Functional unit type
 enum Tms320c64xFunitType {
 	invalid = 0,
-	d,
-	l,
-	m,
-	s,
+	d, /// Adder/Subtractor (used for address generation)
+	l, /// ALU
+	m, /// Multiplier
+	s, /// Shifter
 	no
 }
 

@@ -14,35 +14,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class M68kRegister : RegisterImpl!M68kRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class M68kInstructionGroup : InstructionGroupImpl!M68kInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class M68kDetail : DetailImpl!(M68kRegister, M68kInstructionGroup, M68kInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class M68kInstruction : InstructionImpl!(M68kInstructionId, M68kRegister, M68kDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneM68k : CapstoneImpl!(M68kInstructionId, M68kInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.m68k, modeFlags);
     }
 }
@@ -64,7 +69,7 @@ struct M68kOpMem {
     ubyte offset;           /// Used for bf* instructions
     ubyte indexSize;        /// 0 = w, 1 = l
 
-	this(in Capstone cs, m68k_op_mem internal) {
+	package this(in Capstone cs, m68k_op_mem internal) {
 		baseReg = new M68kRegister(cs, internal.base_reg);
 		indexReg = new M68kRegister(cs, internal.index_reg);
 		inBaseReg = new M68kRegister(cs, internal.in_base_reg);
@@ -84,7 +89,7 @@ struct M68kOpBrDisp {
 	int disp;       /// Displacement value
 	ubyte dispSize; /// Size from m68k_op_br_disp_size type above
 
-	this(m68k_op_br_disp internal) {
+	package this(m68k_op_br_disp internal) {
 		disp = internal.disp;
 		dispSize = internal.disp_size;
 	}
@@ -137,26 +142,26 @@ struct M68kOp {
 				value.regPair = [new M68kRegister(cs, internal.reg_pair.reg_0), new M68kRegister(cs, internal.reg_pair.reg_1)];
 				break;
 			case M68kOpType.brDisp:
-				value.brDisp = internal.br_disp.to!M68kOpBrDisp;
+				value.brDisp = M68kOpBrDisp(internal.br_disp);
 				break;
 		}
 		addressMode = internal.address_mode.to!M68kAddressMode;
 	}
 }
 
-/// Operation size of the current instruction (NOT the actually size of instruction)
+/// Operation size of the current instruction (NOT the actual size of instruction)
 struct M68kOpSize {
-	M68kSizeType type;
+	M68kSizeType type; /// Type of size
 	union {
-		M68kCpuSize cpuSize;
-		M68kFpuSize fpuSize;
+		M68kCpuSize cpuSize; /// Size of CPU instruction
+		M68kFpuSize fpuSize; /// Size of the FPU instruction
 	}
 }
 
 /// M68k-specific information about an instruction
 struct M68kInstructionDetail {
-	M68kOp[] operands; // Operands for this instruction.
-	M68kOpSize opSize; // Size of data operand works on in bytes (.b, .w, .l, etc)
+	M68kOp[] operands; /// Operands for this instruction.
+	M68kOpSize opSize; /// Size of data operand works on in bytes (.b, .w, .l, etc)
 
 	package this(in Capstone cs, cs_arch_detail arch_detail){
         auto internal = arch_detail.m68k;

@@ -80,12 +80,12 @@ void writeDetail(ref OutBuffer buf, in Tms320c64xInstruction instr){
 			buf.writefln("Unknown (Unit %u, Side %u)", tms320c64x.funit.unit, tms320c64x.funit.side);
 			break;
 	}
-	if(tms320c64x.funit.crosspath == 1)
+	if(tms320c64x.funit.crosspath)
 		buf.writefln("\tCrosspath: 1");
 
 	if(tms320c64x.condition.reg.id != Tms320c64xRegisterId.invalid)
-		buf.writefln("\tCondition: [%c%s]", (tms320c64x.condition.zero == 1) ? '!' : ' ', tms320c64x.condition.reg.name);
-	buf.writefln("\tParallel: %s", (tms320c64x.parallel == 1) ? "true" : "false");
+		buf.writefln("\tCondition: [%c%s]", tms320c64x.condition.zero ? '!' : ' ', tms320c64x.condition.reg.name);
+	buf.writefln("\tParallel: %s", tms320c64x.parallel);
 
 	buf.writefln("");
 }

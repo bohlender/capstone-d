@@ -15,35 +15,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class SyszRegister : RegisterImpl!SyszRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class SyszInstructionGroup : InstructionGroupImpl!SyszInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class SyszDetail : DetailImpl!(SyszRegister, SyszInstructionGroup, SyszInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class SyszInstruction : InstructionImpl!(SyszInstructionId, SyszRegister, SyszDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneSysz : CapstoneImpl!(SyszInstructionId, SyszInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.sysz, modeFlags);
     }
 }
@@ -58,7 +63,7 @@ struct SyszOpMem {
 	ulong length; 		/// BDLAddr operand
 	long disp;	  		/// Displacement/offset value
 
-	this(in Capstone cs, sysz_op_mem internal){
+	package this(in Capstone cs, sysz_op_mem internal){
 		base = new SyszRegister(cs, internal.base);
 		index = new SyszRegister(cs, internal.index);
 		length = internal.length;

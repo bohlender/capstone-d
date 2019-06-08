@@ -14,35 +14,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class MipsRegister : RegisterImpl!MipsRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class MipsInstructionGroup : InstructionGroupImpl!MipsInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class MipsDetail : DetailImpl!(MipsRegister, MipsInstructionGroup, MipsInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class MipsInstruction : InstructionImpl!(MipsInstructionId, MipsRegister, MipsDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneMips : CapstoneImpl!(MipsInstructionId, MipsInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.mips, modeFlags);
     }
 }
@@ -55,7 +60,7 @@ struct MipsOpMem {
     MipsRegister base;   /// Base register (or `MipsRegister.invalid` if irrelevant)
     long disp;           /// Displacement value
 
-	this(in Capstone cs, mips_op_mem internal) {
+	package this(in Capstone cs, mips_op_mem internal) {
 		base = new MipsRegister(cs, internal.base);
 		disp = internal.disp;
 	}

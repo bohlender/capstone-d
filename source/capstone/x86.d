@@ -15,52 +15,55 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class X86Register : RegisterImpl!X86RegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class X86InstructionGroup : InstructionGroupImpl!X86InstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class X86Detail : DetailImpl!(X86Register, X86InstructionGroup, X86InstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class X86Instruction : InstructionImpl!(X86InstructionId, X86Register, X86Detail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneX86 : CapstoneImpl!(X86InstructionId, X86Instruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.x86, modeFlags);
     }
 }
 
+/// Instruction encoding info
 struct X86Encoding {
-	/// ModR/M offset, or 0 when irrelevant
-	ubyte modrmOffset;
+	ubyte modrmOffset; /// ModR/M offset, or 0 when irrelevant
 
-	/// Displacement offset, or 0 when irrelevant.
-	ubyte dispOffset;
-	ubyte dispSize;
+	ubyte dispOffset; /// Displacement offset, or 0 when irrelevant.
+	ubyte dispSize; /// Size of displacement
 
-	/// Immediate offset, or 0 when irrelevant.
-	ubyte immOffset;
-	ubyte immSize;
+	ubyte immOffset; /// Immediate offset, or 0 when irrelevant.
+	ubyte immSize; /// Size of immediate 
 
-	this(cs_x86_encoding internal){
+	package this(cs_x86_encoding internal){
 		modrmOffset = internal.modrm_offset;
 		dispOffset = internal.disp_offset;
 		dispSize = internal.disp_size;
@@ -80,7 +83,7 @@ struct X86OpMem {
     int scale;           /// Scale for index register
     long disp;           /// Displacement value
 
-	this(in Capstone cs, x86_op_mem internal){
+	package this(in Capstone cs, x86_op_mem internal){
 		segment = new X86Register(cs, internal.segment);
 		base = new X86Register(cs, internal.base);
 		index = new X86Register(cs, internal.index);
@@ -197,7 +200,7 @@ struct X86InstructionDetail {
         avxCc = internal.avx_cc.to!X86AvxCodeCondition;
 		eflags = cast(EFlag)internal.eflags; // covers fpuFlags too
         avxRM = internal.avx_rm.to!X86AvxRoundingMode;
-		encoding = internal.encoding.to!X86Encoding;
+		encoding = X86Encoding(internal.encoding);
 
         foreach(op; internal.operands[0..internal.op_count])
             operands ~= X86Op(cs, op);
@@ -318,6 +321,7 @@ enum X86Prefix {
     addrsize    =   0x67    /// Address-size override (cs_x86.prefix[3]
 }
 
+/// Subflags of EFLAGS
 enum EFlag : ulong {
 	mod_af = 1UL << 0,
 	mod_cf = 1UL << 1,
@@ -381,6 +385,7 @@ enum EFlag : ulong {
 }
 alias EFlags = BitFlags!EFlag;
 
+/// Subflags of FPU_FLAGS
 enum FpuFlag : ulong {
 	mod_c0 = 1UL << 0,
 	mod_c1 = 1UL << 1,

@@ -15,35 +15,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class SparcRegister : RegisterImpl!SparcRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class SparcInstructionGroup : InstructionGroupImpl!SparcInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class SparcDetail : DetailImpl!(SparcRegister, SparcInstructionGroup, SparcInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class SparcInstruction : InstructionImpl!(SparcInstructionId, SparcRegister, SparcDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneSparc : CapstoneImpl!(SparcInstructionId, SparcInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.sparc, modeFlags);
     }
 }
@@ -57,7 +62,7 @@ struct SparcOpMem {
 	SparcRegister index; /// Index register
 	int disp;    		 /// Displacement/offset value
 
-	this(in Capstone cs, sparc_op_mem internal){
+	package this(in Capstone cs, sparc_op_mem internal){
 		base = new SparcRegister(cs, internal.base);
 		index = new SparcRegister(cs, internal.index);
 		disp = internal.disp;

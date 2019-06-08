@@ -15,35 +15,40 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class M680xRegister : RegisterImpl!M680xRegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class M680xInstructionGroup : InstructionGroupImpl!M680xInstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class M680xDetail : DetailImpl!(M680xRegister, M680xInstructionGroup, M680xInstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class M680xInstruction : InstructionImpl!(M680xInstructionId, M680xRegister, M680xDetail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneM680x : CapstoneImpl!(M680xInstructionId, M680xInstruction) {
-    this(in ModeFlags modeFlags){
+    /** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
+	this(in ModeFlags modeFlags){
         super(Arch.m680x, modeFlags);
     }
 }
@@ -59,7 +64,7 @@ struct M680xOpIdx {
 							  /// If flag M680xFlag.postIncDec set it is post inc-/decrement otherwise pre inc-/decrement
 	BitFlags!M680xFlag flags; /// 8-bit flags (see above)
 
-	this(in Capstone cs, m680x_op_idx internal) {
+	package this(in Capstone cs, m680x_op_idx internal) {
 		baseReg = new M680xRegister(cs, internal.base_reg);
 		offsetReg = new M680xRegister(cs, internal.offset_reg);
 		offset = internal.offset;
@@ -75,7 +80,7 @@ struct M680xOpRel {
 	ushort address;	/// The absolute address. Calculated as PC + offset. PC is the first address after the instruction.
 	short offset;	/// The offset/displacement value
 
-	this(m680x_op_rel internal) {
+	package this(m680x_op_rel internal) {
 		address = internal.address;
 		offset = internal.offset;
 	}
@@ -86,7 +91,7 @@ struct M680xOpExt {
 	ushort address; /// The absolute address
 	bool indirect;  /// true if extended indirect addressing
 
-	this(m680x_op_ext internal) {
+	package this(m680x_op_ext internal) {
 		address = internal.address;
 		indirect = internal.indirect;
 	}
@@ -151,8 +156,8 @@ struct M680xOp {
 
 /// M680x-specific information about an instruction
 struct M680xInstructionDetail {
-	M680xOp[] operands; /// Operands for this instruction
-	BitFlags!M680xInstructionFlag flags;
+	M680xOp[] operands; 				 /// Operands for this instruction
+	BitFlags!M680xInstructionFlag flags; /// See `M680xInstructionFlag`
 
 	package this(in Capstone cs, cs_arch_detail arch_detail){
         auto internal = arch_detail.m680x;
@@ -194,7 +199,7 @@ enum M680xFlag {
 	postIncDec = 4
 }
 
-// M680X instruction flags:
+/// M680X instruction flags:
 enum M680xInstructionFlag {
 	firstOpInMnem = 1, /// The first (register) operand is part of the instruction mnemonic
 	secondOpInMnem = 2 /// The second (register) operand is part of the instruction mnemonic

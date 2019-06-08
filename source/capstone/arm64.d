@@ -14,34 +14,39 @@ import capstone.utils;
 
 /// Architecture-specific Register variant
 class Arm64Register : RegisterImpl!Arm64RegisterId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific InstructionGroup variant
 class Arm64InstructionGroup : InstructionGroupImpl!Arm64InstructionGroupId {
-    this(in Capstone cs, in int id) {
+    package this(in Capstone cs, in int id) {
         super(cs, id);
     }
 }
 
 /// Architecture-specific Detail variant
 class Arm64Detail : DetailImpl!(Arm64Register, Arm64InstructionGroup, Arm64InstructionDetail) {
-    this(in Capstone cs, cs_detail* internal) {
+    package this(in Capstone cs, cs_detail* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific instruction variant
 class Arm64Instruction : InstructionImpl!(Arm64InstructionId, Arm64Register, Arm64Detail) {
-    this(in Capstone cs, cs_insn* internal) {
+    package this(in Capstone cs, cs_insn* internal) {
 		super(cs, internal);
 	}
 }
 
 /// Architecture-specific Capstone variant
 class CapstoneArm64 : CapstoneImpl!(Arm64InstructionId, Arm64Instruction) {
+	/** Creates an architecture-specific instance with a given mode of interpretation
+    
+    Params:
+        modeFlags = The (initial) mode of interpretation, which can still be changed later on
+    */
     this(in ModeFlags modeFlags){
         super(Arch.arm64, modeFlags);
     }
@@ -56,7 +61,7 @@ struct Arm64OpMem {
 	Arm64Register index; /// Index register
 	int disp;			 /// displacement/offset value
 
-	this(in Capstone cs, arm64_op_mem internal){
+	package this(in Capstone cs, arm64_op_mem internal){
         base = new Arm64Register(cs, internal.base);
         index = new Arm64Register(cs, internal.index);
         disp = internal.disp;
@@ -68,7 +73,7 @@ struct Arm64Shift{
 	Arm64ShiftType type; /// Type of shift
 	uint value;			 /// value (constant or register) to shift by
 
-	this(cs_arm64_op.Shift internal){
+	package this(cs_arm64_op.Shift internal){
         type = internal.type.to!Arm64ShiftType;
         value = internal.value;
     }
@@ -109,7 +114,7 @@ struct Arm64Op {
 		vectorIndex = internal.vector_index;
 		vas = internal.vas.to!Arm64Vas;
 		vess = internal.vess.to!Arm64Vess;
-		shift = internal.shift.to!Arm64Shift;
+		shift = Arm64Shift(internal.shift);
 		ext = internal.ext.to!Arm64Extender;
 		type = internal.type.to!Arm64OpType;
         access = cast(AccessType)internal.access;
