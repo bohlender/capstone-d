@@ -14,6 +14,7 @@ Disasm:
 			operands[0].crx.reg: cr5
 			operands[0].crx.cond: eq
 		operands[1].type: IMM = 0xffffffffffffff14
+	Branch code: 76
 	Branch hint: 1
 
 0x1008:	lwz	r1, 0(0)

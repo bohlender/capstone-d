@@ -1,4 +1,4 @@
-module test.custom_mnem;
+module test.customized_mnem;
 
 import std.outbuffer;
 import std.conv: to;
@@ -41,7 +41,7 @@ unittest{
 	// 3. Now print out the instruction in default setup.
 	buf.writeDisasmOne(cs);
 
-	const expected = import("custom_mnem.expected");
+	const expected = import("customized_mnem.expected");
 	const actual = buf.toString;
 
 	assert(expected == actual, expectationMismatch(expected, actual));

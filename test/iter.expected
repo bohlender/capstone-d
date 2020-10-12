@@ -184,10 +184,10 @@ Disasm:
 0x1020:	bdnzlrl+		 // insn-ID: 30, insn-mnem: bdnzlrl
 	Implicit registers read: ctr lr rm 
 	Implicit registers modified: ctr 
-0x1024:	bgelrl-		cr2 // insn-ID: 40, insn-mnem: blrl
+0x1024:	bgelrl-		cr2 // insn-ID: 21, insn-mnem: bclrl
 	Implicit registers read: ctr lr rm 
 	Implicit registers modified: lr ctr 
-0x1028:	bne		0x103c // insn-ID: 14, insn-mnem: b
+0x1028:	bne		0x103c // insn-ID: 16, insn-mnem: bc
 	Implicit registers read: ctr rm 
 	Implicit registers modified: ctr 
 
@@ -280,34 +280,34 @@ Disasm:
 0x1003:	orcc		#85 // insn-ID: 243, insn-mnem: orcc
 	Implicit registers read: cc 
 	Implicit registers modified: cc 
-0x1005:	exg		d,x // insn-ID: 153, insn-mnem: exg
+0x1005:	exg		d, x // insn-ID: 153, insn-mnem: exg
 	Implicit registers read: d x 
 	Implicit registers modified: d x 
-0x1007:	bls		$0FF2 // insn-ID: 58, insn-mnem: bls
+0x1007:	bls		$0ff2 // insn-ID: 58, insn-mnem: bls
 	Implicit registers read: cc 
 	This instruction belongs to groups: branch_relative jump 
-0x1009:	leay		6,x // insn-ID: 209, insn-mnem: leay
+0x1009:	leay		6, x // insn-ID: 209, insn-mnem: leay
 	Implicit registers read: cc x 
 	Implicit registers modified: cc y 
-0x100b:	pshs		cc,b,x,u // insn-ID: 251, insn-mnem: pshs
+0x100b:	pshs		cc, b, x, u // insn-ID: 251, insn-mnem: pshs
 	Implicit registers read: s cc b x u 
 	Implicit registers modified: s 
-0x100d:	lda		,x++ // insn-ID: 190, insn-mnem: lda
+0x100d:	lda		, x++ // insn-ID: 190, insn-mnem: lda
 	Implicit registers read: cc x 
 	Implicit registers modified: cc a x 
-0x100f:	sta		32767,x // insn-ID: 298, insn-mnem: sta
+0x100f:	sta		32767, x // insn-ID: 298, insn-mnem: sta
 	Implicit registers read: cc a x 
 	Implicit registers modified: cc 
-0x1013:	lda		[$2017,pcR] // insn-ID: 190, insn-mnem: lda
+0x1013:	lda		[$2017, pcr] // insn-ID: 190, insn-mnem: lda
 	Implicit registers read: cc pc 
 	Implicit registers modified: cc a 
-0x1017:	sta		[,x++] // insn-ID: 298, insn-mnem: sta
+0x1017:	sta		[, x++] // insn-ID: 298, insn-mnem: sta
 	Implicit registers read: cc a x 
 	Implicit registers modified: cc x 
 0x1019:	lda		[$1000] // insn-ID: 190, insn-mnem: lda
 	Implicit registers read: cc 
 	Implicit registers modified: cc a 
-0x101d:	cmps		[4096,x] // insn-ID: 98, insn-mnem: cmps
+0x101d:	cmps		[4096, x] // insn-ID: 98, insn-mnem: cmps
 	Implicit registers read: cc s x 
 	Implicit registers modified: cc 
 0x1022:	rts		 // insn-ID: 285, insn-mnem: rts

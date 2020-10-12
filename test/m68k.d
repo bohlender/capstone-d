@@ -86,6 +86,12 @@ void writeDetail(ref OutBuffer buf, in M68kInstruction instr){
 				buf.writefln("\t\toperands[%d].type: FP_DOUBLE", i);
 				buf.writefln("\t\t\toperands[%d].dimm: %lf", i, op.dimm);
 				break;
+			case M68kOpType.regBits:
+				buf.writefln("\t\toperands[%d].type: REG_BITS = $%x", i, op.registerBits);
+				break;
+			case M68kOpType.regPair:
+				buf.writefln("\t\toperands[%d].type: REG_PAIR = (%s, %s)", i, op.regPair[0].name, op.regPair[1].name);
+				break;
 			default:
 				break;
 		}

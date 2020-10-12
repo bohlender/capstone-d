@@ -1,8 +1,8 @@
 ********************
 Platform: M680X_HD6301
-Code: 0x6B 0x10 0x00 0x71 0x10 0x00 0x72 0x10 0x10 0x39 
+Code: 0x6b 0x10 0x00 0x71 0x10 0x00 0x72 0x10 0x10 0x39 
 Disasm:
-0x1000: 6B1000     tim   #16;0,x
+0x1000: 6b1000     tim   #16; 0, x
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -16,7 +16,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x1003: 711000     aim   #16,$00
+0x1003: 711000     aim   #16, $00
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -27,7 +27,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x1006: 721010     oim   #16,$10
+0x1006: 721010     oim   #16, $10
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -45,9 +45,9 @@ Disasm:
 
 ********************
 Platform: M680X_HD6309
-Code: 0x01 0x10 0x10 0x62 0x10 0x10 0x7B 0x10 0x10 0x00 0xCD 0x49 0x96 0x02 0xD2 0x10 0x30 0x23 0x10 0x38 0x10 0x3B 0x10 0x53 0x10 0x5D 0x11 0x30 0x43 0x10 0x11 0x37 0x25 0x10 0x11 0x38 0x12 0x11 0x39 0x23 0x11 0x3B 0x34 0x11 0x8E 0x10 0x00 0x11 0xAF 0x10 0x11 0xAB 0x10 0x11 0xF6 0x80 0x00 
+Code: 0x01 0x10 0x10 0x62 0x10 0x10 0x7b 0x10 0x10 0x00 0xcd 0x49 0x96 0x02 0xd2 0x10 0x30 0x23 0x10 0x38 0x10 0x3b 0x10 0x53 0x10 0x5d 0x11 0x30 0x43 0x10 0x11 0x37 0x25 0x10 0x11 0x38 0x12 0x11 0x39 0x23 0x11 0x3b 0x34 0x11 0x8e 0x10 0x00 0x11 0xaf 0x10 0x11 0xab 0x10 0x11 0xf6 0x80 0x00 
 Disasm:
-0x1000: 011010     oim   #16,$10
+0x1000: 011010     oim   #16, $10
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -58,7 +58,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x1003: 621010     aim   #16;-16,x
+0x1003: 621010     aim   #16; -16, x
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -72,7 +72,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x1006: 7B101000   tim   #16,$1000
+0x1006: 7b101000   tim   #16, $1000
 	op_count: 2
 		operands[0].type: IMMEDIATE = #16
 			size: 1
@@ -83,7 +83,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x100A: CD499602D2 ldq   #1234567890
+0x100a: cd499602d2 ldq   #1234567890
 	op_count: 2
 		operands[0].type: REGISTER = q (in mnemonic)
 			size: 4
@@ -94,7 +94,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc q
 
-0x100F: 103023     addr  y,u
+0x100f: 103023     addr  y, u
 	op_count: 2
 		operands[0].type: REGISTER = y
 			size: 2
@@ -116,7 +116,7 @@ Disasm:
 	Registers read: s w
 	Registers modified: s
 
-0x1014: 103B       puluw 
+0x1014: 103b       puluw 
 	op_count: 2
 		operands[0].type: REGISTER = u (in mnemonic)
 			size: 2
@@ -135,7 +135,7 @@ Disasm:
 	Registers read: cc w
 	Registers modified: cc w
 
-0x1018: 105D       tstw  
+0x1018: 105d       tstw  
 	op_count: 1
 		operands[0].type: REGISTER = w (in mnemonic)
 			size: 2
@@ -143,7 +143,7 @@ Disasm:
 	Registers read: cc w
 	Registers modified: cc
 
-0x101A: 11304310   band  a,0,3,$10
+0x101a: 11304310   band  a, 0, 3, $10
 	op_count: 4
 		operands[0].type: REGISTER = a
 			size: 1
@@ -158,7 +158,7 @@ Disasm:
 	Registers read: a
 	Registers modified: a
 
-0x101E: 11372510   stbt  cc,4,5,$10
+0x101e: 11372510   stbt  cc, 4, 5, $10
 	op_count: 4
 		operands[0].type: REGISTER = cc
 			size: 1
@@ -172,7 +172,7 @@ Disasm:
 			access: READ | WRITE
 	Registers read: cc
 
-0x1022: 113812     tfm   x+,y+
+0x1022: 113812     tfm   x+, y+
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: x
@@ -187,7 +187,7 @@ Disasm:
 	Registers read: w x y
 	Registers modified: w x y
 
-0x1025: 113923     tfm   y-,u-
+0x1025: 113923     tfm   y-, u-
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: y
@@ -202,7 +202,7 @@ Disasm:
 	Registers read: w y u
 	Registers modified: w y u
 
-0x1028: 113B34     tfm   u,s+
+0x1028: 113b34     tfm   u, s+
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: u
@@ -216,7 +216,7 @@ Disasm:
 	Registers read: w u s
 	Registers modified: w s
 
-0x102B: 118E1000   divq  #4096
+0x102b: 118e1000   divq  #4096
 	op_count: 2
 		operands[0].type: REGISTER = q (in mnemonic)
 			size: 4
@@ -227,7 +227,7 @@ Disasm:
 	Registers read: cc q
 	Registers modified: cc q
 
-0x102F: 11AF10     muld  -16,x
+0x102f: 11af10     muld  -16, x
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -241,7 +241,7 @@ Disasm:
 	Registers read: cc d x
 	Registers modified: cc d w
 
-0x1032: 11AB10     adde  -16,x
+0x1032: 11ab10     adde  -16, x
 	op_count: 2
 		operands[0].type: REGISTER = e (in mnemonic)
 			size: 1
@@ -255,7 +255,7 @@ Disasm:
 	Registers read: cc e x
 	Registers modified: cc e
 
-0x1035: 11F68000   ldf   $8000
+0x1035: 11f68000   ldf   $8000
 	op_count: 2
 		operands[0].type: REGISTER = f (in mnemonic)
 			size: 1
@@ -268,7 +268,7 @@ Disasm:
 
 ********************
 Platform: M680X_M6800
-Code: 0x01 0x09 0x36 0x64 0x7F 0x74 0x10 0x00 0x90 0x10 0xA4 0x10 0xB6 0x10 0x00 0x39 
+Code: 0x01 0x09 0x36 0x64 0x7f 0x74 0x10 0x00 0x90 0x10 0xa4 0x10 0xb6 0x10 0x00 0x39 
 Disasm:
 0x1000: 01         nop   
 
@@ -288,7 +288,7 @@ Disasm:
 	Registers read: a s
 	Registers modified: s
 
-0x1003: 647F       lsr   127,x
+0x1003: 647f       lsr   127, x
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: x
@@ -318,7 +318,7 @@ Disasm:
 	Registers read: cc a
 	Registers modified: cc a
 
-0x100A: A410       anda  16,x
+0x100a: a410       anda  16, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -332,7 +332,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc a
 
-0x100C: B61000     ldaa  $1000
+0x100c: b61000     ldaa  $1000
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -343,14 +343,14 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc a
 
-0x100F: 39         rts   
+0x100f: 39         rts   
 	Registers read: s
 	Registers modified: s pc
 	groups_count: 1
 
 ********************
 Platform: M680X_M6801
-Code: 0x04 0x05 0x3C 0x3D 0x38 0x93 0x10 0xEC 0x10 0xED 0x10 0x39 
+Code: 0x04 0x05 0x3c 0x3d 0x38 0x93 0x10 0xec 0x10 0xed 0x10 0x39 
 Disasm:
 0x1000: 04         lsrd  
 	op_count: 1
@@ -368,7 +368,7 @@ Disasm:
 	Registers read: cc d
 	Registers modified: cc d
 
-0x1002: 3C         pshx  
+0x1002: 3c         pshx  
 	op_count: 1
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 2
@@ -376,7 +376,7 @@ Disasm:
 	Registers read: x s
 	Registers modified: s
 
-0x1003: 3D         mul   
+0x1003: 3d         mul   
 	Registers read: cc a b
 	Registers modified: cc a b
 
@@ -399,7 +399,7 @@ Disasm:
 	Registers read: cc d
 	Registers modified: cc d
 
-0x1007: EC10       ldd   16,x
+0x1007: ec10       ldd   16, x
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -413,7 +413,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc d
 
-0x1009: ED10       std   16,x
+0x1009: ed10       std   16, x
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -427,20 +427,20 @@ Disasm:
 	Registers read: cc d x
 	Registers modified: cc
 
-0x100B: 39         rts   
+0x100b: 39         rts   
 	Registers read: s
 	Registers modified: s pc
 	groups_count: 1
 
 ********************
 Platform: M680X_M68HC05
-Code: 0x04 0x7F 0x00 0x17 0x22 0x28 0x00 0x2E 0x00 0x40 0x42 0x5A 0x70 0x8E 0x97 0x9C 0xA0 0x15 0xAD 0x00 0xC3 0x10 0x00 0xDA 0x12 0x34 0xE5 0x7F 0xFE 
+Code: 0x04 0x7f 0x00 0x17 0x22 0x28 0x00 0x2e 0x00 0x40 0x42 0x5a 0x70 0x8e 0x97 0x9c 0xa0 0x15 0xad 0x00 0xc3 0x10 0x00 0xda 0x12 0x34 0xe5 0x7f 0xfe 
 Disasm:
-0x1000: 047F00     brset 2,$7F,$1003
+0x1000: 047f00     brset 2, $7f, $1003
 	op_count: 3
 		operands[0].type: CONSTANT = 2
 			access: READ
-		operands[1].type: DIRECT = 0x7F
+		operands[1].type: DIRECT = 0x7f
 			size: 1
 			access: READ
 		operands[2].type: RELATIVE = 0x1003
@@ -448,7 +448,7 @@ Disasm:
 	Registers modified: cc
 	groups_count: 2
 
-0x1003: 1722       bset  3,$22
+0x1003: 1722       bset  3, $22
 	op_count: 2
 		operands[0].type: CONSTANT = 3
 			access: READ
@@ -462,7 +462,7 @@ Disasm:
 	Registers read: cc
 	groups_count: 2
 
-0x1007: 2E00       bil   $1009
+0x1007: 2e00       bil   $1009
 	op_count: 1
 		operands[0].type: RELATIVE = 0x1009
 	Registers read: cc
@@ -476,11 +476,11 @@ Disasm:
 	Registers read: cc a
 	Registers modified: cc a
 
-0x100A: 42         mul   
+0x100a: 42         mul   
 	Registers read: cc a x
 	Registers modified: cc a x
 
-0x100B: 5A         decx  
+0x100b: 5a         decx  
 	op_count: 1
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 1
@@ -488,7 +488,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc x
 
-0x100C: 70         neg   ,x
+0x100c: 70         neg   , x
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: x
@@ -497,9 +497,9 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x100D: 8E         stop  
+0x100d: 8e         stop  
 
-0x100E: 97         tax   
+0x100e: 97         tax   
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -510,14 +510,14 @@ Disasm:
 	Registers read: a
 	Registers modified: x
 
-0x100F: 9C         rsp   
+0x100f: 9c         rsp   
 	op_count: 1
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
 			access: WRITE
 	Registers modified: s
 
-0x1010: A015       sub   #21
+0x1010: a015       sub   #21
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -528,14 +528,14 @@ Disasm:
 	Registers read: cc a
 	Registers modified: cc a
 
-0x1012: AD00       bsr   $1014
+0x1012: ad00       bsr   $1014
 	op_count: 1
 		operands[0].type: RELATIVE = 0x1014
 	Registers read: s
 	Registers modified: s
 	groups_count: 2
 
-0x1014: C31000     cpx   $1000
+0x1014: c31000     cpx   $1000
 	op_count: 2
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 1
@@ -546,7 +546,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x1017: DA1234     ora   4660,x
+0x1017: da1234     ora   4660, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -560,7 +560,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc a
 
-0x101A: E57F       bit   127,x
+0x101a: e57f       bit   127, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -574,7 +574,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc
 
-0x101C: FE         ldx   ,x
+0x101c: fe         ldx   , x
 	op_count: 2
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 1
@@ -588,9 +588,9 @@ Disasm:
 
 ********************
 Platform: M680X_M68HC08
-Code: 0x31 0x22 0x00 0x35 0x22 0x45 0x10 0x00 0x4B 0x00 0x51 0x10 0x52 0x5E 0x22 0x62 0x65 0x12 0x34 0x72 0x84 0x85 0x86 0x87 0x8A 0x8B 0x8C 0x94 0x95 0xA7 0x10 0xAF 0x10 0x9E 0x60 0x7F 0x9E 0x6B 0x7F 0x00 0x9E 0xD6 0x10 0x00 0x9E 0xE6 0x7F 
+Code: 0x31 0x22 0x00 0x35 0x22 0x45 0x10 0x00 0x4b 0x00 0x51 0x10 0x52 0x5e 0x22 0x62 0x65 0x12 0x34 0x72 0x84 0x85 0x86 0x87 0x8a 0x8b 0x8c 0x94 0x95 0xa7 0x10 0xaf 0x10 0x9e 0x60 0x7f 0x9e 0x6b 0x7f 0x00 0x9e 0xd6 0x10 0x00 0x9e 0xe6 0x7f 
 Disasm:
-0x1000: 312200     cbeq  $22,$1003
+0x1000: 312200     cbeq  $22, $1003
 	op_count: 3
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -624,17 +624,17 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc hx
 
-0x1008: 4B00       dbnza $100A
+0x1008: 4b00       dbnza $100a
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
 			access: READ | WRITE
-		operands[1].type: RELATIVE = 0x100A
+		operands[1].type: RELATIVE = 0x100a
 	Registers read: cc a
 	Registers modified: a
 	groups_count: 2
 
-0x100A: 511052     cbeqx #16,$105F
+0x100a: 511052     cbeqx #16, $105f
 	op_count: 3
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 1
@@ -642,11 +642,11 @@ Disasm:
 		operands[1].type: IMMEDIATE = #16
 			size: 1
 			access: READ
-		operands[2].type: RELATIVE = 0x105F
+		operands[2].type: RELATIVE = 0x105f
 	Registers read: cc x
 	groups_count: 2
 
-0x100D: 5E22       mov   $22;x+
+0x100d: 5e22       mov   $22; x+
 	op_count: 2
 		operands[0].type: DIRECT = 0x22
 			size: 1
@@ -659,7 +659,7 @@ Disasm:
 	Registers read: cc x h
 	Registers modified: cc x h
 
-0x100F: 62         nsa   
+0x100f: 62         nsa   
 	op_count: 1
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -720,7 +720,7 @@ Disasm:
 	Registers read: a s
 	Registers modified: s
 
-0x1018: 8A         pulh  
+0x1018: 8a         pulh  
 	op_count: 1
 		operands[0].type: REGISTER = h (in mnemonic)
 			size: 1
@@ -728,7 +728,7 @@ Disasm:
 	Registers read: s
 	Registers modified: h s
 
-0x1019: 8B         pshh  
+0x1019: 8b         pshh  
 	op_count: 1
 		operands[0].type: REGISTER = h (in mnemonic)
 			size: 1
@@ -736,7 +736,7 @@ Disasm:
 	Registers read: h s
 	Registers modified: s
 
-0x101A: 8C         clrh  
+0x101a: 8c         clrh  
 	op_count: 1
 		operands[0].type: REGISTER = h (in mnemonic)
 			size: 1
@@ -744,7 +744,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc h
 
-0x101B: 94         txs   
+0x101b: 94         txs   
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -755,7 +755,7 @@ Disasm:
 	Registers read: hx
 	Registers modified: s
 
-0x101C: 95         tsx   
+0x101c: 95         tsx   
 	op_count: 2
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
@@ -766,7 +766,7 @@ Disasm:
 	Registers read: s
 	Registers modified: hx
 
-0x101D: A710       ais   #16
+0x101d: a710       ais   #16
 	op_count: 2
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
@@ -777,7 +777,7 @@ Disasm:
 	Registers read: s
 	Registers modified: s
 
-0x101F: AF10       aix   #16
+0x101f: af10       aix   #16
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -788,7 +788,7 @@ Disasm:
 	Registers read: hx
 	Registers modified: hx
 
-0x1021: 9E607F     neg   127,s
+0x1021: 9e607f     neg   127, s
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: s
@@ -799,7 +799,7 @@ Disasm:
 	Registers read: cc s
 	Registers modified: cc
 
-0x1024: 9E6B7F00   dbnz  127,s;$1028
+0x1024: 9e6b7f00   dbnz  127, s; $1028
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: s
@@ -811,7 +811,7 @@ Disasm:
 	Registers read: cc s
 	groups_count: 2
 
-0x1028: 9ED61000   lda   4096,s
+0x1028: 9ed61000   lda   4096, s
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -825,7 +825,7 @@ Disasm:
 	Registers read: cc s
 	Registers modified: cc a
 
-0x102C: 9EE67F     lda   127,s
+0x102c: 9ee67f     lda   127, s
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -841,7 +841,7 @@ Disasm:
 
 ********************
 Platform: M680X_M6809
-Code: 0x06 0x10 0x19 0x1A 0x55 0x1E 0x01 0x23 0xE9 0x31 0x06 0x34 0x55 0xA6 0x81 0xA7 0x89 0x7F 0xFF 0xA6 0x9D 0x10 0x00 0xA7 0x91 0xA6 0x9F 0x10 0x00 0x11 0xAC 0x99 0x10 0x00 0x39 0xA6 0x07 0xA6 0x27 0xA6 0x47 0xA6 0x67 0xA6 0x0F 0xA6 0x10 0xA6 0x80 0xA6 0x81 0xA6 0x82 0xA6 0x83 0xA6 0x84 0xA6 0x85 0xA6 0x86 0xA6 0x88 0x7F 0xA6 0x88 0x80 0xA6 0x89 0x7F 0xFF 0xA6 0x89 0x80 0x00 0xA6 0x8B 0xA6 0x8C 0x10 0xA6 0x8D 0x10 0x00 0xA6 0x91 0xA6 0x93 0xA6 0x94 0xA6 0x95 0xA6 0x96 0xA6 0x98 0x7F 0xA6 0x98 0x80 0xA6 0x99 0x7F 0xFF 0xA6 0x99 0x80 0x00 0xA6 0x9B 0xA6 0x9C 0x10 0xA6 0x9D 0x10 0x00 0xA6 0x9F 0x10 0x00 
+Code: 0x06 0x10 0x19 0x1a 0x55 0x1e 0x01 0x23 0xe9 0x31 0x06 0x34 0x55 0xa6 0x81 0xa7 0x89 0x7f 0xff 0xa6 0x9d 0x10 0x00 0xa7 0x91 0xa6 0x9f 0x10 0x00 0x11 0xac 0x99 0x10 0x00 0x39 0xa6 0x07 0xa6 0x27 0xa6 0x47 0xa6 0x67 0xa6 0x0f 0xa6 0x10 0xa6 0x80 0xa6 0x81 0xa6 0x82 0xa6 0x83 0xa6 0x84 0xa6 0x85 0xa6 0x86 0xa6 0x88 0x7f 0xa6 0x88 0x80 0xa6 0x89 0x7f 0xff 0xa6 0x89 0x80 0x00 0xa6 0x8b 0xa6 0x8c 0x10 0xa6 0x8d 0x10 0x00 0xa6 0x91 0xa6 0x93 0xa6 0x94 0xa6 0x95 0xa6 0x96 0xa6 0x98 0x7f 0xa6 0x98 0x80 0xa6 0x99 0x7f 0xff 0xa6 0x99 0x80 0x00 0xa6 0x9b 0xa6 0x9c 0x10 0xa6 0x9d 0x10 0x00 0xa6 0x9f 0x10 0x00 
 Disasm:
 0x1000: 0610       ror   $10
 	op_count: 1
@@ -855,7 +855,7 @@ Disasm:
 	Registers read: cc a
 	Registers modified: cc a
 
-0x1003: 1A55       orcc  #85
+0x1003: 1a55       orcc  #85
 	op_count: 2
 		operands[0].type: REGISTER = cc (in mnemonic)
 			size: 1
@@ -866,7 +866,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x1005: 1E01       exg   d,x
+0x1005: 1e01       exg   d, x
 	op_count: 2
 		operands[0].type: REGISTER = d
 			size: 2
@@ -877,13 +877,13 @@ Disasm:
 	Registers read: d x
 	Registers modified: d x
 
-0x1007: 23E9       bls   $0FF2
+0x1007: 23e9       bls   $0ff2
 	op_count: 1
-		operands[0].type: RELATIVE = 0x0FF2
+		operands[0].type: RELATIVE = 0x0ff2
 	Registers read: cc
 	groups_count: 2
 
-0x1009: 3106       leay  6,x
+0x1009: 3106       leay  6, x
 	op_count: 2
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -897,7 +897,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc y
 
-0x100B: 3455       pshs  cc,b,x,u
+0x100b: 3455       pshs  cc, b, x, u
 	op_count: 5
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
@@ -917,7 +917,7 @@ Disasm:
 	Registers read: s cc b x u
 	Registers modified: s
 
-0x100D: A681       lda   ,x++
+0x100d: a681       lda   , x++
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -930,7 +930,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x100F: A7897FFF   sta   32767,x
+0x100f: a7897fff   sta   32767, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -944,7 +944,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc
 
-0x1013: A69D1000   lda   [$2017,pcR]
+0x1013: a69d1000   lda   [$2017, pcr]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -959,7 +959,7 @@ Disasm:
 	Registers read: cc pc
 	Registers modified: cc a
 
-0x1017: A791       sta   [,x++]
+0x1017: a791       sta   [, x++]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -972,7 +972,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc x
 
-0x1019: A69F1000   lda   [$1000]
+0x1019: a69f1000   lda   [$1000]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -983,7 +983,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc a
 
-0x101D: 11AC991000 cmps  [4096,x]
+0x101d: 11ac991000 cmps  [4096, x]
 	op_count: 2
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
@@ -1002,7 +1002,7 @@ Disasm:
 	Registers modified: s pc
 	groups_count: 1
 
-0x1023: A607       lda   7,x
+0x1023: a607       lda   7, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1016,7 +1016,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1025: A627       lda   7,y
+0x1025: a627       lda   7, y
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1030,7 +1030,7 @@ Disasm:
 	Registers read: cc y
 	Registers modified: cc a
 
-0x1027: A647       lda   7,u
+0x1027: a647       lda   7, u
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1044,7 +1044,7 @@ Disasm:
 	Registers read: cc u
 	Registers modified: cc a
 
-0x1029: A667       lda   7,s
+0x1029: a667       lda   7, s
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1058,7 +1058,7 @@ Disasm:
 	Registers read: cc s
 	Registers modified: cc a
 
-0x102B: A60F       lda   15,x
+0x102b: a60f       lda   15, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1072,7 +1072,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x102D: A610       lda   -16,x
+0x102d: a610       lda   -16, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1086,7 +1086,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x102F: A680       lda   ,x+
+0x102f: a680       lda   , x+
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1099,7 +1099,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1031: A681       lda   ,x++
+0x1031: a681       lda   , x++
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1112,7 +1112,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1033: A682       lda   ,-x
+0x1033: a682       lda   , -x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1125,7 +1125,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1035: A683       lda   ,--x
+0x1035: a683       lda   , --x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1138,7 +1138,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1037: A684       lda   ,x
+0x1037: a684       lda   , x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1150,7 +1150,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1039: A685       lda   b,x
+0x1039: a685       lda   b, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1163,7 +1163,7 @@ Disasm:
 	Registers read: cc x b
 	Registers modified: cc a
 
-0x103B: A686       lda   a,x
+0x103b: a686       lda   a, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1176,7 +1176,7 @@ Disasm:
 	Registers read: cc x a
 	Registers modified: cc a
 
-0x103D: A6887F     lda   127,x
+0x103d: a6887f     lda   127, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1190,7 +1190,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1040: A68880     lda   -128,x
+0x1040: a68880     lda   -128, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1204,7 +1204,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1043: A6897FFF   lda   32767,x
+0x1043: a6897fff   lda   32767, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1218,7 +1218,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1047: A6898000   lda   -32768,x
+0x1047: a6898000   lda   -32768, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1232,7 +1232,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x104B: A68B       lda   d,x
+0x104b: a68b       lda   d, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1245,7 +1245,7 @@ Disasm:
 	Registers read: cc x d
 	Registers modified: cc a
 
-0x104D: A68C10     lda   $1050,pcR
+0x104d: a68c10     lda   $1050, pcr
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1260,7 +1260,7 @@ Disasm:
 	Registers read: cc pc
 	Registers modified: cc a
 
-0x1050: A68D1000   lda   $2054,pcR
+0x1050: a68d1000   lda   $2054, pcr
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1275,7 +1275,7 @@ Disasm:
 	Registers read: cc pc
 	Registers modified: cc a
 
-0x1054: A691       lda   [,x++]
+0x1054: a691       lda   [, x++]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1288,7 +1288,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1056: A693       lda   [,--x]
+0x1056: a693       lda   [, --x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1301,7 +1301,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a x
 
-0x1058: A694       lda   [,x]
+0x1058: a694       lda   [, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1313,7 +1313,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x105A: A695       lda   [b,x]
+0x105a: a695       lda   [b, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1326,7 +1326,7 @@ Disasm:
 	Registers read: cc x b
 	Registers modified: cc a
 
-0x105C: A696       lda   [a,x]
+0x105c: a696       lda   [a, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1339,7 +1339,7 @@ Disasm:
 	Registers read: cc x a
 	Registers modified: cc a
 
-0x105E: A6987F     lda   [127,x]
+0x105e: a6987f     lda   [127, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1353,7 +1353,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1061: A69880     lda   [-128,x]
+0x1061: a69880     lda   [-128, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1367,7 +1367,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1064: A6997FFF   lda   [32767,x]
+0x1064: a6997fff   lda   [32767, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1381,7 +1381,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x1068: A6998000   lda   [-32768,x]
+0x1068: a6998000   lda   [-32768, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1395,7 +1395,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc a
 
-0x106C: A69B       lda   [d,x]
+0x106c: a69b       lda   [d, x]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1408,7 +1408,7 @@ Disasm:
 	Registers read: cc x d
 	Registers modified: cc a
 
-0x106E: A69C10     lda   [$1071,pcR]
+0x106e: a69c10     lda   [$1071, pcr]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1423,7 +1423,7 @@ Disasm:
 	Registers read: cc pc
 	Registers modified: cc a
 
-0x1071: A69D1000   lda   [$2075,pcR]
+0x1071: a69d1000   lda   [$2075, pcr]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1438,7 +1438,7 @@ Disasm:
 	Registers read: cc pc
 	Registers modified: cc a
 
-0x1075: A69F1000   lda   [$1000]
+0x1075: a69f1000   lda   [$1000]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1451,7 +1451,7 @@ Disasm:
 
 ********************
 Platform: M680X_M68HC11
-Code: 0x02 0x03 0x12 0x7F 0x10 0x00 0x13 0x99 0x08 0x00 0x14 0x7F 0x02 0x15 0x7F 0x01 0x1E 0x7F 0x20 0x00 0x8F 0xCF 0x18 0x08 0x18 0x30 0x18 0x3C 0x18 0x67 0x18 0x8C 0x10 0x00 0x18 0x8F 0x18 0xCE 0x10 0x00 0x18 0xFF 0x10 0x00 0x1A 0xA3 0x7F 0x1A 0xAC 0x1A 0xEE 0x7F 0x1A 0xEF 0x7F 0xCD 0xAC 0x7F 
+Code: 0x02 0x03 0x12 0x7f 0x10 0x00 0x13 0x99 0x08 0x00 0x14 0x7f 0x02 0x15 0x7f 0x01 0x1e 0x7f 0x20 0x00 0x8f 0xcf 0x18 0x08 0x18 0x30 0x18 0x3c 0x18 0x67 0x18 0x8c 0x10 0x00 0x18 0x8f 0x18 0xce 0x10 0x00 0x18 0xff 0x10 0x00 0x1a 0xa3 0x7f 0x1a 0xac 0x1a 0xee 0x7f 0x1a 0xef 0x7f 0xcd 0xac 0x7f 
 Disasm:
 0x1000: 02         idiv  
 	Registers read: cc d x
@@ -1461,9 +1461,9 @@ Disasm:
 	Registers read: cc d x
 	Registers modified: cc d x
 
-0x1002: 127F1000   brset $7F,#16,$1006
+0x1002: 127f1000   brset $7f, #16, $1006
 	op_count: 3
-		operands[0].type: DIRECT = 0x7F
+		operands[0].type: DIRECT = 0x7f
 			size: 1
 			access: READ
 		operands[1].type: IMMEDIATE = #16
@@ -1473,7 +1473,7 @@ Disasm:
 	Registers read: cc
 	groups_count: 2
 
-0x1006: 13990800   brclr $99,#8,$100A
+0x1006: 13990800   brclr $99, #8, $100a
 	op_count: 3
 		operands[0].type: DIRECT = 0x99
 			size: 1
@@ -1481,13 +1481,13 @@ Disasm:
 		operands[1].type: IMMEDIATE = #8
 			size: 1
 			access: READ
-		operands[2].type: RELATIVE = 0x100A
+		operands[2].type: RELATIVE = 0x100a
 	Registers read: cc
 	groups_count: 2
 
-0x100A: 147F02     bset  $7F,#2
+0x100a: 147f02     bset  $7f, #2
 	op_count: 2
-		operands[0].type: DIRECT = 0x7F
+		operands[0].type: DIRECT = 0x7f
 			size: 1
 			access: READ | WRITE
 		operands[1].type: IMMEDIATE = #2
@@ -1496,9 +1496,9 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x100D: 157F01     bclr  $7F,#1
+0x100d: 157f01     bclr  $7f, #1
 	op_count: 2
-		operands[0].type: DIRECT = 0x7F
+		operands[0].type: DIRECT = 0x7f
 			size: 1
 			access: READ | WRITE
 		operands[1].type: IMMEDIATE = #1
@@ -1507,7 +1507,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc
 
-0x1010: 1E7F2000   brset 127,x;#32;$1014
+0x1010: 1e7f2000   brset 127, x; #32; $1014
 	op_count: 3
 		operands[0].type: INDEXED
 			base register: x
@@ -1522,7 +1522,7 @@ Disasm:
 	Registers read: cc x
 	groups_count: 2
 
-0x1014: 8F         xgdx  
+0x1014: 8f         xgdx  
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -1533,7 +1533,7 @@ Disasm:
 	Registers read: d x
 	Registers modified: d x
 
-0x1015: CF         stop  
+0x1015: cf         stop  
 
 0x1016: 1808       iny   
 	op_count: 1
@@ -1554,7 +1554,7 @@ Disasm:
 	Registers read: s
 	Registers modified: y
 
-0x101A: 183C       pshy  
+0x101a: 183c       pshy  
 	op_count: 1
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -1562,7 +1562,7 @@ Disasm:
 	Registers read: y s
 	Registers modified: s
 
-0x101C: 186718     asr   24,y
+0x101c: 186718     asr   24, y
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: y
@@ -1573,7 +1573,7 @@ Disasm:
 	Registers read: cc y
 	Registers modified: cc
 
-0x101F: 8C1000     cpx   #4096
+0x101f: 8c1000     cpx   #4096
 	op_count: 2
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 2
@@ -1584,7 +1584,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x1022: 188F       xgdy  
+0x1022: 188f       xgdy  
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -1595,7 +1595,7 @@ Disasm:
 	Registers read: d y
 	Registers modified: d y
 
-0x1024: 18CE1000   ldy   #4096
+0x1024: 18ce1000   ldy   #4096
 	op_count: 2
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -1606,7 +1606,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc y
 
-0x1028: 18FF1000   sty   $1000
+0x1028: 18ff1000   sty   $1000
 	op_count: 2
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -1617,7 +1617,7 @@ Disasm:
 	Registers read: cc y
 	Registers modified: cc
 
-0x102C: 1AA37F     cpd   127,x
+0x102c: 1aa37f     cpd   127, x
 	op_count: 2
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -1631,7 +1631,7 @@ Disasm:
 	Registers read: cc d x
 	Registers modified: cc
 
-0x102F: 1AAC1A     cpy   26,x
+0x102f: 1aac1a     cpy   26, x
 	op_count: 2
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -1645,7 +1645,7 @@ Disasm:
 	Registers read: cc y x
 	Registers modified: cc
 
-0x1032: EE7F       ldx   127,x
+0x1032: ee7f       ldx   127, x
 	op_count: 2
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 2
@@ -1659,7 +1659,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc x
 
-0x1034: 1AEF7F     sty   127,x
+0x1034: 1aef7f     sty   127, x
 	op_count: 2
 		operands[0].type: REGISTER = y (in mnemonic)
 			size: 2
@@ -1673,7 +1673,7 @@ Disasm:
 	Registers read: cc y x
 	Registers modified: cc
 
-0x1037: CDAC7F     cpx   127,y
+0x1037: cdac7f     cpx   127, y
 	op_count: 2
 		operands[0].type: REGISTER = x (in mnemonic)
 			size: 2
@@ -1689,11 +1689,11 @@ Disasm:
 
 ********************
 Platform: M680X_CPU12
-Code: 0x00 0x04 0x01 0x00 0x0C 0x00 0x80 0x0E 0x00 0x80 0x00 0x11 0x1E 0x10 0x00 0x80 0x00 0x3B 0x4A 0x10 0x00 0x04 0x4B 0x01 0x04 0x4F 0x7F 0x80 0x00 0x8F 0x10 0x00 0xB7 0x52 0xB7 0xB1 0xA6 0x67 0xA6 0xFE 0xA6 0xF7 0x18 0x02 0xE2 0x30 0x39 0xE2 0x10 0x00 0x18 0x0C 0x30 0x39 0x10 0x00 0x18 0x11 0x18 0x12 0x10 0x00 0x18 0x19 0x00 0x18 0x1E 0x00 0x18 0x3E 0x18 0x3F 0x00 
+Code: 0x00 0x04 0x01 0x00 0x0c 0x00 0x80 0x0e 0x00 0x80 0x00 0x11 0x1e 0x10 0x00 0x80 0x00 0x3b 0x4a 0x10 0x00 0x04 0x4b 0x01 0x04 0x4f 0x7f 0x80 0x00 0x8f 0x10 0x00 0xb7 0x52 0xb7 0xb1 0xa6 0x67 0xa6 0xfe 0xa6 0xf7 0x18 0x02 0xe2 0x30 0x39 0xe2 0x10 0x00 0x18 0x0c 0x30 0x39 0x10 0x00 0x18 0x11 0x18 0x12 0x10 0x00 0x18 0x19 0x00 0x18 0x1e 0x00 0x18 0x3e 0x18 0x3f 0x00 
 Disasm:
 0x1000: 00         bgnd  
 
-0x1001: 040100     dbeq  b,$1004
+0x1001: 040100     dbeq  b, $1004
 	op_count: 2
 		operands[0].type: REGISTER = b
 			size: 1
@@ -1703,7 +1703,7 @@ Disasm:
 	Registers modified: b
 	groups_count: 2
 
-0x1004: 0C0080     bset  0,x;#-128
+0x1004: 0c0080     bset  0, x; #-128
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: x
@@ -1717,7 +1717,7 @@ Disasm:
 	Registers read: cc x
 	Registers modified: cc
 
-0x1007: 0E008000   brset 0,x;#-128;$100B
+0x1007: 0e008000   brset 0, x; #-128; $100b
 	op_count: 3
 		operands[0].type: INDEXED
 			base register: x
@@ -1728,15 +1728,15 @@ Disasm:
 		operands[1].type: IMMEDIATE = #-128
 			size: 1
 			access: READ
-		operands[2].type: RELATIVE = 0x100B
+		operands[2].type: RELATIVE = 0x100b
 	Registers read: cc x
 	groups_count: 2
 
-0x100B: 11         ediv  
+0x100b: 11         ediv  
 	Registers read: cc d y x
 	Registers modified: cc d y
 
-0x100C: 1E10008000 brset $1000,#-128,$1011
+0x100c: 1e10008000 brset $1000, #-128, $1011
 	op_count: 3
 		operands[0].type: EXTENDED  = 0x1000
 			size: 1
@@ -1748,7 +1748,7 @@ Disasm:
 	Registers read: cc
 	groups_count: 2
 
-0x1011: 3B         pshd  
+0x1011: 3b         pshd  
 	op_count: 1
 		operands[0].type: REGISTER = d (in mnemonic)
 			size: 2
@@ -1756,7 +1756,7 @@ Disasm:
 	Registers read: d s
 	Registers modified: s
 
-0x1012: 4A100004   call  $1000,4
+0x1012: 4a100004   call  $1000, 4
 	op_count: 2
 		operands[0].type: EXTENDED  = 0x1000
 			size: 1
@@ -1765,7 +1765,7 @@ Disasm:
 	Registers modified: s
 	groups_count: 1
 
-0x1016: 4B0104     call  1,x;4
+0x1016: 4b0104     call  1, x; 4
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: x
@@ -1777,19 +1777,19 @@ Disasm:
 	Registers modified: s
 	groups_count: 1
 
-0x1019: 4F7F8000   brclr $7F,#-128,$101D
+0x1019: 4f7f8000   brclr $7f, #-128, $101d
 	op_count: 3
-		operands[0].type: DIRECT = 0x7F
+		operands[0].type: DIRECT = 0x7f
 			size: 1
 			access: READ
 		operands[1].type: IMMEDIATE = #-128
 			size: 1
 			access: READ
-		operands[2].type: RELATIVE = 0x101D
+		operands[2].type: RELATIVE = 0x101d
 	Registers read: cc
 	groups_count: 2
 
-0x101D: 8F1000     cps   #4096
+0x101d: 8f1000     cps   #4096
 	op_count: 2
 		operands[0].type: REGISTER = s (in mnemonic)
 			size: 2
@@ -1800,7 +1800,7 @@ Disasm:
 	Registers read: cc s
 	Registers modified: cc
 
-0x1020: B752       tfr   x,cc
+0x1020: b752       tfr   x, cc
 	op_count: 2
 		operands[0].type: REGISTER = x
 			size: 2
@@ -1811,7 +1811,7 @@ Disasm:
 	Registers read: x
 	Registers modified: cc
 
-0x1022: B7B1       exg   tmp3,b
+0x1022: b7b1       exg   tmp3, b
 	op_count: 2
 		operands[0].type: REGISTER = tmp3
 			size: 2
@@ -1822,7 +1822,7 @@ Disasm:
 	Registers read: tmp3 b
 	Registers modified: tmp3 b
 
-0x1024: A667       ldaa  8,+y
+0x1024: a667       ldaa  8, +y
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1835,7 +1835,7 @@ Disasm:
 	Registers read: cc y
 	Registers modified: cc a y
 
-0x1026: A6FE       ldaa  d,pc
+0x1026: a6fe       ldaa  d, pc
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1848,7 +1848,7 @@ Disasm:
 	Registers read: cc pc d
 	Registers modified: cc a
 
-0x1028: A6F7       ldaa  [d,s]
+0x1028: a6f7       ldaa  [d, s]
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1861,7 +1861,7 @@ Disasm:
 	Registers read: cc s d
 	Registers modified: cc a
 
-0x102A: 1802E23039E21000         movw  12345,x;4096,x
+0x102a: 1802e23039e21000         movw  12345, x; 4096, x
 	op_count: 2
 		operands[0].type: INDEXED
 			base register: x
@@ -1877,7 +1877,7 @@ Disasm:
 			access: WRITE
 	Registers read: x
 
-0x1032: 180C30391000         movb  $3039,$1000
+0x1032: 180c30391000         movb  $3039, $1000
 	op_count: 2
 		operands[0].type: EXTENDED  = 0x3039
 			size: 1
@@ -1890,7 +1890,7 @@ Disasm:
 	Registers read: cc d x
 	Registers modified: cc d x
 
-0x103A: 18121000   emacs $1000
+0x103a: 18121000   emacs $1000
 	op_count: 1
 		operands[0].type: EXTENDED  = 0x1000
 			size: 4
@@ -1898,7 +1898,7 @@ Disasm:
 	Registers read: cc x y
 	Registers modified: cc x
 
-0x103E: 181900     mina  0,x
+0x103e: 181900     mina  0, x
 	op_count: 2
 		operands[0].type: REGISTER = a (in mnemonic)
 			size: 1
@@ -1912,7 +1912,7 @@ Disasm:
 	Registers read: cc a x
 	Registers modified: cc a
 
-0x1041: 181E00     emaxm 0,x
+0x1041: 181e00     emaxm 0, x
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: x
@@ -1923,9 +1923,9 @@ Disasm:
 	Registers read: cc x d
 	Registers modified: cc
 
-0x1044: 183E       stop  
+0x1044: 183e       stop  
 
-0x1046: 183F00     etbl  0,x
+0x1046: 183f00     etbl  0, x
 	op_count: 1
 		operands[0].type: INDEXED
 			base register: x
@@ -1938,7 +1938,7 @@ Disasm:
 
 ********************
 Platform: M680X_HCS08
-Code: 0x32 0x10 0x00 0x9E 0xAE 0x9E 0xCE 0x7F 0x9E 0xBE 0x10 0x00 0x9E 0xFE 0x7F 0x3E 0x10 0x00 0x9E 0xF3 0x7F 0x96 0x10 0x00 0x9E 0xFF 0x7F 0x82 
+Code: 0x32 0x10 0x00 0x9e 0xae 0x9e 0xce 0x7f 0x9e 0xbe 0x10 0x00 0x9e 0xfe 0x7f 0x3e 0x10 0x00 0x9e 0xf3 0x7f 0x96 0x10 0x00 0x9e 0xff 0x7f 0x82 
 Disasm:
 0x1000: 321000     ldhx  $1000
 	op_count: 2
@@ -1951,7 +1951,7 @@ Disasm:
 	Registers read: cc
 	Registers modified: cc hx
 
-0x1003: 9EAE       ldhx  ,x
+0x1003: 9eae       ldhx  , x
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -1963,7 +1963,7 @@ Disasm:
 	Registers read: cc x h
 	Registers modified: cc hx
 
-0x1005: 9ECE7F     ldhx  127,x
+0x1005: 9ece7f     ldhx  127, x
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -1977,7 +1977,7 @@ Disasm:
 	Registers read: cc x h
 	Registers modified: cc hx
 
-0x1008: 9EBE1000   ldhx  4096,x
+0x1008: 9ebe1000   ldhx  4096, x
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -1991,7 +1991,7 @@ Disasm:
 	Registers read: cc x h
 	Registers modified: cc hx
 
-0x100C: 9EFE7F     ldhx  127,s
+0x100c: 9efe7f     ldhx  127, s
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -2005,7 +2005,7 @@ Disasm:
 	Registers read: cc s
 	Registers modified: cc hx
 
-0x100F: 3E1000     cphx  $1000
+0x100f: 3e1000     cphx  $1000
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -2016,7 +2016,7 @@ Disasm:
 	Registers read: cc hx
 	Registers modified: cc
 
-0x1012: 9EF37F     cphx  127,s
+0x1012: 9ef37f     cphx  127, s
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -2041,7 +2041,7 @@ Disasm:
 	Registers read: cc hx
 	Registers modified: cc
 
-0x1018: 9EFF7F     sthx  127,s
+0x1018: 9eff7f     sthx  127, s
 	op_count: 2
 		operands[0].type: REGISTER = hx (in mnemonic)
 			size: 2
@@ -2055,5 +2055,5 @@ Disasm:
 	Registers read: cc hx s
 	Registers modified: cc
 
-0x101B: 82         bgnd  
+0x101b: 82         bgnd  
 

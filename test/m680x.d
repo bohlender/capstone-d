@@ -53,13 +53,13 @@ void writeDetail(ref OutBuffer buf, in M680xInstruction instr){
 				buf.writefln("\t\toperands[%d].type: IMMEDIATE = #%d", i, op.imm);
 				break;
 			case M680xOpType.direct:
-				buf.writefln("\t\toperands[%d].type: DIRECT = 0x%02X", i, op.directAddr);
+				buf.writefln("\t\toperands[%d].type: DIRECT = 0x%02x", i, op.directAddr);
 				break;
 			case M680xOpType.extended:
-				buf.writefln("\t\toperands[%d].type: EXTENDED %s = 0x%04X", i, op.ext.indirect ? "INDIRECT" : "", op.ext.address);
+				buf.writefln("\t\toperands[%d].type: EXTENDED %s = 0x%04x", i, op.ext.indirect ? "INDIRECT" : "", op.ext.address);
 				break;
 			case M680xOpType.relative:
-				buf.writefln("\t\toperands[%d].type: RELATIVE = 0x%04X", i, op.rel.address);
+				buf.writefln("\t\toperands[%d].type: RELATIVE = 0x%04x", i, op.rel.address);
 				break;
 			case M680xOpType.indexed:
 				buf.writefln("\t\toperands[%d].type: INDEXED%s", i, (op.idx.flags & M680xFlag.indirect) ? " INDIRECT" : "");
@@ -73,7 +73,7 @@ void writeDetail(ref OutBuffer buf, in M680xInstruction instr){
 					buf.writefln("\t\t\toffset: %d", op.idx.offset);
 
 					if(op.idx.baseReg.id == M680xRegisterId.pc)
-						buf.writefln("\t\t\toffset address: 0x%X", op.idx.offsetAddr);
+						buf.writefln("\t\t\toffset address: 0x%x", op.idx.offsetAddr);
 					buf.writefln("\t\t\toffset bits: %d", op.idx.offsetBits);
 				}
 
@@ -125,14 +125,14 @@ unittest{
 		
 		buf.writefln("********************");
 		buf.writefln("Platform: %s", platform.comment);
-		buf.writefln("Code: %s", platform.code.bytesToHex(true, true));
+		buf.writefln("Code: %s", platform.code.bytesToHex(true));
 
 		auto res = cs.disasm(platform.code, 0x1000);
 		if(res.length > 0){
 			buf.writefln("Disasm:");
 			foreach(instr; res) {
 				auto spaces = "%.*s".format(1 + (5-instr.bytes.length.to!int)*2, "         "); // weird spacing taken from original test
-				buf.writefln("0x%04X: %s%s%-5s %s", instr.address, instr.bytes.bytesToHex(false,true,false), spaces, instr.mnemonic, instr.opStr);
+				buf.writefln("0x%04x: %s%s%-5s %s", instr.address, instr.bytes.bytesToHex(false,false,false), spaces, instr.mnemonic, instr.opStr);
 				buf.writeDetail(instr);
 			}
 		}else{

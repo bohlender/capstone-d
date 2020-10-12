@@ -9,6 +9,7 @@ Disasm:
 	writing to reg:   d5
 	groups_count: 0
 		operands[0].type: REG = d0
+		operands[1].type: REG_PAIR = (d4, d5)
 
 0x1004:	movem.l	d0-d2/a2-a3, -(a7)
 	op_count: 2
@@ -19,6 +20,7 @@ Disasm:
 	reading from reg: a3
 	writing to reg:   a7
 	groups_count: 0
+		operands[0].type: REG_BITS = $c07
 		operands[1].type: MEM
 		address mode: Register Indirect - Address with Predecrement
 
@@ -33,6 +35,7 @@ Disasm:
 	groups_count: 0
 		operands[0].type: MEM
 		address mode: Register Indirect - Address with Postincrement
+		operands[1].type: REG_BITS = $c07
 
 0x100c:	add.w	d0, d2
 	op_count: 2

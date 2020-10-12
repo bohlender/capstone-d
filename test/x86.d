@@ -3,13 +3,14 @@ module test.x86;
 import std.outbuffer;
 import std.conv: to;
 import std.array: array;
-import std.algorithm: filter;
+import std.algorithm: filter, any;
 import std.string: toUpper;
 import std.range: empty;
 import std.array: join;
 import std.algorithm: map, joiner;
 import std.format: format;
 import std.typecons: BitFlags;
+import std.traits: EnumMembers;
 
 import capstone;
 import capstone.x86;
@@ -127,14 +128,22 @@ void writeDetail(ref OutBuffer buf, in X86Instruction instr, in CapstoneX86 cs){
 	if (!instr.writes.empty)
 		buf.writefln("\tRegisters modified: %s", instr.writes.map!(reg => reg.name).join(" "));
 
-	if (x86.eflags) {
-		buf.writef("\tEFLAGS:");
-		for(auto i = 0; i <= 45; i++){
-			auto f = (1UL << i).to!EFlag;
-			if (x86.eflags & f)
-				buf.writef(" %s", f.to!string.toUpper);
+	if (x86.eflags || x86.fpuFlags){
+		if (x86.groups().any!(grp => grp.id == X86InstructionGroupId.fpu)){
+			buf.writef("\tFPU_FLAGS:");
+			foreach(flag; EnumMembers!FpuFlag) {
+				if (x86.fpuFlags & flag)
+					buf.writef(" %s", flag.to!string.toUpper);
+			}
+			buf.writefln("");
+		}else{
+			buf.writef("\tEFLAGS:");
+			foreach(flag; EnumMembers!EFlag) {
+				if (x86.eflags & flag)
+					buf.writef(" %s", flag.to!string.toUpper);
+			}
+			buf.writefln("");
 		}
-		buf.writefln("");
 	}
 	buf.writefln("");
 }
@@ -156,7 +165,7 @@ unittest{
 		buf.writefln("Disasm:");
 
 		foreach(instr; res){
-			buf.writefln("0x%x:\t%s\t%s\n", instr.address, instr.mnemonic, instr.opStr);
+			buf.writefln("0x%x:\t%s\t%s", instr.address, instr.mnemonic, instr.opStr);
 			buf.writeDetail(instr, cs);
 		}
 		buf.writefln("0x%x:", res[$-1].address + res[$-1].bytes.length);
