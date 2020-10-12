@@ -1,6 +1,7 @@
 module test.m680x;
 
 import std.outbuffer;
+import std.format: format;
 import std.conv: to;
 import std.math: abs;
 

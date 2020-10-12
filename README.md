@@ -92,4 +92,4 @@ Unlike in the C API, an instruction `instr` does indeed not have a `size` member
 
 ## Contribute
 If you find bugs or think that something could be improved, simply create an according issue.
-If you want to tackle an issue or contribute to the plugin feel free to create a pull request.
+If you want to tackle an issue or contribute to the bindings feel free to create a pull request.
