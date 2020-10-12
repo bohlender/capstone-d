@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/bohlender/capstone-d.svg?branch=master)](https://travis-ci.org/bohlender/capstone-d)
+[![Build Status](https://travis-ci.com/bohlender/capstone-d.svg?branch=master)](https://travis-ci.com/bohlender/capstone-d)
 [![codecov](https://codecov.io/gh/bohlender/capstone-d/branch/master/graph/badge.svg)](https://codecov.io/gh/bohlender/capstone-d)
 
 # capstone-d
