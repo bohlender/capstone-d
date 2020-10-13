@@ -30,20 +30,8 @@ enum platforms = [
 void writeDetail(ref OutBuffer buf, in X86Instruction instr, in CapstoneX86 cs){
 	auto x86 = instr.detail; //auto x86 = instr.detail.archSpecific;
 
-	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
-	// buf.writefln("\tPrefix:%s", x86.prefix.bytesToHex);
-	buf.write("\tPrefix:");
-	foreach(b; x86.prefix)
-		buf.write("0x%.2x ".format(b));
-	buf.writefln("");
-
-	// TODO: DMD v2.083.1 segfaults in build-mode=singleFile when using
-	// buf.writefln("\tOpcode:%s", x86.opcode.bytesToHex);
-	buf.write("\tOpcode:");
-	foreach(b; x86.opcode)
-		buf.write("0x%.2x ".format(b));
-	buf.writefln("");
-
+	buf.writefln("\tPrefix:%s", x86.prefix.bytesToHex);
+	buf.writefln("\tOpcode:%s", x86.opcode.bytesToHex);
 	buf.writefln("\trex: 0x%x", x86.rex);
 	buf.writefln("\taddr_size: %d", x86.addrSize);
 	buf.writefln("\tmodrm: 0x%x", x86.modRM);

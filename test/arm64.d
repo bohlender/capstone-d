@@ -47,7 +47,6 @@ void writeDetail(ref OutBuffer buf, in Arm64Instruction instr){
 				buf.writefln("\t\toperands[%d].type: C-IMM = %d", i, op.imm);
 				break;
 			case Arm64OpType.reg_mrs:
-				// buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg.id); // TODO: Should not crash -> use tagged union
 				buf.writefln("\t\toperands[%d].type: REG_MRS = 0x%x", i, op.reg_mrs);
 				break;
 			case Arm64OpType.reg_msr:
